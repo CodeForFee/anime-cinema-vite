@@ -316,16 +316,30 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* exits need their own keyframes: re-using the entry one with "reverse" does not restart it */
+@keyframes cn-sheet-down {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 100%, 0); }
+}
+@keyframes cn-sheet-right {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(100%, 0, 0); }
+}
+@keyframes cn-fade-away {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
 @keyframes cn-pop {
   from { opacity: 0; transform: scale(0.94); }
 }
 .cn-sheet { animation: cn-sheet-up 320ms cubic-bezier(0.32, 0.72, 0, 1) both; }
-.cn-sheet-out { animation: cn-sheet-up 220ms cubic-bezier(0.4, 0, 1, 1) reverse both; }
+.cn-sheet-out { animation: cn-sheet-down 220ms cubic-bezier(0.4, 0, 1, 1) both; }
 @media (orientation: landscape) {
-  .cn-sheet, .cn-sheet-out { animation-name: cn-sheet-left; }
+  .cn-sheet { animation-name: cn-sheet-left; }
+  .cn-sheet-out { animation-name: cn-sheet-right; }
 }
 .cn-fade { animation: cn-fade 260ms ease-out both; }
-.cn-fade-out { animation: cn-fade 220ms ease-in reverse both; }
+.cn-fade-out { animation: cn-fade-away 220ms ease-in both; }
 .cn-pop { animation: cn-pop 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
 @media (prefers-reduced-motion: reduce) {
   .cn-sheet, .cn-sheet-out, .cn-fade, .cn-fade-out, .cn-pop { animation-duration: 1ms; }

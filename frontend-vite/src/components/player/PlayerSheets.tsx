@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { cn, formatEpisodeName } from "../../lib/utils";
 import type { Episode } from "../../types/anime";
 
+// keep equal to the .cn-sheet-out duration in globals.css
+const SHEET_OUT_MS = 220;
+
 /**
  * Panel inside the player frame: a bottom sheet in portrait, a side panel in landscape.
  * Rendered in the frame, not portalled to <body>, or it would not show in full screen.
@@ -22,6 +25,15 @@ function Sheet({
   const [closing, setClosing] = useState(false);
   const close = () => setClosing(true);
 
+  // A timer, not animationend: that event may never come (reduced motion, interrupted animation), and a
+  // sheet left mounted is an invisible layer that swallows every tap on the player
+  // biome-ignore lint/correctness/useExhaustiveDependencies: onClose is a new closure every render
+  useEffect(() => {
+    if (!closing) return;
+    const timer = setTimeout(onClose, SHEET_OUT_MS);
+    return () => clearTimeout(timer);
+  }, [closing]);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && setClosing(true);
     window.addEventListener("keydown", onKey);
@@ -29,7 +41,7 @@ function Sheet({
   }, []);
 
   return (
-    <div className="absolute inset-0 z-30" role="dialog" aria-modal="true" aria-label={title}>
+    <div className={cn("absolute inset-0 z-30", closing && "pointer-events-none")} role="dialog" aria-modal="true" aria-label={title}>
       <button
         type="button"
         aria-label="Đóng"
@@ -37,7 +49,6 @@ function Sheet({
         className={cn("absolute inset-0 bg-black/45", closing ? "cn-fade-out" : "cn-fade")}
       />
       <div
-        onAnimationEnd={(event) => closing && event.target === event.currentTarget && onClose()}
         className={cn(
           "glass-sheet absolute inset-x-0 bottom-0 flex max-h-full flex-col rounded-t-3xl text-white",
           "landscape:inset-y-0 landscape:left-auto landscape:right-0 landscape:w-[min(400px,48%)] landscape:rounded-none landscape:rounded-l-3xl",
