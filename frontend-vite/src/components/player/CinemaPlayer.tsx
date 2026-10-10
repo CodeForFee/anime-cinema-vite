@@ -4,6 +4,7 @@ import { AlertCircle, RotateCw } from "lucide-react";
 import { Button } from "../lightswind/button";
 import { usePlayerStore } from "../../stores/usePlayerStore";
 import { usePlayerBridge } from "../../hooks/usePlayerBridge";
+import { onBack } from "../../logic/back";
 import { cn, formatEpisodeName } from "../../lib/utils";
 import type { Episode, StreamSource } from "../../types/anime";
 import { resumePoint, useProgressStore } from "./player-logic";
@@ -168,6 +169,10 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
+
+  // Android back leaves full screen first, before it leaves the page
+  // biome-ignore lint/correctness/useExhaustiveDependencies: toggleFullscreen is a new closure every render
+  useEffect(() => (isFullscreen ? onBack(toggleFullscreen) : undefined), [isFullscreen]);
 
   // Never leave the app rotated after the player is gone
   useEffect(() => () => nativeShell()?.postMessage("fullscreen:off"), []);

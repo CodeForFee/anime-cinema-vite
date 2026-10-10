@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "@/lib/router";
+import { onBack } from "../../logic/back";
 import { usePathname, useRouter, useSearchParams } from "@/lib/router";
 import {
   NavigationMenu,
@@ -110,6 +111,10 @@ export const HeaderNav: React.FC = () => {
     document.documentElement.toggleAttribute("data-search", isSearchOpen && phone);
     return () => document.documentElement.removeAttribute("data-search");
   }, [isSearchOpen]);
+
+  // Android back closes the search popup
+  // biome-ignore lint/correctness/useExhaustiveDependencies: closeSearch is a new closure every render
+  useEffect(() => (isSearchOpen ? onBack(closeSearch) : undefined), [isSearchOpen]);
 
   const closeSearch = () => {
     setIsResultsOpen(false);

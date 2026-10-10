@@ -12,6 +12,7 @@ import { createRoot } from "react-dom/client"
 import { BrowserRouter } from "react-router-dom"
 
 import App from "./App"
+import { installBackButton } from "./logic/back"
 import { isNativeApp } from "./logic/bridge"
 
 // Only Chromium renders an SVG filter as backdrop-filter; elsewhere .glass stays a plain blur
@@ -32,6 +33,8 @@ if (!isNativeApp) {
   if (import.meta.env.PROD) void navigator.serviceWorker?.register("/sw.js").catch(() => {})
 }
 else void navigator.serviceWorker?.getRegistrations().then((all) => all.forEach((worker) => worker.unregister()))
+
+installBackButton()
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

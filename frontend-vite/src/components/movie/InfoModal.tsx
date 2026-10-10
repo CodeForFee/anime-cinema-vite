@@ -8,6 +8,7 @@ import { LazyImage } from "./LazyImage";
 import { EpisodeRowsSkeleton } from "./Skeletons";
 import { useHistoryStore } from "../../stores/useHistoryStore";
 import { useUIStore } from "../../stores/useUIStore";
+import { onBack } from "../../logic/back";
 import { useAnimeDetailQuery } from "../../hooks/useAnimeQuery";
 import { cn, formatEpisodeName } from "../../lib/utils";
 import { Check, Play, Plus, ThumbsUp, Volume2, VolumeX, X } from "lucide-react";
@@ -18,6 +19,8 @@ export const InfoModal: React.FC = () => {
   const isOpen = useUIStore((state) => state.isInfoModalOpen);
   const onClose = useUIStore((state) => state.closeInfoModal);
   const openInfoModal = useUIStore((state) => state.openInfoModal);
+  // Android back closes the preview instead of leaving the page
+  useEffect(() => (isOpen ? onBack(onClose) : undefined), [isOpen, onClose]);
 
   const [isMuted, setIsMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(false);

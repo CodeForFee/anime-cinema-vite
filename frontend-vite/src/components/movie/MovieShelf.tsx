@@ -1,7 +1,7 @@
 
 import React, { useRef } from "react";
 import { Link } from "@/lib/router";
-import { Button, ScrollShadow, Tooltip } from "@heroui/react";
+import { Button, Tooltip } from "@heroui/react";
 import type { LucideIcon } from "lucide-react";
 import { PosterTile } from "./PosterTile";
 import { AnimeItem } from "../../types/anime";
@@ -63,18 +63,17 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
           </Button>
         </Tooltip>
 
-        <ScrollShadow
+        {/* a plain scroller: HeroUI ScrollShadow masks the whole row, repainted on every page scroll */}
+        <div
           ref={scrollContainerRef}
-          orientation="horizontal"
-          hideScrollBar
-          className="flex items-start gap-3 snap-shelf overflow-x-auto scroll-smooth py-2 md:gap-4"
+          className="no-scrollbar flex items-start gap-3 snap-shelf overflow-x-auto scroll-smooth py-2 md:gap-4"
         >
           {items.map((anime) => (
             <div key={anime.slug || anime.title} className="w-44 shrink-0 md:w-52">
               <PosterTile anime={anime} />
             </div>
           ))}
-        </ScrollShadow>
+        </div>
 
         {/* Right Arrow Button */}
         <Tooltip content="Cuộn phải" placement="left">

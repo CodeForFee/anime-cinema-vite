@@ -24,7 +24,7 @@ export function PosterTile({ anime }: { anime: AnimeItem }) {
         type="button"
         onClick={() => openInfoModal(anime)}
         aria-label={anime.title}
-        className="group block w-full overflow-hidden rounded-2xl bg-white/5 text-left shadow-[0_18px_40px_rgba(0,0,0,0.35)] ring-1 ring-white/10 transition active:scale-[0.97]"
+        className="group block w-full overflow-hidden rounded-2xl bg-white/5 text-left ring-1 ring-white/10 transition active:scale-[0.97]"
       >
         <span className="relative block aspect-[2/3]">
           <LazyImage
@@ -33,11 +33,11 @@ export function PosterTile({ anime }: { anime: AnimeItem }) {
             className="h-full w-full object-cover transition-[transform,opacity] duration-500 md:group-hover:scale-105"
           />
           {badge && (
-            <span className="absolute left-2 top-2 rounded-lg bg-black/40 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-white/15 backdrop-blur-md">
+            <span className="absolute left-2 top-2 rounded-lg bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-white/15">
               {badge}
             </span>
           )}
-          <span className="absolute inset-x-2 bottom-2 rounded-xl bg-black/35 px-2.5 py-2 ring-1 ring-white/15 backdrop-blur-md">
+          <span className="poster-caption absolute inset-x-2 bottom-2 rounded-xl px-2.5 py-2 ring-1 ring-white/15">
             <span className="line-clamp-2 text-sm font-semibold leading-tight text-white">{anime.title}</span>
             {(anime.year || anime.rating) && (
               <span className="mt-1 flex items-center gap-2 text-xs text-gray-300">

@@ -102,7 +102,7 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
               tabIndex={i === index ? 0 : -1}
               aria-label={anime.title}
               onClick={() => (i === index ? openInfoModal(anime) : setIndex(i))}
-              className="absolute left-1/2 top-0 aspect-[2/3] w-[min(62vw,280px)] overflow-hidden rounded-[1.75rem] bg-[#1c1c1f] text-left shadow-[0_24px_50px_rgba(0,0,0,0.55)] ring-1 ring-white/15 [backface-visibility:hidden] will-change-transform"
+              className="absolute left-1/2 top-0 aspect-[2/3] w-[min(62vw,280px)] overflow-hidden rounded-[1.75rem] bg-[#1c1c1f] text-left shadow-[0_14px_28px_rgba(0,0,0,0.5)] ring-1 ring-white/15 [backface-visibility:hidden] will-change-transform"
               // first paint before the layout effect runs: already roughly in place
               style={{ transform: `translate3d(calc(-50% + ${around(i) * STEP * 100}%), 0, 0)` }}
             >

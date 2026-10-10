@@ -3,6 +3,7 @@ import { Check, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { cn, formatEpisodeName } from "../../lib/utils";
+import { onBack } from "../../logic/back";
 import type { Episode } from "../../types/anime";
 
 // keep equal to the .cn-sheet-out duration in globals.css
@@ -34,6 +35,9 @@ function Sheet({
     return () => clearTimeout(timer);
   }, [closing]);
 
+  // Android back closes the sheet before anything else
+  useEffect(() => onBack(() => setClosing(true)), []);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && setClosing(true);
     window.addEventListener("keydown", onKey);
@@ -50,8 +54,9 @@ function Sheet({
       />
       <div
         className={cn(
-          "glass-sheet absolute inset-x-0 bottom-0 flex max-h-full flex-col rounded-t-3xl text-white",
-          "landscape:inset-y-0 landscape:left-auto landscape:right-0 landscape:w-[min(400px,48%)] landscape:rounded-none landscape:rounded-l-3xl",
+          // a floating card with the same gap and radius on every side, in both orientations
+          "glass-sheet absolute inset-x-2 bottom-2 flex max-h-[calc(100%-1rem)] flex-col overflow-hidden rounded-3xl text-white",
+          "landscape:inset-y-2 landscape:left-auto landscape:right-[max(0.5rem,var(--inset-right))] landscape:w-[min(380px,46%)]",
           closing ? "cn-sheet-out" : "cn-sheet"
         )}
       >
