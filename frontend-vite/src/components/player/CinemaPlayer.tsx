@@ -3,7 +3,9 @@ import { useState, useEffect, useRef } from "react";
 import { AlertCircle, RotateCw } from "lucide-react";
 import { Button } from "../lightswind/button";
 import { usePlayerStore } from "../../stores/usePlayerStore";
+import { useQuery } from "@tanstack/react-query";
 import { usePlayerBridge } from "../../hooks/usePlayerBridge";
+import { findMalId, getSkipTimes } from "../../logic/skip-times";
 import { onBack } from "../../logic/back";
 import { cn, formatEpisodeName } from "../../lib/utils";
 import type { Episode, StreamSource } from "../../types/anime";
@@ -30,6 +32,8 @@ interface CinemaPlayerProps {
   hasNextEpisode?: boolean;
   /** Called once per episode at 80 %: time to fetch the next one so switching is instant */
   onNearEnd?: () => void;
+  /** What to look the opening / ending up by (logic/skip-times.ts); no skip button without it */
+  skipLookup?: { slug: string; names: string[]; year?: number; episode: number | null };
 }
 
 /** Set by the Android app (MainActivity.java): rotates to landscape and hides the system bars */
@@ -41,8 +45,7 @@ const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches;
 
 const SAVE_EVERY_MS = 5000;
 // "Bỏ qua giới thiệu": most TV openings are ~90 s and start within the first 2.5 min
-const INTRO_LENGTH = 85;
-const INTRO_WINDOW = 150;
+// without ending times, the next-episode card comes this many seconds before the end
 const NEXT_UP_BEFORE_END = 20;
 
 export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
@@ -59,6 +62,7 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
   onNextEpisode,
   hasNextEpisode,
   onNearEnd,
+  skipLookup,
 }) => {
   const frameRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -197,10 +201,32 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
   const showError = hasError || failed;
   const nextEpisode = episodes && currentEpisodeId ? episodes[episodes.findIndex((e) => e.id === currentEpisodeId) + 1] : undefined;
   const remaining = state && state.duration > 0 ? state.duration - state.currentTime : Infinity;
+  // This episode's real opening / ending: MyAnimeList id once per title, times once per episode and cut
+  const duration = Math.round(state?.duration ?? 0);
+  const { data: malId } = useQuery({
+    queryKey: ["skip", "mal-id", skipLookup?.slug],
+    queryFn: () => findMalId(skipLookup?.names ?? [], skipLookup?.year),
+    enabled: Boolean(skipLookup?.names.length),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 7 * 24 * 60 * 60 * 1000,
+  });
+  const { data: skipTimes } = useQuery({
+    queryKey: ["skip", "times", malId, skipLookup?.episode, duration],
+    queryFn: () => getSkipTimes(malId as number, skipLookup?.episode as number, duration),
+    enabled: Boolean(malId && skipLookup?.episode && duration > 0),
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+  const op = skipTimes?.op;
+  const ed = skipTimes?.ed;
+  const now = state?.currentTime ?? 0;
+
+  const inEnding = ed !== undefined && now >= ed[0] && ed[1] >= duration - 30;
   const showNextUp =
-    !askResume && !nextDismissed && hasNextEpisode && onNextEpisode && state !== null && (state.ended || remaining <= NEXT_UP_BEFORE_END);
+    !askResume && !nextDismissed && hasNextEpisode && onNextEpisode && state !== null &&
+    (state.ended || remaining <= NEXT_UP_BEFORE_END || inEnding);
+  // only while the opening is actually playing: resuming past it never shows the button
   const showSkipIntro =
-    !askResume && !introSkipped && state !== null && state.duration > 600 && state.currentTime > 5 && state.currentTime < INTRO_WINDOW;
+    !askResume && !introSkipped && state !== null && op !== undefined && now >= op[0] && now < op[1] - 2;
 
   return (
     <div
@@ -281,7 +307,7 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
         {showSkipIntro && (
           <SkipIntroButton
             onSkip={() => {
-              bridge.send("seek", state.currentTime + INTRO_LENGTH);
+              bridge.send("seek", op[1]);
               setIntroSkipped(true);
             }}
           />

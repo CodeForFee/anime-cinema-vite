@@ -8,6 +8,7 @@ import { useHistoryStore } from "../stores/useHistoryStore";
 import { CinemaPlayer } from "../components/player/CinemaPlayer";
 import { AmbientBackdrop } from "../components/layout/AmbientBackdrop";
 import { progressKey } from "../components/player/player-logic";
+import { episodeNumberOf, searchNames } from "../logic/skip-times";
 import { EpisodeGrid } from "../components/player/EpisodeGrid";
 import { MovieShelf } from "../components/movie/MovieShelf";
 import { InfoModal } from "../components/movie/InfoModal";
@@ -237,6 +238,12 @@ function WatchContent() {
         onNextEpisode={handleNextEpisode}
         hasNextEpisode={hasNextEpisode}
         onNearEnd={prefetchNextEpisode}
+        skipLookup={{
+          slug: anime.slug,
+          names: searchNames(anime.title, anime.subTitle),
+          year: Number(anime.year) || undefined,
+          episode: currentEpisode ? episodeNumberOf(currentEpisode.name) : null,
+        }}
       />
 
       {/* Now playing */}
