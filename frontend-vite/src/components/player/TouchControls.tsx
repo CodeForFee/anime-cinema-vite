@@ -21,6 +21,7 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import type { PlayerCommand, PlayerState } from "../../hooks/usePlayerBridge";
 import { cn } from "../../lib/utils";
+import { hasNativeLevels, nativeLevels, refreshLevels, setNativeBrightness, setNativeVolume } from "../../logic/native-levels";
 import {
   BRIGHTNESS_MAX,
   BRIGHTNESS_MIN,
@@ -53,7 +54,8 @@ const DOUBLE_TAP_MS = 280;
 const IS_IOS =
   /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
 
-type Hud = { kind: "volume" | "brightness"; value: number } | { kind: "seek"; value: number; delta: number };
+/** fraction: the level as 0..1, what the bar and the percentage show */
+type Hud = { kind: "volume" | "brightness"; fraction: number } | { kind: "seek"; value: number; delta: number };
 
 const ROUND = "flex items-center justify-center rounded-full text-white transition active:scale-90";
 const CHIP = "glass-button flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold text-white transition active:scale-95";
@@ -96,6 +98,12 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     const timer = setTimeout(() => setVisible(false), AUTO_HIDE_MS);
     return () => clearTimeout(timer);
   }, [visible, state.paused, scrub, hud, activity]);
+
+  // In the app the swipes drive the phone's own volume and brightness: start from where they are now
+  const native = hasNativeLevels();
+  useEffect(() => {
+    if (native) refreshLevels();
+  }, [native, isFullscreen]);
 
   useEffect(
     () => () => {
@@ -144,8 +152,8 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
       if (first) {
         clearTimeout(hudTimer.current);
         dragFrom.current = {
-          volume: state.volume ?? 1,
-          brightness,
+          volume: native ? nativeLevels().volume : (state.volume ?? 1),
+          brightness: native ? nativeLevels().brightness : brightness,
           time: state.currentTime,
           right: ix - rect.left > rect.width / 2,
         };
@@ -154,14 +162,20 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
 
       if (axis === "y" && isFullscreen) {
         if (from.right) {
-          if (IS_IOS || state.volume === undefined) return;
           const volume = swipeLevel(from.volume, my, rect.height, 0, 1);
-          send("volume", Math.round(volume * 100) / 100);
-          setHud({ kind: "volume", value: volume });
+          if (native) setNativeVolume(volume);
+          else if (IS_IOS || state.volume === undefined) return;
+          else send("volume", Math.round(volume * 100) / 100);
+          setHud({ kind: "volume", fraction: volume });
+        } else if (native) {
+          const value = swipeLevel(from.brightness, my, rect.height, 0.01, 1);
+          setNativeBrightness(value);
+          setHud({ kind: "brightness", fraction: value });
         } else {
+          // a browser cannot touch the screen: dim or brighten the picture instead
           const value = swipeLevel(from.brightness, my, rect.height, BRIGHTNESS_MIN, BRIGHTNESS_MAX);
           onBrightness(value);
-          setHud({ kind: "brightness", value });
+          setHud({ kind: "brightness", fraction: (value - BRIGHTNESS_MIN) / (BRIGHTNESS_MAX - BRIGHTNESS_MIN) });
         }
       } else if (axis === "x" && state.duration > 0) {
         const target = swipeSeek(from.time, mx, rect.width, state.duration);
@@ -182,7 +196,8 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   };
 
   const shownTime = scrub ?? state.currentTime;
-  const VolumeIcon = !state.volume ? VolumeX : state.volume < 0.5 ? Volume1 : Volume2;
+  const shownVolume = hud?.kind === "volume" ? hud.fraction : (state.volume ?? 1);
+  const VolumeIcon = !shownVolume ? VolumeX : shownVolume < 0.5 ? Volume1 : Volume2;
 
   return (
     <section
@@ -222,17 +237,11 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
               <div className="h-1.5 w-32 overflow-hidden rounded-full bg-white/25">
                 <div
                   className="h-full rounded-full bg-white"
-                  style={{
-                    width: `${
-                      hud.kind === "volume"
-                        ? hud.value * 100
-                        : ((hud.value - BRIGHTNESS_MIN) / (BRIGHTNESS_MAX - BRIGHTNESS_MIN)) * 100
-                    }%`,
-                  }}
+                  style={{ width: `${hud.fraction * 100}%` }}
                 />
               </div>
               <span className="w-9 text-right text-xs font-semibold tabular-nums">
-                {Math.round(hud.value * 100)}%
+                {Math.round(hud.fraction * 100)}%
               </span>
             </div>
           )}
