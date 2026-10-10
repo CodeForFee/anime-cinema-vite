@@ -9,7 +9,6 @@ import { Menu } from "src/apis/runs/menu"
 import { PhimDetail } from "src/apis/runs/phim/detail"
 import { PhimIdChap } from "src/apis/runs/phim/[id]/[chap]"
 import { TypeNormalValue } from "src/apis/runs/[type_normal]/[value]"
-import pLimit from "p-limit"
 import { forceHttp2 } from "src/logic/forceHttp2"
 import { post } from "src/logic/http"
 
@@ -86,12 +85,10 @@ async function browse(path: string, page: number = 1): Promise<BrowseResult> {
   }
 }
 
-// The lists only carry thumbnails. Like getHomePage() in backend-hono, the hero and the recommended
-// shelf take their poster and wide banner from each detail page. A few at a time: these requests
-// leave the viewer browser, not a server with a shared cache.
-const detailLimit = pLimit(4)
-const enrich = (item: AnimeItem) =>
-  detailLimit(async (): Promise<AnimeItem> => {
+// The lists only carry thumbnails; the poster, wide banner and synopsis of a title live on its detail
+// page (same source as getHomePage() in backend-hono). One title per call: the hero asks for the slide
+// on screen instead of the home page waiting for all of them.
+const enrich = async (item: AnimeItem): Promise<AnimeItem> => {
     try {
       const info = await PhimDetail(item.slug)
       const poster = image(info.image) || item.poster
@@ -112,13 +109,7 @@ const enrich = (item: AnimeItem) =>
     } catch {
       return item
     }
-  })
-
-const firstPage = (path: string) =>
-  browse(path).then(
-    (res) => res.items,
-    () => []
-  )
+}
 
 export const animeApi = {
   // Navigation menu exactly as the source lists it (types, rankings, every genre and season)
@@ -127,39 +118,29 @@ export const animeApi = {
   // One page of any list from that menu
   browse,
 
+  enrich,
+
   getHomeData: async (): Promise<HomeDataResponse> => {
     try {
-      const [home, series, movies, chinese] = await Promise.all([
-        Index(),
-        firstPage("/anime-bo/"),
-        firstPage("/anime-le/"),
-        firstPage("/hoat-hinh-trung-quoc/")
-      ])
+      // One request. The series / movies / chinese shelves fetch their own list when scrolled to
+      // (pages/home.tsx), and banners are fetched per slide (useEnrichedItem).
+      const home = await Index()
 
       const latest = home.lastUpdate.map(toItem)
       const sapChieu = home.preRelease.map(toItem)
       const carousel = home.carousel.map(toItem)
-      const [featured, topSlider] = await Promise.all([
-        Promise.all((carousel.length > 0 ? carousel : home.nominate.map(toItem)).slice(0, 6).map(enrich)),
-        Promise.all(
-          home.thisSeason
-            .filter((post) => !post.image?.includes("big_banner"))
-            .map(toItem)
-            .map(enrich)
-        )
-      ])
 
       return {
         success: true,
-        featured,
-        topSlider,
+        featured: (carousel.length > 0 ? carousel : home.nominate.map(toItem)).slice(0, 6),
+        topSlider: home.thisSeason.filter((post) => !post.image?.includes("big_banner")).map(toItem),
         latest,
         sapChieu,
         upcoming: sapChieu,
         hotTuan: home.hotUpdate.map(toItem),
-        series: series.length > 0 ? series : latest.slice(0, 10),
-        movies: movies.length > 0 ? movies : latest.slice(10, 20),
-        chinese
+        series: [],
+        movies: [],
+        chinese: []
       }
     } catch (err) {
       console.error("API getHomeData error:", err)

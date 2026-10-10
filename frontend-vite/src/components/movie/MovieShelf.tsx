@@ -75,7 +75,7 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
           ref={scrollContainerRef}
           orientation="horizontal"
           hideScrollBar
-          className="flex items-center gap-4 overflow-x-auto scroll-smooth py-2"
+          className="flex items-center gap-4 snap-shelf overflow-x-auto scroll-smooth py-2"
         >
           {items.map((anime) => (
             <MovieCard

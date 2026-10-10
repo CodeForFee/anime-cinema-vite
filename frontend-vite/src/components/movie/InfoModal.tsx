@@ -180,7 +180,8 @@ export const InfoModal: React.FC = () => {
     }
   };
 
-  if (!isOpen || (!selectedAnime && !detail)) return null;
+  // Stays mounted while closed, so the dialog can play its closing animation
+  if (!selectedAnime && !detail) return null;
 
   const ytEmbedUrl = trailerUrl
     ? `${trailerUrl}${trailerUrl.includes("?") ? "&" : "?"}autoplay=1&mute=1&controls=0&loop=1&enablejsapi=1&playsinline=1&modestbranding=1&rel=0`
@@ -191,7 +192,8 @@ export const InfoModal: React.FC = () => {
       <DialogContent
         ref={modalBodyRef}
         hideCloseButton
-        className="max-w-[1040px] max-h-[92vh] rounded-[8px] border-[#333] bg-[#181818] p-0 text-white shadow-[0_0_80px_rgba(0,0,0,0.95)] max-sm:-mx-4 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:w-screen max-sm:max-w-[100vw] max-sm:flex-shrink-0 max-sm:rounded-none max-sm:border-0"
+        sheetOnMobile
+        className="max-w-[1040px] max-h-[92vh] rounded-[8px] border-[#333] bg-[#181818] p-0 text-white shadow-[0_0_80px_rgba(0,0,0,0.95)] max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:w-screen max-sm:max-w-[100vw] max-sm:flex-shrink-0 max-sm:rounded-none max-sm:border-0"
       >
             <div className="w-full bg-[#181818] text-white">
               {/* =========================================================================

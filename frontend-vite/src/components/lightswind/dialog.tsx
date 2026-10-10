@@ -2,7 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { cn } from "../../lib/utils"; // Assuming a utility for classnames
 import { X } from "lucide-react";
-import { motion, AnimatePresence, HTMLMotionProps } from "framer-motion";
+import { motion, AnimatePresence, HTMLMotionProps, useDragControls } from "framer-motion";
 
 // Helper for cn if not provided
 const dummyCn = (...inputs: any[]) => {
@@ -126,10 +126,15 @@ type OmittedDialogContentHTMLAttributes = Omit<React.HTMLAttributes<HTMLDivEleme
 // Define Props Interface
 interface DialogContentProps extends OmittedDialogContentHTMLAttributes {
     hideCloseButton?: boolean;
+    /** On phone-width screens, slide up from the bottom edge as a sheet that can be dragged down to close */
+    sheetOnMobile?: boolean;
 }
 
+// Tailwind's "sm" breakpoint: below it the dialog may turn into a sheet
+const isPhoneWidth = () => window.matchMedia("(max-width: 639px)").matches;
+
 const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
-    ({ className, children, hideCloseButton, ...props }, ref) => {
+    ({ className, children, hideCloseButton, sheetOnMobile, ...props }, ref) => {
         const context = React.useContext(DialogContext);
         if (!context) {
             throw new Error("DialogContent must be used within a Dialog");
@@ -138,6 +143,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         const { open, setOpen } = context;
 
         const [mounted, setMounted] = React.useState(false);
+        const dragControls = useDragControls();
 
         React.useEffect(() => {
             setMounted(true);
@@ -156,10 +162,12 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
 
         if (!mounted) return null;
 
+        const sheet = Boolean(sheetOnMobile) && isPhoneWidth();
+
         return ReactDOM.createPortal(
             <AnimatePresence>
                 {open && (
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                    <div className={cnFunction("fixed inset-0 z-[9999] flex justify-center", sheet ? "items-end" : "items-center p-4")}>
                         {/* Backdrop Overlay */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -173,14 +181,22 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
                         {/* Dialog Content */}
                         <motion.div
                             ref={ref}
-                            initial={{ opacity: 0, scale: 0.3 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.3 }}
-                            transition={{
-                                type: "spring",
-                                damping: 25,
-                                stiffness: 400,
-                                opacity: { duration: 0.2 }
+                            initial={sheet ? { y: "100%" } : { opacity: 0, scale: 0.3 }}
+                            animate={sheet ? { y: 0 } : { opacity: 1, scale: 1 }}
+                            exit={sheet ? { y: "100%" } : { opacity: 0, scale: 0.3 }}
+                            transition={
+                                sheet
+                                    ? { type: "tween", duration: 0.34, ease: [0.32, 0.72, 0, 1] }
+                                    : { type: "spring", damping: 25, stiffness: 400, opacity: { duration: 0.2 } }
+                            }
+                            // The sheet is dragged by its grabber only, so its content keeps scrolling normally
+                            drag={sheet ? "y" : false}
+                            dragControls={dragControls}
+                            dragListener={false}
+                            dragConstraints={{ top: 0, bottom: 0 }}
+                            dragElastic={{ top: 0, bottom: 0.6 }}
+                            onDragEnd={(_event, info) => {
+                                if (info.offset.y > 120 || info.velocity.y > 600) setOpen(false);
                             }}
                             className={cnFunction(
                                 `relative z-[9999] w-full max-w-lg rounded-2xl border 
@@ -192,6 +208,15 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
                             data-lenis-prevent
                             {...props as HTMLMotionProps<'div'>}
                         >
+                            {sheet && (
+                                <div
+                                    aria-hidden
+                                    onPointerDown={(event) => dragControls.start(event)}
+                                    className="sticky top-0 z-40 -mb-7 flex h-7 w-full cursor-grab touch-none items-center justify-center"
+                                >
+                                    <span className="h-1.5 w-10 rounded-full bg-white/45 shadow-[0_1px_4px_rgba(0,0,0,0.6)]" />
+                                </div>
+                            )}
                             {children}
                             {!hideCloseButton && (
                                 <button

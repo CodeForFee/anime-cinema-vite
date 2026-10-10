@@ -9,11 +9,14 @@ import referrersDefault from "../../map-referer.json"
 import { EXTRA } from "../env"
 import { arrayBufferToBase64 } from "../logic/arrayBufferToBase64"
 
+import { adRules } from "./logic/ad-rules"
 import { getReferrers } from "./logic/get-referrers"
 import { installReferrers } from "./logic/install-referers"
+import { installRules } from "./logic/install-rules"
 
 // setup install rules default
 const setup = Promise.all([
+  installRules(adRules),
   installReferrers(referrersDefault),
   getReferrers().then((referrers) =>
     installReferrers(referrers as Record<string, string>)

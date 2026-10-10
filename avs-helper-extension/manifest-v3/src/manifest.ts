@@ -39,8 +39,16 @@ export async function getManifest() {
         all_frames: true,
         run_at: "document_start",
         js: ["./dist/contentScripts/index.global.js"]
+      },
+      {
+        // Ad shield + remote control inside the source player page; inert unless the web embedded it
+        matches: ["https://storage.googleapiscdn.com/player/*"],
+        all_frames: true,
+        run_at: "document_start",
+        world: "MAIN",
+        js: ["./assets/player-bridge.js"]
       }
-    ],
+    ] as Manifest.WebExtensionManifest["content_scripts"],
     content_security_policy: {
       extension_pages: isDev
         ? `script-src 'self' http://localhost:${port}; object-src 'self' http://localhost:${port}`

@@ -1,9 +1,10 @@
-import { Http } from "client-ext-animevsub-helper"
+import { Http } from "src/logic/bridge"
 import { Puzzle } from "lucide-react"
 
 /**
  * Every request of this app goes through the AVS Helper extension (see src/logic/http.ts).
  * The extension stamps data-http-version on <html> at document_start; without it nothing can load.
+ * Inside the Android app the native transport stands in for it, so this gate is always open there.
  */
 export function ExtensionGate({ children }: { children: React.ReactNode }) {
   if (Http.version) return <>{children}</>

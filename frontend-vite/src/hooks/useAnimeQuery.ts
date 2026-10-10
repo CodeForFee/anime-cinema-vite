@@ -1,6 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { animeApi } from "../lib/api";
+import type { AnimeItem, HomeDataResponse } from "../types/anime";
 
 export const QUERY_KEYS = {
   HOME: ["anime", "home"] as const,
@@ -11,13 +12,43 @@ export const QUERY_KEYS = {
 };
 
 // 1. Home Data Query
+// The last home page is kept on the device and shown at once on the next launch while the fresh one loads
+const HOME_CACHE_KEY = "home-cache-v1";
+
 export function useHomeQuery() {
   return useQuery({
     queryKey: QUERY_KEYS.HOME,
-    queryFn: () => animeApi.getHomeData(),
+    queryFn: async () => {
+      const home = await animeApi.getHomeData();
+      try {
+        if (home.success) localStorage.setItem(HOME_CACHE_KEY, JSON.stringify(home));
+      } catch {
+        // storage full or unavailable: the page still works, it just starts empty next time
+      }
+      return home;
+    },
+    placeholderData: () => {
+      try {
+        return JSON.parse(localStorage.getItem(HOME_CACHE_KEY) || "null") as HomeDataResponse | null ?? undefined;
+      } catch {
+        return undefined;
+      }
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
+}
+
+// Poster, wide banner and synopsis of one title, from its detail page. Until it arrives (or if it
+// fails) the caller keeps the thumbnail-only item it already has.
+export function useEnrichedItem(item?: AnimeItem) {
+  const { data } = useQuery({
+    queryKey: ["anime", "enriched", item?.slug] as const,
+    queryFn: () => animeApi.enrich(item as AnimeItem),
+    enabled: Boolean(item?.slug),
+    staleTime: 30 * 60 * 1000,
+  });
+  return data ?? item;
 }
 
 // 2. Anime Detail Query

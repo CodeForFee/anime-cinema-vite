@@ -55,8 +55,7 @@ function SearchContent() {
           onValueChange={setSearchTerm}
           startContent={<FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-primaryRed mr-2" />}
           classNames={{
-            inputWrapper:
-              "bg-[#10121A] border-white/10 hover:border-white/20 focus-within:!border-primaryRed h-14",
+            inputWrapper: "glass-field h-14 focus-within:!border-primaryRed",
             input: "text-base text-white placeholder:text-gray-400",
           }}
         />
@@ -73,7 +72,7 @@ function SearchContent() {
               variant="flat"
               as="button"
               onClick={() => setSearchTerm(kw)}
-              className="bg-white/5 text-gray-300 hover:bg-white/15 hover:text-white cursor-pointer transition-colors"
+              className="glass-chip text-gray-200 hover:text-white cursor-pointer transition-colors"
             >
               {kw}
             </Chip>

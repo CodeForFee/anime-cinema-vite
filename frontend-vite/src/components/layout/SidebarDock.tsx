@@ -1,47 +1,60 @@
-
 import React from "react";
+import { motion } from "framer-motion";
+import { Bookmark, Compass, History, Home, Search } from "lucide-react";
 import { Link } from "@/lib/router";
 import { usePathname } from "@/lib/router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faHouse,
-  faCompass,
-  faMagnifyingGlass,
-  faBookmark,
-  faClockRotateLeft,
-} from "@fortawesome/free-solid-svg-icons";
 import { cn } from "../../lib/utils";
 
 const MOBILE_NAV_LINKS = [
-  { label: "Trang chủ", href: "/", icon: faHouse },
-  { label: "Khám phá", href: "/explore", icon: faCompass },
-  { label: "Tìm kiếm", href: "/search", icon: faMagnifyingGlass },
-  { label: "Danh sách", href: "/favorites", icon: faBookmark },
-  { label: "Lịch sử", href: "/history", icon: faClockRotateLeft },
+  { label: "Trang chủ", href: "/", icon: Home },
+  { label: "Khám phá", href: "/explore", icon: Compass },
+  { label: "Tìm kiếm", href: "/search", icon: Search },
+  { label: "Danh sách", href: "/favorites", icon: Bookmark },
+  { label: "Lịch sử", href: "/history", icon: History },
 ];
 
+/**
+ * Phone / narrow screens only: a floating glass pill of icons (styles: .liquid-glass in globals.css).
+ * The lit "lens" slides from the old tab to the new one. Desktop navigates from the header.
+ */
 export const SidebarDock: React.FC = () => {
   const pathname = usePathname();
 
   return (
-    <nav className="flex lg:hidden fixed bottom-0 inset-x-0 h-16 bg-[#121212]/95 backdrop-blur-2xl border-t border-white/10 z-50 items-center justify-around px-2 select-none">
-      {MOBILE_NAV_LINKS.map((item) => {
-        const isActive = pathname === item.href;
+    <nav
+      aria-label="Điều hướng chính"
+      // its own view-transition layer, so it stays put while pages slide underneath (lib/router.tsx)
+      style={{ viewTransitionName: "dock" } as React.CSSProperties}
+      className="lg:hidden pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 flex justify-center px-5 select-none"
+    >
+      <div className="liquid-glass pointer-events-auto relative flex w-full max-w-sm items-center gap-1 rounded-full p-1.5">
+        {MOBILE_NAV_LINKS.map(({ label, href, icon: Icon }) => {
+          const isActive = pathname === href;
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] transition-colors",
-              isActive ? "text-primaryRed font-bold" : "text-gray-400 hover:text-white"
-            )}
-          >
-            <FontAwesomeIcon icon={item.icon} className="w-4 h-4 mb-1" />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={label}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "relative flex h-11 flex-1 items-center justify-center rounded-full transition-colors duration-200",
+                isActive ? "text-[#1c1300]" : "text-white/85 active:text-white"
+              )}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="dock-lens"
+                  aria-hidden
+                  className="liquid-glass-lens absolute inset-0 rounded-full"
+                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                />
+              )}
+              <Icon aria-hidden className="relative h-[22px] w-[22px]" strokeWidth={isActive ? 2.25 : 1.75} />
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 };

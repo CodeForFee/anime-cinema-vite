@@ -3,3 +3,4 @@
 hosts:
   - localhost
   - 127.0.0.1
+  - anime-cinema-vite.vercel.app

@@ -14,5 +14,6 @@ export const useUIStore = create<UIStoreState>((set) => ({
 
   openInfoModal: (anime) =>
     set({ selectedAnime: anime, isInfoModalOpen: true }),
-  closeInfoModal: () => set({ selectedAnime: null, isInfoModalOpen: false }),
+  // selectedAnime is kept: the modal still shows it while it animates out
+  closeInfoModal: () => set({ isInfoModalOpen: false }),
 }));

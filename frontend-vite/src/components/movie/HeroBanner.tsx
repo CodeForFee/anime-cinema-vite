@@ -1,4 +1,6 @@
 
+import { motion } from "framer-motion";
+import { useEnrichedItem } from "../../hooks/useAnimeQuery";
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "@/lib/router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -29,6 +31,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
   const stripRef = useRef<HTMLDivElement>(null);
+  const dragged = useRef(false);
   const openInfoModal = useUIStore((state) => state.openInfoModal);
   const favorites = useHistoryStore((state) => state.favorites);
   const toggleFavorite = useHistoryStore((state) => state.toggleFavorite);
@@ -56,8 +59,11 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
     strip.scrollTo({ left: thumb.offsetLeft - (strip.clientWidth - thumb.offsetWidth) / 2, behavior: "smooth" });
   }, [currentIndex]);
 
-  if (slides.length === 0) return null;
-  const current = slides[currentIndex] || slides[0];
+  // Sharp banner for the slide on screen; the next one is fetched ahead so the 5 s auto-advance finds it ready
+  const current = useEnrichedItem(slides[currentIndex] || slides[0]);
+  useEnrichedItem(slides.length > 1 ? slides[(currentIndex + 1) % slides.length] : undefined);
+
+  if (slides.length === 0 || !current) return null;
 
   // Resolve sharpest backdrop and poster
   const posterImg = current.poster || current.image || "";
@@ -98,10 +104,36 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
       {/* Bottom margin leaves room for the thumbnail strip hanging over the card edge */}
       <div className="relative mb-10 md:mb-12">
         {/* On desktop the card's aspect ratio makes the 58%-wide image area exactly 16:9, so banners show uncropped */}
-        <div className="relative h-[460px] lg:h-auto lg:aspect-[3.065/1] lg:min-h-[440px] overflow-hidden rounded-3xl bg-[#1c1c1f]">
+        <motion.div
+          className="relative h-[460px] lg:h-auto lg:aspect-[3.065/1] lg:min-h-[440px] overflow-hidden rounded-3xl bg-[#1c1c1f]"
+          // Follows the finger with a rubber-band pull and springs back; a long or fast swipe changes slide
+          drag={slides.length > 1 ? "x" : false}
+          dragDirectionLock
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.22}
+          onDragStart={() => {
+            dragged.current = true;
+          }}
+          onDragEnd={(_event, info) => {
+            setTimeout(() => (dragged.current = false), 0);
+            if (info.offset.x < -60 || info.velocity.x < -500) setCurrentIndex((i) => (i + 1) % slides.length);
+            else if (info.offset.x > 60 || info.velocity.x > 500) setCurrentIndex((i) => (i - 1 + slides.length) % slides.length);
+          }}
+          // a drag must not also press the button it started on
+          onClickCapture={(event) => {
+            if (dragged.current) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          }}
+        >
           {/* Backdrop on the right: only its left edge fades into the card, the rest stays untouched */}
-          <img
+          <motion.img
             key={backdropImg}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            draggable={false}
             src={backdropImg}
             alt={current.title}
             className="absolute inset-y-0 right-0 h-full w-full lg:w-[58%] object-cover object-center lg:[mask-image:linear-gradient(to_right,transparent,black_30%)]"
@@ -204,7 +236,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Poster Thumbnail Strip (slide picker) */}
         {slides.length > 1 && (

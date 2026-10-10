@@ -105,7 +105,7 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
           ref={scrollRef}
           orientation="horizontal"
           hideScrollBar
-          className="flex items-start gap-4 md:gap-5 overflow-x-auto scroll-smooth py-4"
+          className="flex items-start gap-4 md:gap-5 snap-shelf overflow-x-auto scroll-smooth py-4"
         >
           {items.map((anime, idx) => {
             const rank = idx + 1;

@@ -37,7 +37,7 @@ export default function App() {
         <ExtensionGate>
           <ScrollToTop />
           <HeaderNav />
-          <div className="flex flex-col min-h-[calc(100vh-64px)] pb-16 lg:pb-0 w-full overflow-x-hidden">
+          <div className="flex flex-col min-h-[calc(100vh-64px)] pb-24 lg:pb-0 w-full overflow-x-hidden">
             <main className="flex-1 w-full max-w-full">
               <Routes>
                 <Route path="/" element={<HomePage />} />

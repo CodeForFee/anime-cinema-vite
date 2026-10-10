@@ -93,3 +93,154 @@ body {
               linear-gradient(to bottom, black 60%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
+
+/* ---------- Mobile feel ---------- */
+
+/* Horizontal shelves: cards settle on an edge and a sideways flick never drags the page */
+.snap-shelf {
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+@media (pointer: coarse) {
+  .snap-shelf {
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 1rem;
+  }
+  .snap-shelf > * {
+    scroll-snap-align: start;
+  }
+}
+
+/* Page change on touch devices: the old page slips left as the new one comes in (lib/router.tsx) */
+@keyframes avs-page-out {
+  to {
+    opacity: 0;
+    transform: translateX(-7%);
+  }
+}
+@keyframes avs-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(7%);
+  }
+}
+::view-transition-old(root) {
+  animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both avs-page-out;
+}
+::view-transition-new(root) {
+  animation: 280ms cubic-bezier(0.32, 0.72, 0, 1) both avs-page-in;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* Floating tab bar (components/layout/SidebarDock.tsx) */
+.liquid-glass {
+  /* dark tint first: icons must stay readable over bright posters and white text */
+  background: linear-gradient(135deg, rgba(46, 46, 52, 0.88), rgba(16, 16, 20, 0.92) 55%, rgba(34, 34, 40, 0.88));
+  -webkit-backdrop-filter: blur(22px) saturate(180%) brightness(0.8);
+  backdrop-filter: blur(22px) saturate(180%) brightness(0.8);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 18px rgba(255, 255, 255, 0.04),
+    0 12px 40px rgba(0, 0, 0, 0.6);
+}
+/* the highlight a curved pane of glass catches from above */
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 16% -20%, rgba(255, 255, 255, 0.16), transparent 55%);
+  mix-blend-mode: screen;
+}
+/* the selected tab: amber that is solid in the middle and bleeds out toward the edge */
+.liquid-glass-lens {
+  background: radial-gradient(115% 130% at 50% 45%, rgba(255, 200, 48, 0.97) 0%, rgba(255, 184, 0, 0.82) 42%, rgba(255, 150, 0, 0.22) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 20px rgba(255, 184, 0, 0.5),
+    0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* Touch player (components/player/MobilePlayerControls.tsx) */
+@keyframes avs-jump {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) scale(1);
+  }
+}
+.avs-jump {
+  animation: avs-jump 650ms ease-out forwards;
+}
+.avs-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px; /* tall touch target around a thin track */
+  background: transparent;
+  cursor: pointer;
+}
+.avs-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #e50914 var(--avs-progress, 0%), rgba(255, 255, 255, 0.3) var(--avs-progress, 0%));
+}
+.avs-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 9999px;
+  background: #e50914;
+  box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.25);
+}
+.avs-range::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.3);
+}
+.avs-range::-moz-range-progress {
+  height: 4px;
+  border-radius: 9999px;
+  background: #e50914;
+}
+.avs-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: #e50914;
+}
+
+/* Glass input and chips (pages/search.tsx) */
+.glass-field {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  backdrop-filter: blur(18px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 28px rgba(0, 0, 0, 0.4);
+}
+.glass-chip {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05)) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}

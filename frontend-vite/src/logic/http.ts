@@ -1,6 +1,6 @@
 import type { GetOption } from "client-ext-animevsub-helper"
-import { Http } from "client-ext-animevsub-helper"
 import { C_URL } from "src/constants"
+import { Http } from "src/logic/bridge"
 
 const noExt = () =>
   Promise.reject(

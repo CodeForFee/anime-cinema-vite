@@ -12,6 +12,8 @@ function writeManifest() {
 
 fs.ensureDirSync(r("extension"))
 fs.copySync(r("../lib/assets"), r("extension/assets"))
+// one source for the web, the Android app and the extension
+fs.copySync(r("../../frontend-vite/public/player-bridge.js"), r("extension/assets/player-bridge.js"))
 writeManifest()
 
 if (isDev) {

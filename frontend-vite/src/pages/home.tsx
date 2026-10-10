@@ -4,6 +4,7 @@ import { CalendarClock, Clapperboard, Flame, Sparkles, Swords, Tv, Zap, type Luc
 import { HeroBanner } from "../components/movie/HeroBanner";
 import { Top10Shelf } from "../components/home/Top10Shelf";
 import { MovieShelf } from "../components/movie/MovieShelf";
+import { LazyShelf } from "../components/movie/LazyShelf";
 import { InfoModal } from "../components/movie/InfoModal";
 import { useHomeQuery } from "../hooks/useAnimeQuery";
 import { HomeSkeleton } from "../components/movie/Skeletons";
@@ -15,16 +16,18 @@ interface ShelfConfig {
   icon: LucideIcon;
   seeMoreHref: string;
   /** Which part of the home data this shelf shows */
-  items: (res: HomeDataResponse) => AnimeItem[] | undefined;
+  items?: (res: HomeDataResponse) => AnimeItem[] | undefined;
+  /** Or: a source list this shelf fetches by itself, once it is scrolled near the screen */
+  path?: string;
 }
 
 // The shelves under the hero, in display order. Add, remove or reorder a shelf here.
 const SHELVES: ShelfConfig[] = [
   { key: "latest", title: "Mới Cập Nhật Hôm Nay", icon: Zap, seeMoreHref: "/explore?type=phim-moi", items: (r) => r.latest },
   { key: "upcoming", title: "Anime Sắp Chiếu", icon: CalendarClock, seeMoreHref: "/explore?type=sap-chieu", items: (r) => r.sapChieu || r.upcoming },
-  { key: "series", title: "Phim Bộ Đang Hot", icon: Tv, seeMoreHref: "/explore?type=phim-bo", items: (r) => r.series },
-  { key: "movies", title: "Phim Lẻ Chiếu Rạp", icon: Clapperboard, seeMoreHref: "/explore?type=phim-le", items: (r) => r.movies },
-  { key: "chinese", title: "Hoạt Hình 3D Trung Quốc", icon: Swords, seeMoreHref: "/explore?type=hoat-hinh-trung-quoc", items: (r) => r.chinese },
+  { key: "series", title: "Phim Bộ Đang Hot", icon: Tv, seeMoreHref: "/explore?type=phim-bo", path: "/anime-bo/" },
+  { key: "movies", title: "Phim Lẻ Chiếu Rạp", icon: Clapperboard, seeMoreHref: "/explore?type=phim-le", path: "/anime-le/" },
+  { key: "chinese", title: "Hoạt Hình 3D Trung Quốc", icon: Swords, seeMoreHref: "/explore?type=hoat-hinh-trung-quoc", path: "/hoat-hinh-trung-quoc/" },
   { key: "featured", title: "Phim Đề Cử Đặc Sắc", icon: Sparkles, seeMoreHref: "/explore", items: (r) => r.featured },
 ];
 
@@ -60,15 +63,25 @@ export default function HomePage() {
       {/* 3. Main Shelves / Carousels (MovieShelf renders nothing when its list is empty) */}
       <div className="space-y-2 relative z-20">
         {res &&
-          SHELVES.map((shelf) => (
-            <MovieShelf
-              key={shelf.key}
-              title={shelf.title}
-              icon={shelf.icon}
-              items={shelf.items(res) || []}
-              seeMoreHref={shelf.seeMoreHref}
-            />
-          ))}
+          SHELVES.map((shelf) =>
+            shelf.path ? (
+              <LazyShelf
+                key={shelf.key}
+                title={shelf.title}
+                icon={shelf.icon}
+                path={shelf.path}
+                seeMoreHref={shelf.seeMoreHref}
+              />
+            ) : (
+              <MovieShelf
+                key={shelf.key}
+                title={shelf.title}
+                icon={shelf.icon}
+                items={shelf.items?.(res) || []}
+                seeMoreHref={shelf.seeMoreHref}
+              />
+            )
+          )}
       </div>
 
       {/* Global Anime Detail Modal */}

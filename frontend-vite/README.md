@@ -15,6 +15,20 @@ cd ../frontend-vite && pnpm i && pnpm dev      # http://localhost:4100
 
 `pnpm test` runs the parser specs, `pnpm build` type-checks and builds.
 
+## Android app (no extension needed)
+
+```sh
+pnpm build:apk      # vite build + cap sync + gradlew assembleDebug
+```
+
+The APK lands in `android/app/build/outputs/apk/debug/app-debug.apk`. Gradle needs JDK 21: point `JAVA_HOME`
+at one if the build stops with `invalid source release: 21`. It is a debug-signed build, fine to install by
+hand; a store or long-lived build needs its own signing key.
+
+Inside the app `src/logic/bridge.ts` sends requests through the native HTTP stack instead of the extension, and
+`capacitor.config.ts` serves the bundled web under the source host so the embedded player gets the Referer it
+expects. Not yet run on a device.
+
 ## How it is wired
 
 | Layer | Where | Origin |
@@ -37,10 +51,14 @@ The source host is `src/constants.ts`; keep it equal to the Referer in `../avs-h
 
 Home, detail, episode lists and playback work on localhost with the extension loaded.
 
-Playback embeds the CDN's own player page in an iframe (`embedUrl` in `src/lib/api.ts`); the URL tag makes the
-extension send the source Referer with the frame request. The player then runs on the CDN's origin and talks to
-it from the viewer's IP. Consequences: its own ads show (for example on pause), there is no resume position, and
-the page cannot see when an episode ends, so there is no automatic next episode.
+Playback embeds the CDN player page in an iframe (`embedUrl` in `src/lib/api.ts`); the URL tag makes the
+extension send the source Referer with the frame request. The player then runs on the CDN origin and talks to
+it from the viewer IP.
+
+`public/player-bridge.js` is injected into that frame (by the extension as a content script, by the Android app
+from `MainActivity.java`). It carries the ad shield and a postMessage remote control. On touch devices the app
+draws its own controls over the player (`src/components/player/MobilePlayerControls.tsx`) and gets the end of an
+episode from the bridge; with a mouse the player keeps its own controls. There is no resume position yet.
 
 The upstream decryptor path (`src/logic/new-dha/pkg`, release build of 2026-06-14) is only used when the source
 answers with something other than its iframe player. For the iframe player it is rejected by the CDN

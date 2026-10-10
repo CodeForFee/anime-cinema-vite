@@ -51,7 +51,7 @@ export const TopSlider: React.FC<TopSliderProps> = ({ items }) => {
           ref={scrollRef}
           orientation="horizontal"
           hideScrollBar
-          className="flex items-center gap-3 md:gap-4 overflow-x-auto scroll-smooth py-1"
+          className="flex items-center gap-3 md:gap-4 snap-shelf overflow-x-auto scroll-smooth py-1"
         >
           {items.map((anime, idx) => {
             const isCompleted = anime.episode?.toLowerCase().includes("hoàn tất");
