@@ -44,6 +44,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    // every APK carries the app name: Capynime-2.0.1.apk (release), Capynime-2.0.1-debug.apk
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "Capynime-${variant.versionName}${variant.buildType.name == 'release' ? '' : '-' + variant.buildType.name}.apk"
+        }
+    }
 }
 
 repositories {

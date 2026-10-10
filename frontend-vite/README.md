@@ -36,14 +36,19 @@ maskable icons, Android launcher icons and splash screens (`scripts/icons.mjs` +
 ## Android app (no extension needed)
 
 ```sh
-pnpm build:apk       # debug: android/app/build/outputs/apk/debug/app-debug.apk
-pnpm build:release   # signed + minified: apk/release/app-release.apk and bundle/release/app-release.aab
+pnpm build:apk          # debug: android/app/build/outputs/apk/debug/Capynime-<version>-debug.apk
+pnpm release [patch|minor|major]   # bump version, signed APK + AAB -> release/Capynime-<version>.apk|.aab
 ```
 
-Gradle needs JDK 21 (`JAVA_HOME`). Release signing reads `android/keystore.properties` (git-ignored; copy
-`keystore.properties.example`, create the key once with the `keytool` line in it and keep it safe: without it
-installed apps cannot be updated). Without that file the release build comes out unsigned. App id `app.capynime`,
-version from `package.json` (2.3.4 -> versionCode 20304).
+`pnpm release` bumps `package.json` (versionCode follows: 2.3.4 -> 20304, so every release can update the
+installed app), builds, signs and copies the files to `release/`; on failure it puts the version back. It finds a
+JDK 21+ itself (JAVA_HOME, Android Studio jbr, Adoptium). Commit `package.json` after a release.
+
+Signing reads `android/keystore.properties` + `android/capynime-release.jks` (both git-ignored; back them up:
+without them installed apps can no longer be updated). The script refuses to build without them. App id
+`app.capynime`. Phones warn about any APK installed outside Google Play; that is normal for sideloading, not a
+fault of the build. An install that fails is almost always a different signing key on the copy already installed.
+
 
 Inside the app `src/logic/bridge.ts` sends requests through the native HTTP stack instead of the extension, and
 `capacitor.config.ts` serves the bundled web under the source host so the embedded player gets the Referer it
