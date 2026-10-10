@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useUIStore } from "../../stores/useUIStore";
 import type { AnimeItem } from "../../types/anime";
-import { clamp } from "../player/player-logic";
 import { LazyImage } from "../movie/LazyImage";
 
 /** "02" from "TẬP 02" */
@@ -16,6 +15,12 @@ export function partLabel(anime: AnimeItem): string | null {
   const meta = String((anime as { metadata?: Record<string, string> }).metadata?.Season ?? "").trim();
   if (!meta || meta === "1" || meta === "Phần 1") return null;
   return meta.startsWith("Phần") ? meta : `Phần ${meta}`;
+}
+
+/** Offset of card i from the current one on a loop of count cards: the shortest way round, in (-count/2, count/2] */
+export function loopOffset(i: number, current: number, count: number) {
+  const raw = (((i - current) % count) + count) % count;
+  return raw > count / 2 ? raw - count : raw;
 }
 
 // how far a neighbour sits from the centre, as a share of the card width
@@ -34,12 +39,14 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
   const cards = useRef(new Map<number, HTMLButtonElement>());
   const shades = useRef(new Map<number, HTMLSpanElement>());
   const openInfoModal = useUIStore((state) => state.openInfoModal);
-  const last = items.length - 1;
+  const count = items.length;
+  const around = (i: number) => loopOffset(i, index, count);
+  const go = (step: number) => setIndex((i) => (((i + step) % count) + count) % count);
 
   /** Places every mounted card for a drag of `drag` cards (0 = at rest) */
   const layout = (drag: number, animate: boolean) => {
     for (const [i, card] of cards.current) {
-      const offset = i - index + drag;
+      const offset = around(i) + drag;
       const distance = Math.min(Math.abs(offset), VISIBLE + 1);
       card.style.transition = animate ? SETTLE : "none";
       card.style.transform = `translate3d(calc(-50% + ${offset * STEP * 100}%), 0, 0) scale(${1 - Math.min(distance, VISIBLE) * 0.13})`;
@@ -61,16 +68,13 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
     ({ active, movement: [mx], velocity: [vx], direction: [dx], tap }) => {
       if (tap) return;
       const width = cards.current.get(index)?.offsetWidth || 240;
-      // rubber band at both ends
-      let drag = mx / (width * STEP);
-      if ((index === 0 && drag > 0) || (index === last && drag < 0)) drag *= 0.35;
+      const drag = mx / (width * STEP);
       if (active) return layout(drag, false);
 
       const flick = vx > 0.35 ? -dx : 0;
       const step = Math.abs(mx) > width * 0.2 ? -Math.sign(mx) : flick;
-      const next = clamp(index + step, 0, last);
-      if (next === index) layout(0, true);
-      else setIndex(next);
+      if (step === 0) layout(0, true);
+      else go(step);
     },
     { axis: "x", filterTaps: true, pointer: { touch: true } }
   );
@@ -84,7 +88,8 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
     <div className="px-4">
       <div {...bind()} className="relative mx-auto h-[min(93vw,420px)] touch-pan-y select-none">
         {items.map((anime, i) => {
-          if (Math.abs(i - index) > VISIBLE + 1) return null;
+          // the list loops: the last titles sit to the left of the first
+          if (Math.abs(around(i)) > VISIBLE + 1) return null;
           const episode = episodeNumber(anime);
           return (
             <button
@@ -99,7 +104,7 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
               onClick={() => (i === index ? openInfoModal(anime) : setIndex(i))}
               className="absolute left-1/2 top-0 aspect-[2/3] w-[min(62vw,280px)] overflow-hidden rounded-[1.75rem] bg-[#1c1c1f] text-left shadow-[0_24px_50px_rgba(0,0,0,0.55)] ring-1 ring-white/15 [backface-visibility:hidden] will-change-transform"
               // first paint before the layout effect runs: already roughly in place
-              style={{ transform: `translate3d(calc(-50% + ${(i - index) * STEP * 100}%), 0, 0)` }}
+              style={{ transform: `translate3d(calc(-50% + ${around(i) * STEP * 100}%), 0, 0)` }}
             >
               <LazyImage src={anime.poster || anime.image} alt="" className="h-full w-full object-cover" />
               {/* cards behind the middle one sink into the dark */}
@@ -125,21 +130,21 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
         })}
 
         {/* for those who tap rather than swipe */}
-        {index > 0 && (
+        {count > 1 && (
           <button
             type="button"
             aria-label="Phim trước"
-            onClick={() => setIndex(index - 1)}
+            onClick={() => go(-1)}
             className="glass-button absolute left-0 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white transition active:scale-90"
           >
             <ChevronLeft aria-hidden className="h-5 w-5" />
           </button>
         )}
-        {index < last && (
+        {count > 1 && (
           <button
             type="button"
             aria-label="Phim sau"
-            onClick={() => setIndex(index + 1)}
+            onClick={() => go(1)}
             className="glass-button absolute right-0 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white transition active:scale-90"
           >
             <ChevronRight aria-hidden className="h-5 w-5" />

@@ -10,6 +10,7 @@ import { useUIStore } from "../../stores/useUIStore";
 import { useHistoryStore } from "../../stores/useHistoryStore";
 import { cn } from "../../lib/utils";
 import { Heart, Info, Play, Star } from "lucide-react";
+import { loopOffset } from "../home/StackCarousel";
 
 interface HeroBannerProps {
   items: AnimeItem[];
@@ -214,12 +215,47 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
           </div>
         </motion.div>
 
-        {/* Poster Thumbnail Strip (slide picker) */}
+        {/* Phones: the thumbnails loop around the picked one, which sits large in the middle (coverflow) */}
+        {slides.length > 1 && (
+          <div className="absolute inset-x-0 bottom-0 z-20 h-28 translate-y-[30%] overflow-hidden md:hidden">
+            {slides.map((item, idx) => {
+              const offset = loopOffset(idx, currentIndex, slides.length);
+              const distance = Math.abs(offset);
+              if (distance > 4) return null;
+              // the big middle one needs more room than the rest
+              const x = Math.sign(offset) * (distance <= 1 ? distance * 60 : 60 + (distance - 1) * 52);
+              return (
+                <button
+                  key={item.slug || idx}
+                  type="button"
+                  aria-label={item.title}
+                  aria-current={distance === 0 || undefined}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={cn(
+                    "absolute bottom-3 left-1/2 w-11 origin-bottom overflow-hidden rounded-lg border-2 bg-[#1c1c1f] transition-[transform,opacity,border-color,box-shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                    distance === 0
+                      ? "z-10 border-white shadow-[0_12px_28px_rgba(0,0,0,0.65)]"
+                      : distance === 1
+                        ? "border-white/25"
+                        : "border-transparent"
+                  )}
+                  style={{
+                    transform: `translateX(calc(-50% + ${x}px)) translateY(${distance === 0 ? -4 : 0}px) scale(${distance === 0 ? 1.45 : distance === 1 ? 1.05 : 0.9})`,
+                    opacity: distance === 0 ? 1 : distance === 1 ? 0.9 : distance >= 4 ? 0 : 0.55,
+                  }}
+                >
+                  <img src={item.poster || item.image || ""} alt="" loading="lazy" className="aspect-[2/3] w-full object-cover" />
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Poster Thumbnail Strip (slide picker), tablet and up */}
         {slides.length > 1 && (
           <div
             ref={stripRef}
-            // Phones: half-width padding on both ends so any thumbnail can scroll to the exact centre (coverflow)
-            className="absolute inset-x-0 bottom-0 z-20 flex translate-y-[22%] overflow-x-auto md:translate-y-1/3 no-scrollbar px-[calc(50%-1.375rem)] pb-3 pt-10 md:px-4 md:py-2"
+            className="absolute inset-x-0 bottom-0 z-20 hidden translate-y-1/3 overflow-x-auto no-scrollbar px-4 py-2 md:flex"
           >
             {/* mx-auto centers the row when it fits and falls back to start-aligned when it overflows */}
             <div className="mx-auto flex items-end gap-3 md:items-center md:gap-3">

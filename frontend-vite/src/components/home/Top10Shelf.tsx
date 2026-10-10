@@ -20,7 +20,6 @@ interface Top10ShelfProps {
 export const Top10Shelf: React.FC<Top10ShelfProps> = ({
   items,
   title = "Phim Nổi Bật Đề Cử",
-  icon: Icon,
   seeMoreHref = "/explore?type=trending",
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -60,23 +59,16 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
 
       {/* Section Header */}
       <div className="flex items-center justify-between mb-4 px-4 md:px-12">
-        <div className="flex items-center gap-2.5">
-          {Icon && <Icon aria-hidden className="h-6 w-6 flex-shrink-0 text-primaryRed" strokeWidth={2.25} />}
-          <h3 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            <span>{title}</span>
-          </h3>
-        </div>
+        {/* same header as MovieShelf */}
+        <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">{title}</h3>
 
         {seeMoreHref && (
-          <Link href={seeMoreHref}>
-            <Button
-              size="sm"
-              variant="light"
-              className="text-xs md:text-sm font-semibold text-gray-400 hover:text-white"
-              endContent={<ChevronRight className="w-3 h-3" />}
-            >
-              Xem tất cả
-            </Button>
+          <Link
+            href={seeMoreHref}
+            className="glass-pill flex h-8 items-center gap-1 rounded-full pl-3.5 pr-2.5 text-xs font-semibold text-gray-200 transition hover:text-white"
+          >
+            Xem tất cả
+            <ChevronRight aria-hidden className="h-3.5 w-3.5" />
           </Link>
         )}
       </div>
