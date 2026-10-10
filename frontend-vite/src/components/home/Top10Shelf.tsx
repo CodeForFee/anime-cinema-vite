@@ -2,16 +2,11 @@
 import React, { useRef, useState } from "react";
 import { Link } from "@/lib/router";
 import { Button, Tooltip, ScrollShadow } from "@heroui/react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChevronLeft,
-  faChevronRight,
-  faPlay,
-} from "@fortawesome/free-solid-svg-icons";
 import type { LucideIcon } from "lucide-react";
 import { AnimeItem } from "../../types/anime";
 import { LazyImage } from "../movie/LazyImage";
 import { useUIStore } from "../../stores/useUIStore";
+import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 
 interface Top10ShelfProps {
   items: AnimeItem[];
@@ -77,7 +72,7 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
               size="sm"
               variant="light"
               className="text-xs md:text-sm font-semibold text-gray-400 hover:text-white"
-              endContent={<FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />}
+              endContent={<ChevronRight className="w-3 h-3" />}
             >
               Xem tất cả
             </Button>
@@ -97,7 +92,7 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
             onPress={() => handleScroll("left")}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-black/80 hover:bg-primaryRed text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/top10:opacity-100 transition-all duration-300 shadow-2xl"
           >
-            <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" />
           </Button>
         </Tooltip>
 
@@ -170,7 +165,7 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
                     {/* Center Play Button Overlay on Hover */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                       <div className="w-12 h-12 rounded-full bg-primaryRed text-white flex items-center justify-center shadow-xl shadow-red-600/50 transform group-hover:scale-110 transition-transform">
-                        <FontAwesomeIcon icon={faPlay} className="w-5 h-5 fill-current ml-0.5" />
+                        <Play className="fill-current w-5 h-5 fill-current ml-0.5" />
                       </div>
                     </div>
 
@@ -238,7 +233,7 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
             onPress={() => handleScroll("right")}
             className="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-black/80 hover:bg-primaryRed text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/top10:opacity-100 transition-all duration-300 shadow-2xl"
           >
-            <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" />
           </Button>
         </Tooltip>
       </div>

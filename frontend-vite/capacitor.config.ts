@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli"
 
 const config: CapacitorConfig = {
-  appId: "app.animecinema.vite",
-  appName: "Anime Cinema",
+  appId: "app.capynime",
+  appName: "Capynime",
   webDir: "dist",
   server: {
     androidScheme: "https",

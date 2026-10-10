@@ -2,11 +2,10 @@
 import React, { useRef } from "react";
 import { Link } from "@/lib/router";
 import { Button, ScrollShadow, Tooltip } from "@heroui/react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import type { LucideIcon } from "lucide-react";
 import { MovieCard } from "./MovieCard";
 import { AnimeItem } from "../../types/anime";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MovieShelfProps {
   title: string;
@@ -47,7 +46,7 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
               size="sm"
               variant="light"
               className="text-xs md:text-sm font-semibold text-gray-400 hover:text-white"
-              endContent={<FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />}
+              endContent={<ChevronRight className="w-3 h-3" />}
             >
               Xem tất cả
             </Button>
@@ -67,7 +66,7 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
             onPress={() => handleScroll("left")}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-black/80 text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-300 hover:bg-primaryRed shadow-xl"
           >
-            <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" />
           </Button>
         </Tooltip>
 
@@ -95,7 +94,7 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
             onPress={() => handleScroll("right")}
             className="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-black/80 text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-300 hover:bg-primaryRed shadow-xl"
           >
-            <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" />
           </Button>
         </Tooltip>
       </div>

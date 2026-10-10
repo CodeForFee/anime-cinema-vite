@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Anime Cinema</string>
-    <string name="title_activity_main">Anime Cinema</string>
-    <string name="package_name">app.animecinema.vite</string>
-    <string name="custom_url_scheme">app.animecinema.vite</string>
+    <string name="app_name">Capynime</string>
+    <string name="title_activity_main">Capynime</string>
+    <string name="package_name">app.capynime</string>
+    <string name="custom_url_scheme">app.capynime</string>
 </resources>

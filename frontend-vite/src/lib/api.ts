@@ -193,6 +193,20 @@ export const animeApi = {
           isCurrent: slugOf(season.path) === slug
         })),
         related: info.toPut.map(toItem),
+        // keys are the labels AnimeDetailTabs.tsx (INFO_FIELDS) looks up; empty ones are left out there
+        metadata: {
+          "Trạng thái": info.status ?? "",
+          "Thời lượng": info.duration,
+          Season: info.seasonOf?.name ?? "",
+          "Đạo diễn": info.authors.map((a) => a.name).join(", "),
+          Studio: info.studio ?? "",
+          "Quốc gia": info.contries.map((c) => c.name).join(", "),
+          "Ngôn ngữ": info.language ?? "",
+          "Chất lượng": info.quality,
+          "Số người theo dõi": finite(info.follows)?.toLocaleString("vi-VN") ?? ""
+        },
+        // the source has no character list; the pictures it has are the banner and the poster
+        gallery: [...new Set([image(info.banner), image(info.poster), poster].filter((src): src is string => Boolean(src)))],
         isUpcoming: !chapters || chapters.chaps.length === 0
       }
     }

@@ -1,8 +1,6 @@
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "@/lib/router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { Card } from "../lightswind/card";
 import { Button } from "../lightswind/button";
 import { Badge } from "../lightswind/badge";
@@ -10,6 +8,7 @@ import { Input } from "../lightswind/input";
 import { PickerDropdown } from "../movie/PickerDropdown";
 import { Episode, SeasonItem } from "../../types/anime";
 import { formatEpisodeName, cn } from "../../lib/utils";
+import { Search } from "lucide-react";
 
 interface EpisodeGridProps {
   episodes: Episode[];
@@ -80,7 +79,7 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
   const activeSeason = seasons.find((s) => s.slug === currentSlug) || seasons.find((s) => s.isCurrent);
 
   return (
-    <Card className="space-y-4 p-5 backdrop-blur-none">
+    <Card className="glass-card space-y-4 rounded-3xl p-5">
       {/* Header: title, search, range + season pickers */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -93,7 +92,7 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           {episodes.length > 12 && (
             <div className="relative w-44">
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <Input
                 type="text"
                 inputMode="numeric"
@@ -146,10 +145,10 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                 aria-current={isActive ? "true" : undefined}
                 onClick={() => onSelectEpisode(ep)}
                 className={cn(
-                  "h-10 min-w-0 rounded-lg px-1 text-sm font-semibold transition-colors",
+                  "h-10 min-w-0 rounded-xl px-1 text-sm font-semibold transition active:scale-95",
                   isActive
-                    ? "bg-primaryRed text-white"
-                    : "bg-white/5 text-gray-300 hover:bg-white/15 hover:text-white"
+                    ? "bg-primaryRed text-white shadow-[0_0_18px_rgba(229,9,20,0.5)]"
+                    : "glass-pill text-gray-200 hover:text-white"
                 )}
               >
                 <span className="truncate">{formatEpisodeName(ep.name)}</span>

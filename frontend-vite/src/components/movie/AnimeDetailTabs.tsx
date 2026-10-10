@@ -1,20 +1,11 @@
 
 import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faStar,
-  faEye,
-  faCalendarDays,
-  faClock,
-  faVideo,
-  faUsers,
-  faImage,
-} from "@fortawesome/free-solid-svg-icons";
 import { Card } from "../lightswind/card";
 import { Badge } from "../lightswind/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../lightswind/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "../lightswind/avatar";
 import { AnimeDetail } from "../../types/anime";
+import { CalendarDays, Clock, Eye, ImageIcon, Star, Users, Video } from "lucide-react";
 
 interface AnimeDetailTabsProps {
   anime: AnimeDetail;
@@ -58,7 +49,7 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
   const infoRows = INFO_FIELDS.filter(([key]) => meta[key] && cleanValue(meta[key]));
 
   return (
-    <Card className="space-y-6 p-5 md:p-8 backdrop-blur-none">
+    <Card className="glass-card space-y-6 rounded-3xl p-5 md:p-8">
       {/* Overview: poster, title, key facts, synopsis */}
       {/* Phones: small poster beside the title, synopsis full width below. Desktop: poster column + one text column. */}
       <div className="grid grid-cols-[6rem_1fr] items-start gap-x-4 gap-y-4 md:grid-cols-[11rem_1fr] md:gap-x-6">
@@ -81,25 +72,25 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
           <div className="flex flex-wrap items-center gap-2">
             {anime.ratingScore && (
               <Badge variant="unstyled" className={`${META_BADGE} border-amber-400/30 bg-amber-400/10 text-amber-300`}>
-                <FontAwesomeIcon icon={faStar} className="h-3.5 w-3.5" />
+                <Star className="fill-current h-3.5 w-3.5" />
                 {anime.ratingScore}/10
               </Badge>
             )}
             {anime.views && (
               <Badge variant="unstyled" className={META_BADGE}>
-                <FontAwesomeIcon icon={faEye} className="h-3.5 w-3.5 text-gray-400" />
+                <Eye className="h-3.5 w-3.5 text-gray-400" />
                 {anime.views}
               </Badge>
             )}
             {meta["Season"] && (
               <Badge variant="unstyled" className={META_BADGE}>
-                <FontAwesomeIcon icon={faCalendarDays} className="h-3.5 w-3.5 text-gray-400" />
+                <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
                 {meta["Season"]}
               </Badge>
             )}
             {anime.episodes?.length > 0 && (
               <Badge variant="unstyled" className={META_BADGE}>
-                <FontAwesomeIcon icon={faClock} className="h-3.5 w-3.5 text-gray-400" />
+                <Clock className="h-3.5 w-3.5 text-gray-400" />
                 {anime.episodes.length} tập
               </Badge>
             )}
@@ -144,16 +135,19 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
             Thông tin
           </TabsTrigger>
           <TabsTrigger value="trailer" className={TAB_TRIGGER}>
-            <FontAwesomeIcon icon={faVideo} className={TAB_ICON} />
+            <Video className={TAB_ICON} />
             Trailer
           </TabsTrigger>
-          <TabsTrigger value="cast" className={TAB_TRIGGER}>
-            <FontAwesomeIcon icon={faUsers} className={TAB_ICON} />
-            Nhân vật
-            <span className="hidden sm:inline">({characters.length})</span>
-          </TabsTrigger>
+          {/* the source rarely lists characters: no empty tab */}
+          {characters.length > 0 && (
+            <TabsTrigger value="cast" className={TAB_TRIGGER}>
+              <Users className={TAB_ICON} />
+              Nhân vật
+              <span className="hidden sm:inline">({characters.length})</span>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="gallery" className={TAB_TRIGGER}>
-            <FontAwesomeIcon icon={faImage} className={TAB_ICON} />
+            <ImageIcon className={TAB_ICON} />
             Hình ảnh
             <span className="hidden sm:inline">({gallery.length})</span>
           </TabsTrigger>

@@ -25,7 +25,7 @@ export const SidebarDock: React.FC = () => {
       aria-label="Điều hướng chính"
       // its own view-transition layer, so it stays put while pages slide underneath (lib/router.tsx)
       style={{ viewTransitionName: "dock" } as React.CSSProperties}
-      className="lg:hidden pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 flex justify-center px-5 select-none"
+      className="lg:hidden pointer-events-none fixed inset-x-0 bottom-[calc(var(--inset-bottom)+0.75rem)] z-50 flex justify-center px-5 select-none"
     >
       <div className="liquid-glass pointer-events-auto relative flex w-full max-w-sm items-center gap-1 rounded-full p-1.5">
         {MOBILE_NAV_LINKS.map(({ label, href, icon: Icon }) => {

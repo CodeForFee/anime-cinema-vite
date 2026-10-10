@@ -2,17 +2,28 @@
 <html lang="vi" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Anime Cinema - Xem Phim Trực Tuyến Chuẩn HD</title>
-    <meta name="description" content="Xem Anime Vietsub chất lượng cao, mượt mà chuẩn Cinema." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover" />
+    <title>Capynime - Xem Anime Vietsub</title>
+    <meta name="description" content="Capynime: xem anime Vietsub mượt, gọn, tối ưu cho điện thoại." />
+    <meta name="theme-color" content="#0b0b0f" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/pwa-64x64.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <!-- the CDN serving the embedded player and its segments -->
+    <link rel="preconnect" href="https://storage.googleapiscdn.com" />
     <style>
-      :root { --font-sans: "Inter"; --font-display: "Outfit"; }
+      :root { --font-sans: "Inter Variable"; --font-display: "Outfit Variable"; }
     </style>
   </head>
   <body class="bg-[#141414] text-white min-h-screen antialiased selection:bg-primaryRed selection:text-white">
+    <!-- refraction for .glass on Chromium (globals.css, html[data-liquid]) -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <filter id="liquid-glass" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="noise" />
+        <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+        <feDisplacementMap in="SourceGraphic" in2="soft" scale="18" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,4 +1,4 @@
-package app.animecinema.vite;
+package app.capynime;
 
 import android.content.pm.ActivityInfo;
 import android.net.Uri;

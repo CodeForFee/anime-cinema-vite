@@ -17,6 +17,8 @@ export interface HistoryItem {
   poster: string;
   episodeSlug: string;
   episodeName: string;
+  /** key of the watch position in useProgressStore (components/player/player-logic.ts) */
+  episodeId?: string;
   timestamp: number;
   progressPercent?: number;
   updatedAt: number;

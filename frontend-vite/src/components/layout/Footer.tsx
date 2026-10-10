@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "@/lib/router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFilm, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
+import { ShieldCheck } from "lucide-react";
 
 export const Footer: React.FC = () => {
   return (
@@ -9,11 +8,9 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primaryRed text-white">
-            <FontAwesomeIcon icon={faFilm} className="w-4 h-4" />
-          </div>
+          <img src="/app-icon.png" alt="" width={32} height={32} className="w-8 h-8 rounded-lg" />
           <div>
-            <p className="font-bold text-white text-sm tracking-wider">MOVION CINEMA</p>
+            <p className="font-bold text-white text-sm tracking-wider">CAPYNIME</p>
             <p className="text-[11px] text-gray-400">Trải nghiệm xem Anime chuẩn rạp & Không quảng cáo</p>
           </div>
         </div>
@@ -30,7 +27,7 @@ export const Footer: React.FC = () => {
 
         {/* Protection Note */}
         <div className="flex items-center gap-1.5 text-gray-400">
-          <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 text-emerald-400" />
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
           <span>Bảo vệ bởi AnimeShield AdBlock Core</span>
         </div>
       </div>

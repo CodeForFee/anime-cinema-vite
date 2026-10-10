@@ -1,17 +1,23 @@
 
 import React from "react";
 import { Link } from "@/lib/router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClockRotateLeft, faClock, faPlay, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { Card, CardBody, Button, Chip, Image, Tooltip } from "@heroui/react";
 import { useHistoryStore } from "../stores/useHistoryStore";
+import { progressKey, useProgressStore } from "../components/player/player-logic";
+import type { HistoryItem } from "../types/history";
 import { InfoModal } from "../components/movie/InfoModal";
 import { formatTimeAgo } from "../lib/utils";
+import { Clock, History, Play, Trash2 } from "lucide-react";
 
 export default function HistoryPage() {
   const history = useHistoryStore((state) => state.history);
   const removeFromHistory = useHistoryStore((state) => state.removeFromHistory);
   const clearHistory = useHistoryStore((state) => state.clearHistory);
+  const progress = useProgressStore((state) => state.entries);
+  const watchedPercent = (item: HistoryItem) => {
+    const entry = item.episodeId && progress[progressKey(item.slug, item.episodeId)];
+    return entry && entry.d > 0 ? Math.min(100, (entry.t / entry.d) * 100) : 0;
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
@@ -19,7 +25,7 @@ export default function HistoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-primaryRed text-sm font-semibold uppercase tracking-wider mb-1">
-            <FontAwesomeIcon icon={faClockRotateLeft} className="w-3.5 h-3.5" />
+            <History className="w-3.5 h-3.5" />
             <span>Lịch Sử Phát Video</span>
           </div>
           <h1 className="text-3xl font-extrabold text-white">Tiếp Tục Xem Phim</h1>
@@ -33,7 +39,7 @@ export default function HistoryPage() {
             radius="full"
             onPress={clearHistory}
             className="text-xs"
-            startContent={<FontAwesomeIcon icon={faTrashCan} className="w-3 h-3" />}
+            startContent={<Trash2 className="w-3 h-3" />}
           >
             Xóa toàn bộ lịch sử
           </Button>
@@ -43,7 +49,7 @@ export default function HistoryPage() {
       {/* History List */}
       {history.length === 0 ? (
         <div className="p-16 rounded-3xl bg-[#10121A] border border-white/10 text-center text-gray-400 space-y-4">
-          <FontAwesomeIcon icon={faClockRotateLeft} className="w-14 h-14 text-gray-400 mx-auto" />
+          <History className="w-14 h-14 text-gray-400 mx-auto" />
           <h3 className="text-lg font-bold text-white">Chưa có lịch sử xem phim</h3>
           <p className="text-xs max-w-sm mx-auto">
             Khi bạn xem bất kỳ tập anime nào, tiến trình phát và tập phim sẽ tự động được lưu tại đây.
@@ -71,6 +77,11 @@ export default function HistoryPage() {
                     alt={item.title}
                     className="w-full h-full object-cover"
                   />
+                  {watchedPercent(item) > 0 && (
+                    <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/25">
+                      <div className="h-full bg-primaryRed" style={{ width: `${watchedPercent(item)}%` }} />
+                    </div>
+                  )}
                 </div>
 
                 {/* Info */}
@@ -82,7 +93,7 @@ export default function HistoryPage() {
                       {item.episodeName || item.episodeSlug}
                     </Chip>
                     <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <FontAwesomeIcon icon={faClock} className="w-3 h-3 text-gray-400" />
+                      <Clock className="w-3 h-3 text-gray-400" />
                       <span>{formatTimeAgo(item.updatedAt)}</span>
                     </span>
                   </div>
@@ -98,7 +109,7 @@ export default function HistoryPage() {
                         color="danger"
                         radius="lg"
                         className="w-full bg-primaryRed text-white font-semibold text-xs h-8 shadow-md shadow-red-600/30"
-                        startContent={<FontAwesomeIcon icon={faPlay} className="w-3 h-3 text-white mr-1" />}
+                        startContent={<Play className="fill-current w-3 h-3 text-white mr-1" />}
                       >
                         Xem Tiếp
                       </Button>
@@ -113,7 +124,7 @@ export default function HistoryPage() {
                         onPress={() => removeFromHistory(item.slug)}
                         className="bg-white/5 text-gray-400 hover:text-danger h-8 w-8 min-w-8"
                       >
-                        <FontAwesomeIcon icon={faTrashCan} className="w-3 h-3" />
+                        <Trash2 className="w-3 h-3" />
                       </Button>
                     </Tooltip>
                   </div>

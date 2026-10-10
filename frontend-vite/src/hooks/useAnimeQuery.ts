@@ -20,8 +20,10 @@ export function useHomeQuery() {
     queryKey: QUERY_KEYS.HOME,
     queryFn: async () => {
       const home = await animeApi.getHomeData();
+      // a failed load must be an error: then Query retries it and never keeps (or persists) the empty page
+      if (!home.success) throw new Error("home failed");
       try {
-        if (home.success) localStorage.setItem(HOME_CACHE_KEY, JSON.stringify(home));
+        localStorage.setItem(HOME_CACHE_KEY, JSON.stringify(home));
       } catch {
         // storage full or unavailable: the page still works, it just starts empty next time
       }

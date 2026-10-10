@@ -3,20 +3,13 @@ import { motion } from "framer-motion";
 import { useEnrichedItem } from "../../hooks/useAnimeQuery";
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "@/lib/router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faPlay,
-  faStar,
-  faHeart,
-  faCircleInfo,
-  faChevronRight,
-} from "@fortawesome/free-solid-svg-icons";
 import { Button, buttonVariants } from "../lightswind/button";
 import { Badge } from "../lightswind/badge";
 import { AnimeItem } from "../../types/anime";
 import { useUIStore } from "../../stores/useUIStore";
 import { useHistoryStore } from "../../stores/useHistoryStore";
 import { cn } from "../../lib/utils";
+import { ChevronRight, Heart, Info, Play, Star } from "lucide-react";
 
 interface HeroBannerProps {
   items: AnimeItem[];
@@ -97,7 +90,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
           aria-label="Xem tất cả anime mới"
           className="flex h-7 w-7 items-center justify-center rounded-full border border-white/40 text-white transition-colors hover:bg-white/10"
         >
-          <FontAwesomeIcon icon={faChevronRight} className="h-3.5 w-3.5" />
+          <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
@@ -159,7 +152,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
             <div className="flex flex-wrap items-center gap-2">
               {current.rating && (
                 <Badge variant="unstyled" shape="rounded" className={cn(META_BADGE, "gap-1 border-amber-300 text-amber-300")}>
-                  <FontAwesomeIcon icon={faStar} className="h-3 w-3" />
+                  <Star className="fill-current h-3 w-3" />
                   <span>{current.rating}</span>
                 </Badge>
               )}
@@ -210,7 +203,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
                     "h-16 w-16 rounded-full bg-gradient-to-br from-amber-200 to-amber-400 text-black shadow-[0_6px_24px_rgba(251,191,36,0.35)] transition-transform hover:scale-105 [&_svg]:size-6 flex items-center justify-center",
                 })}
               >
-                <FontAwesomeIcon icon={faPlay} className="ml-1 text-xl" />
+                <Play className="fill-current ml-1 h-6 w-6" />
               </Link>
 
               <div className="flex items-center overflow-hidden rounded-full border border-white/20">
@@ -221,7 +214,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
                   onClick={handleToggleFav}
                   className={cn(PILL_BUTTON, isFav && "text-primaryRed")}
                 >
-                  <FontAwesomeIcon icon={faHeart} className="text-base" />
+                  <Heart className="h-4 w-4" />
                 </Button>
                 <span className="h-6 w-px bg-white/20" />
                 <Button
@@ -231,7 +224,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
                   onClick={() => openInfoModal(current)}
                   className={PILL_BUTTON}
                 >
-                  <FontAwesomeIcon icon={faCircleInfo} className="text-base" />
+                  <Info className="h-4 w-4" />
                 </Button>
               </div>
             </div>

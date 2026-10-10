@@ -7,7 +7,8 @@
  *  1. Ad shield. Same rules as animevietsub-adshield-extension (injected.js) and the cleanup
  *     backend-hono used to inject into the player page (avs-adshield-css / avs-adshield-js).
  *     Ad requests themselves are blocked at the network layer (MainActivity / extension rules).
- *  2. Remote control. Lets src/hooks/usePlayerBridge.ts drive the <video> by postMessage, so the app
+ *  2. Remote control. Lets src/hooks/usePlayerBridge.ts drive the <video> by postMessage (play, pause,
+ *     seek, rate, volume), so the app
  *     can draw its own touch controls. The player's controls are hidden only after the app says hello.
  */
 (function () {
@@ -148,15 +149,31 @@
       paused: video.paused,
       waiting: !video.paused && video.readyState < 3,
       rate: video.playbackRate,
+      volume: video.muted ? 0 : video.volume,
       ended: video.ended
     });
   }
 
+  // The player's own "Xem tiếp / Từ đầu" box sits under the app's overlay where it cannot be tapped:
+  // hide it, tell the app the time it offers, and press its button for the app ("resume" 1 / 0)
+  var resumeOffered = null;
+  function forwardResumeOffer() {
+    var box = document.getElementById("avs-resume-overlay");
+    if (!box || box === resumeOffered) return;
+    var time = box.querySelector(".avs-time");
+    var parts = ((time && time.textContent) || "").trim().split(":").map(Number);
+    if (parts.length < 2 || parts.some(isNaN)) return;
+    resumeOffered = box;
+    box.style.setProperty("visibility", "hidden", "important");
+    send("resume", { at: parts.reduce(function (sum, part) { return sum * 60 + part; }, 0) });
+  }
+
   function attach() {
+    forwardResumeOffer();
     var found = document.querySelector("video.jw-video") || document.querySelector("video");
     if (!found || found === video) return;
     video = found;
-    ["play", "playing", "pause", "waiting", "seeked", "ratechange", "durationchange", "ended", "timeupdate"]
+    ["play", "playing", "pause", "waiting", "seeked", "ratechange", "durationchange", "ended", "timeupdate", "volumechange"]
       .forEach(function (name) { video.addEventListener(name, report); });
     report();
   }
@@ -165,25 +182,38 @@
     var message = event.data;
     if (event.source !== window.parent || !message || message.source !== APP) return;
 
-    if (message.type === "hello") {
+    // "hello": the app draws the controls (touch); "observe": the player keeps its own, the app only
+    // follows the position (resume, next episode) and may seek
+    if (message.type === "hello" || message.type === "observe") {
+      var hide = message.type === "hello";
       if (!controlled) {
         controlled = true;
-        setInterval(function () { addStyle("avs-controls-css", CONTROLS_CSS); attach(); }, 500);
+        setInterval(function () {
+          if (hide) addStyle("avs-controls-css", CONTROLS_CSS);
+          attach();
+        }, 500);
       }
-      addStyle("avs-controls-css", CONTROLS_CSS);
+      if (hide) addStyle("avs-controls-css", CONTROLS_CSS);
       attach();
       send("ready");
       report();
       return;
     }
-    if (!controlled || !video) return;
+    if (!controlled) return;
+    // the player loads the video only after its resume box is answered: no <video> needed for this one
+    if (message.type === "resume") {
+      var button = document.getElementById(message.value ? "avs-resume-btn-yes" : "avs-resume-btn-no");
+      if (button) button.click();
+      return;
+    }
+    if (!video) return;
 
     var value = Number(message.value);
     if (message.type === "play") { var playing = video.play(); if (playing && playing.catch) playing.catch(function () {}); }
     else if (message.type === "pause") video.pause();
     else if (message.type === "seek" && isFinite(value)) video.currentTime = Math.max(0, Math.min(value, video.duration || value));
     else if (message.type === "rate" && value > 0 && value <= 4) video.playbackRate = value;
-  });
+    else if (message.type === "volume" && value >= 0 && value <= 1) { video.volume = value; video.muted = value === 0; }  });
 
   // Tell the app the bridge is here; repeated because the app may attach its listener after us
   send("present");

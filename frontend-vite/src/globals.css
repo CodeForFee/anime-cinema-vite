@@ -5,6 +5,12 @@
 :root {
   --background: #08090D;
   --foreground: #ECEDEE;
+  /* Safe areas: the Android app gets them from Capacitor (--safe-area-inset-*, set on <html>), whose
+     WebView may not report env(); browsers use env() */
+  --inset-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --inset-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --inset-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --inset-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
 }
 
 body {
@@ -169,7 +175,7 @@ body {
     0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
-/* Touch player (components/player/MobilePlayerControls.tsx) */
+/* Touch player (components/player/TouchControls.tsx) */
 @keyframes avs-jump {
   0% {
     opacity: 0;
@@ -243,4 +249,102 @@ body {
   backdrop-filter: blur(12px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* ---------- Liquid glass (player, sheets, nav) ---------- */
+.glass {
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 45%, rgba(255, 255, 255, 0.08));
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.08),
+    inset 0 0 22px rgba(255, 255, 255, 0.05),
+    0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.glass-button {
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+/* Chromium bends the backdrop through the SVG filter in index.html; other engines keep the plain blur.
+   Desktop only: on a phone, re-filtering the video under it every frame drops frames */
+@media (pointer: fine) {
+  html[data-liquid] .glass,
+  html[data-liquid] .glass-button {
+    -webkit-backdrop-filter: url(#liquid-glass) blur(18px) saturate(180%);
+    backdrop-filter: url(#liquid-glass) blur(18px) saturate(180%);
+  }
+}
+@media (pointer: coarse) {
+  .glass-button {
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    backdrop-filter: blur(10px) saturate(160%);
+  }
+}
+/* Sheets over the playing video: denser tint, lighter blur, own layer, so sliding stays at 60 fps */
+.glass-sheet {
+  background: linear-gradient(160deg, rgba(40, 40, 52, 0.78), rgba(14, 14, 20, 0.86));
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 -10px 40px rgba(0, 0, 0, 0.45);
+  will-change: transform;
+  contain: layout paint;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-button {
+    background: rgba(24, 24, 30, 0.94);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+/* transform/opacity only: composited, no layout per frame */
+@keyframes cn-sheet-up {
+  from { transform: translate3d(0, 100%, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes cn-sheet-left {
+  from { transform: translate3d(100%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes cn-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes cn-pop {
+  from { opacity: 0; transform: scale(0.94); }
+}
+.cn-sheet { animation: cn-sheet-up 320ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.cn-sheet-out { animation: cn-sheet-up 220ms cubic-bezier(0.4, 0, 1, 1) reverse both; }
+@media (orientation: landscape) {
+  .cn-sheet, .cn-sheet-out { animation-name: cn-sheet-left; }
+}
+.cn-fade { animation: cn-fade 260ms ease-out both; }
+.cn-fade-out { animation: cn-fade 220ms ease-in reverse both; }
+.cn-pop { animation: cn-pop 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .cn-sheet, .cn-sheet-out, .cn-fade, .cn-fade-out, .cn-pop { animation-duration: 1ms; }
+}
+
+/* Page cards over the blurred ambient backdrop (pages/watch.tsx): the backdrop is already blurred, so a
+   translucent tint + light edges reads as glass with no backdrop-filter to recompute while scrolling */
+.glass-card {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.025) 55%, rgba(255, 255, 255, 0.05)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 30px rgba(255, 255, 255, 0.03),
+    0 24px 60px rgba(0, 0, 0, 0.35) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.glass-pill {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 18px rgba(0, 0, 0, 0.3);
 }

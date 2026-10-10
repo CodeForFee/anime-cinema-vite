@@ -3,13 +3,11 @@ import React, { useState, useEffect } from "react";
 import { Link } from "@/lib/router";
 import { Chip, Button, Tooltip } from "@heroui/react";
 import { LazyImage } from "./LazyImage";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlay, faStar, faCircleInfo, faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
-import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { AnimeItem } from "../../types/anime";
 import { useHistoryStore } from "../../stores/useHistoryStore";
 import { useUIStore } from "../../stores/useUIStore";
 import { cn } from "../../lib/utils";
+import { Heart, Info, Play, Star } from "lucide-react";
 
 interface MovieCardProps {
   anime: AnimeItem;
@@ -105,10 +103,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
                   : "bg-black/60 text-white/80 hover:text-white hover:bg-black/90 border border-white/10"
               }`}
             >
-              <FontAwesomeIcon
-                icon={isFavorite ? faHeartSolid : faHeartRegular}
-                className={`w-3.5 h-3.5 ${isFavorite ? "text-white" : "text-gray-300"}`}
-              />
+              <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current text-white" : "text-gray-300"}`} />
             </Button>
           </Tooltip>
         </div>
@@ -122,7 +117,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
             onClick={(e) => e.stopPropagation()}
             className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primaryRed text-white shadow-xl shadow-red-600/50 transition-transform hover:scale-110 active:scale-95"
           >
-            <FontAwesomeIcon icon={faPlay} className="w-5 h-5 ml-0.5" />
+            <Play className="fill-current w-5 h-5 ml-0.5" />
           </Link>
 
           <Button
@@ -130,7 +125,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
             variant="light"
             onPress={() => openInfoModal(anime)}
             className="text-gray-300 hover:text-white text-xs h-7 px-2"
-            startContent={<FontAwesomeIcon icon={faCircleInfo} className="w-3.5 h-3.5" />}
+            startContent={<Info className="w-3.5 h-3.5" />}
           >
             Chi tiết
           </Button>
@@ -151,7 +146,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
         <div className="flex items-center justify-between w-full text-[11px] text-gray-400">
           <span>{anime.year || "Anime"}</span>
           <div className="flex items-center gap-1 text-amber-400 font-medium">
-            <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-amber-400" />
+            <Star className="fill-current w-3 h-3 text-amber-400" />
             <span>{anime.rating || "9.5"}</span>
           </div>
         </div>

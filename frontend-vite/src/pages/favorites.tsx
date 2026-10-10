@@ -1,12 +1,11 @@
 
 import React from "react";
 import { Link } from "@/lib/router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBookmark } from "@fortawesome/free-solid-svg-icons";
 import { Button, Chip } from "@heroui/react";
 import { useHistoryStore } from "../stores/useHistoryStore";
 import { MovieCard } from "../components/movie/MovieCard";
 import { InfoModal } from "../components/movie/InfoModal";
+import { Bookmark } from "lucide-react";
 
 export default function FavoritesPage() {
   const favorites = useHistoryStore((state) => state.favorites);
@@ -17,7 +16,7 @@ export default function FavoritesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-primaryRed text-sm font-semibold uppercase tracking-wider mb-1">
-            <FontAwesomeIcon icon={faBookmark} className="w-3.5 h-3.5" />
+            <Bookmark className="w-3.5 h-3.5" />
             <span>Bộ Sưu Tập Cá Nhân</span>
           </div>
           <h1 className="text-3xl font-extrabold text-white">Danh Sách Yêu Thích & Xem Sau</h1>
@@ -33,7 +32,7 @@ export default function FavoritesPage() {
       {/* Favorites Grid */}
       {favorites.length === 0 ? (
         <div className="p-16 rounded-3xl bg-[#10121A] border border-white/10 text-center text-gray-400 space-y-4">
-          <FontAwesomeIcon icon={faBookmark} className="w-14 h-14 text-gray-400 mx-auto" />
+          <Bookmark className="w-14 h-14 text-gray-400 mx-auto" />
           <h3 className="text-lg font-bold text-white">Chưa có phim nào trong danh sách yêu thích</h3>
           <p className="text-xs max-w-sm mx-auto">
             Bấm vào biểu tượng trái tim ❤️ ở bất kỳ poster phim nào để lưu lại danh sách theo dõi của bạn.

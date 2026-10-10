@@ -2,12 +2,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "@/lib/router";
 import { usePathname, useRouter, useSearchParams } from "@/lib/router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faMagnifyingGlass,
-  faXmark,
-  faChevronDown,
-} from "@fortawesome/free-solid-svg-icons";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -28,6 +22,7 @@ import { cn } from "../../lib/utils";
 import { useMenuQuery, useSearchQuery } from "../../hooks/useAnimeQuery";
 import { useDebounce } from "../../hooks/useDebounce";
 import { MenuGroup } from "../../lib/api";
+import { ChevronDown, Search, X } from "lucide-react";
 
 // Link to the explore page for one of the source site's lists
 const exploreLink = (path: string) => `/explore?path=${encodeURIComponent(path)}`;
@@ -55,8 +50,7 @@ const NavDropdown: React.FC<{ menu: MenuGroup; currentPath: string | null }> = (
         className={cn(navigationMenuTriggerStyle(), NAV_LINK, isActive && NAV_LINK_ACTIVE)}
       >
         {menu.label}
-        <FontAwesomeIcon
-          icon={faChevronDown}
+        <ChevronDown
           className="ml-1.5 h-2.5 w-2.5 text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180"
         />
       </DropdownMenuTrigger>
@@ -159,16 +153,14 @@ export const HeaderNav: React.FC = () => {
   const currentPath = pathname === "/explore" ? searchParams.get("path") : null;
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between gap-4 border-b border-white/10 bg-[#141414] px-4 md:px-12">
+    <header className="sticky top-0 z-50 flex h-[calc(4rem+var(--inset-top))] w-full items-center justify-between gap-4 border-b border-white/10 bg-[#141414] px-4 pt-[var(--inset-top)] md:px-12">
       {/* Left Branding & Navigation */}
       <div className="flex items-center gap-4 md:gap-8">
-        {/* Netflix-Style Red Brand Logo */}
-        <Link href="/" className="flex items-center gap-1">
-          <span className="text-2xl md:text-3xl font-black text-primaryRed tracking-tighter uppercase font-sans">
-            NETFLIX
-          </span>
-          <span className="hidden sm:inline-block text-[10px] font-bold text-white/70 bg-white/10 px-1.5 py-0.5 rounded tracking-widest uppercase ml-1">
-            ANIME
+        {/* Brand */}
+        <Link href="/" aria-label="Capynime - Trang chủ" className="flex items-center gap-2">
+          <img src="/app-icon.png" alt="" width={36} height={36} className="h-8 w-8 md:h-9 md:w-9 rounded-xl shadow-lg shadow-red-900/40" />
+          <span className="font-display text-xl md:text-2xl font-extrabold tracking-tight text-white">
+            Capy<span className="text-primaryRed">nime</span>
           </span>
         </Link>
 
@@ -230,7 +222,7 @@ export const HeaderNav: React.FC = () => {
           )}
         >
           <div className="relative w-full md:w-64 xl:w-80">
-            <FontAwesomeIcon icon={faMagnifyingGlass} className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
             <Input
               ref={searchInputRef}
               type="text"
@@ -315,7 +307,7 @@ export const HeaderNav: React.FC = () => {
             onClick={closeSearch}
             className={cn(ICON_BUTTON, "flex-shrink-0 md:hidden")}
           >
-            <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+            <X className="w-4 h-4" />
           </Button>
         </form>
 
@@ -329,7 +321,7 @@ export const HeaderNav: React.FC = () => {
           }}
           className={cn(ICON_BUTTON, "md:hidden")}
         >
-          <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4" />
+          <Search className="w-4 h-4" />
         </Button>
       </div>
     </header>

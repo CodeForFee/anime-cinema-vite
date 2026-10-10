@@ -1,14 +1,23 @@
 apply plugin: 'com.android.application'
 
+// Version comes from frontend-vite/package.json: 2.3.4 -> versionName "2.3.4", versionCode 20304
+def appPackage = new groovy.json.JsonSlurper().parse(rootProject.file("../package.json"))
+def (vMajor, vMinor, vPatch) = appPackage.version.tokenize(".").collect { it.replaceAll("[^0-9].*", "") as int }
+
+// Release signing: android/keystore.properties (git-ignored, see keystore.properties.example)
+def keystoreFile = rootProject.file("keystore.properties")
+def keystore = new Properties()
+if (keystoreFile.exists()) keystoreFile.withInputStream { keystore.load(it) }
+
 android {
-    namespace = "app.animecinema.vite"
+    namespace = "app.capynime"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.animecinema.vite"
+        applicationId "app.capynime"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode vMajor * 10000 + vMinor * 100 + vPatch
+        versionName appPackage.version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +25,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystoreFile.exists()) {
+                storeFile rootProject.file(keystore["storeFile"])
+                storePassword keystore["storePassword"]
+                keyAlias keystore["keyAlias"]
+                keyPassword keystore["keyPassword"]
+            }
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // unsigned when keystore.properties is missing; gradle then still builds app-release-unsigned.apk
+            if (keystoreFile.exists()) signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

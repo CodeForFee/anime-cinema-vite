@@ -6,20 +6,11 @@ import { Button } from "../lightswind/button";
 import { PickerDropdown } from "./PickerDropdown";
 import { LazyImage } from "./LazyImage";
 import { EpisodeRowsSkeleton } from "./Skeletons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faPlay,
-  faPlus,
-  faCheck,
-  faThumbsUp,
-  faVolumeHigh,
-  faVolumeXmark,
-  faXmark,
-} from "@fortawesome/free-solid-svg-icons";
 import { useHistoryStore } from "../../stores/useHistoryStore";
 import { useUIStore } from "../../stores/useUIStore";
 import { useAnimeDetailQuery } from "../../hooks/useAnimeQuery";
 import { cn, formatEpisodeName } from "../../lib/utils";
+import { Check, Play, Plus, ThumbsUp, Volume2, VolumeX, X } from "lucide-react";
 
 export const InfoModal: React.FC = () => {
   const router = useRouter();
@@ -193,7 +184,7 @@ export const InfoModal: React.FC = () => {
         ref={modalBodyRef}
         hideCloseButton
         sheetOnMobile
-        className="max-w-[1040px] max-h-[92vh] rounded-[8px] border-[#333] bg-[#181818] p-0 text-white shadow-[0_0_80px_rgba(0,0,0,0.95)] max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:w-screen max-sm:max-w-[100vw] max-sm:flex-shrink-0 max-sm:rounded-none max-sm:border-0"
+        className="max-w-[1040px] max-h-[92vh] rounded-[8px] border-[#333] bg-[#181818] p-0 text-white shadow-[0_0_80px_rgba(0,0,0,0.95)] max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:w-screen max-sm:max-w-[100vw] max-sm:flex-shrink-0 max-sm:rounded-none max-sm:border-0 max-sm:pt-[var(--inset-top)] max-sm:pb-[var(--inset-bottom)]"
       >
             <div className="w-full bg-[#181818] text-white">
               {/* =========================================================================
@@ -231,7 +222,7 @@ export const InfoModal: React.FC = () => {
                   aria-label="Đóng"
                   className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 w-9 h-9 rounded-full bg-[#181818] hover:bg-[#282828] border border-white/20 hover:border-white/50 text-white flex items-center justify-center transition-colors shadow-lg cursor-pointer"
                 >
-                  <FontAwesomeIcon icon={faXmark} className="w-5 h-5 text-white" />
+                  <X className="w-5 h-5 text-white" />
                 </button>
 
                 {/* Bottom Left Hero Content */}
@@ -258,7 +249,7 @@ export const InfoModal: React.FC = () => {
                         onClick={() => handlePlay()}
                         className="bg-white hover:bg-white/90 text-black font-extrabold px-6 h-10 rounded-[4px] shadow-lg flex items-center gap-2 text-sm sm:text-base cursor-pointer"
                       >
-                        <FontAwesomeIcon icon={faPlay} className="w-4 h-4 text-black mr-1" />
+                        <Play className="fill-current w-4 h-4 text-black mr-1" />
                         <span>Phát</span>
                       </Button>
 
@@ -283,9 +274,9 @@ export const InfoModal: React.FC = () => {
                         }`}
                       >
                         {isFavorite ? (
-                          <FontAwesomeIcon icon={faCheck} className="w-4 h-4 text-white" />
+                          <Check className="w-4 h-4 text-white" />
                         ) : (
-                          <FontAwesomeIcon icon={faPlus} className="w-4 h-4 text-white" />
+                          <Plus className="w-4 h-4 text-white" />
                         )}
                       </button>
 
@@ -300,7 +291,7 @@ export const InfoModal: React.FC = () => {
                             : "bg-[#2a2a2a]/60 border-[#808080] hover:border-white text-white hover:bg-[#2a2a2a]/90"
                         }`}
                       >
-                        <FontAwesomeIcon icon={faThumbsUp} className="w-4 h-4" />
+                        <ThumbsUp className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -314,9 +305,9 @@ export const InfoModal: React.FC = () => {
                       className="w-10 h-10 rounded-full bg-[#181818]/80 hover:bg-[#282828] border border-[#808080] hover:border-white text-white flex items-center justify-center transition-colors shadow-lg cursor-pointer flex-shrink-0"
                     >
                       {isMuted ? (
-                        <FontAwesomeIcon icon={faVolumeXmark} className="w-4 h-4 text-gray-300" />
+                        <VolumeX className="w-4 h-4 text-gray-300" />
                       ) : (
-                        <FontAwesomeIcon icon={faVolumeHigh} className="w-4 h-4 text-white" />
+                        <Volume2 className="w-4 h-4 text-white" />
                       )}
                     </button>
                   )}
@@ -538,7 +529,7 @@ export const InfoModal: React.FC = () => {
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <div className="w-10 h-10 rounded-full bg-black/60 border border-white flex items-center justify-center">
-                                    <FontAwesomeIcon icon={faPlay} className="w-4 h-4 text-white ml-0.5" />
+                                    <Play className="fill-current w-4 h-4 text-white ml-0.5" />
                                   </div>
                                 </div>
                               </div>
