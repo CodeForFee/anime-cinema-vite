@@ -1,0 +1,337 @@
+
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "@/lib/router";
+import { usePathname, useRouter, useSearchParams } from "@/lib/router";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faMagnifyingGlass,
+  faXmark,
+  faChevronDown,
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  navigationMenuTriggerStyle,
+} from "../lightswind/navigation-menu";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuGroup,
+} from "../lightswind/dropdown-menu";
+import { Button } from "../lightswind/button";
+import { Input } from "../lightswind/input";
+import { Skeleton } from "../lightswind/skeleton";
+import { cn } from "../../lib/utils";
+import { useMenuQuery, useSearchQuery } from "../../hooks/useAnimeQuery";
+import { useDebounce } from "../../hooks/useDebounce";
+import { MenuGroup } from "../../lib/api";
+
+// Link to the explore page for one of the source site's lists
+const exploreLink = (path: string) => `/explore?path=${encodeURIComponent(path)}`;
+
+// Overrides on top of Lightswind's navigationMenuTriggerStyle() to fit the dark Netflix bar
+const NAV_LINK =
+  "h-9 rounded-full bg-transparent px-3.5 text-gray-300 hover:bg-white/10 hover:text-white focus:bg-transparent focus:text-gray-300 focus-visible:bg-white/10 focus-visible:text-white data-[state=open]:bg-white/10 data-[state=open]:text-white";
+const NAV_LINK_ACTIVE = "bg-white/15 text-white font-semibold focus:bg-white/15 focus:text-white";
+const MENU_CONTENT = "rounded-xl border-white/10 p-1.5 shadow-2xl";
+const MENU_ITEM = "cursor-pointer rounded-lg p-0 text-gray-200";
+const MENU_ITEM_LINK = "flex w-full items-center gap-2.5 px-3 py-2";
+const ICON_BUTTON =
+  "h-9 w-9 rounded-full text-gray-300 transition-colors hover:bg-white/10 hover:text-white [&_svg]:size-5";
+
+const NavDropdown: React.FC<{ menu: MenuGroup; currentPath: string | null }> = ({ menu, currentPath }) => {
+  const [open, setOpen] = useState(false);
+  const isActive = menu.items.some((item) => item.path === currentPath);
+  // Seasons come four to a year, so four columns gives one year per row; other long lists get three
+  const columns = menu.items[0]?.path.startsWith("/season/") ? 4 : menu.items.length > 8 ? 3 : 1;
+
+  return (
+    <DropdownMenu hoverMode open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        data-state={open ? "open" : "closed"}
+        className={cn(navigationMenuTriggerStyle(), NAV_LINK, isActive && NAV_LINK_ACTIVE)}
+      >
+        {menu.label}
+        <FontAwesomeIcon
+          icon={faChevronDown}
+          className="ml-1.5 h-2.5 w-2.5 text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180"
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        sideOffset={8}
+        className={cn(
+          MENU_CONTENT,
+          columns === 4 ? "w-[600px]" : columns === 3 ? "w-[480px]" : "min-w-[220px]",
+          "max-w-[calc(100vw-2rem)]"
+        )}
+      >
+        <DropdownMenuGroup
+          className={cn(
+            columns === 1 ? "space-y-0.5" : "grid gap-0.5 space-y-0",
+            columns === 4 && "grid-cols-4",
+            columns === 3 && "grid-cols-3"
+          )}
+        >
+          {menu.items.map((item) => (
+            <DropdownMenuItem
+              key={item.path}
+              className={cn(MENU_ITEM, item.path === currentPath && "bg-primaryRed/15 text-white")}
+            >
+              <Link href={exploreLink(item.path)} className={cn(MENU_ITEM_LINK, columns > 1 && "px-2.5 text-[13px]")}>
+                <span className="truncate">{item.label}</span>
+              </Link>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+export const HeaderNav: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const searchBoxRef = useRef<HTMLFormElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Results panel under the search box
+  const [isResultsOpen, setIsResultsOpen] = useState(false);
+
+  // Live search: results follow what is typed, a moment after the typing stops
+  const debouncedQuery = useDebounce(searchQuery.trim(), 350);
+  const { data: searchRes, isFetching: isSearching } = useSearchQuery(debouncedQuery);
+  const searchResults = searchRes?.items || [];
+  const isWaiting = isSearching || debouncedQuery !== searchQuery.trim();
+  const showResults = isResultsOpen && searchQuery.trim().length > 0;
+
+  const closeSearch = () => {
+    setIsResultsOpen(false);
+    setIsSearchOpen(false);
+    searchInputRef.current?.blur();
+  };
+
+  // Handle hotkey Ctrl+K / Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+        // Focus after the box is shown (it is hidden on small screens until opened)
+        setTimeout(() => searchInputRef.current?.focus(), 0);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Close the results when clicking anywhere else, and whenever the page changes
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) setIsResultsOpen(false);
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, []);
+
+  useEffect(() => {
+    setIsResultsOpen(false);
+    setIsSearchOpen(false);
+  }, [pathname, searchParams]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      closeSearch();
+    }
+  };
+
+  // Dropdowns are the source site's own menu, so every genre and season it has shows up here
+  const { data: menus = [], isLoading: isMenuLoading } = useMenuQuery();
+  // Which dropdown entry (if any) matches the explore page currently shown
+  const currentPath = pathname === "/explore" ? searchParams.get("path") : null;
+
+  return (
+    <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between gap-4 border-b border-white/10 bg-[#141414] px-4 md:px-12">
+      {/* Left Branding & Navigation */}
+      <div className="flex items-center gap-4 md:gap-8">
+        {/* Netflix-Style Red Brand Logo */}
+        <Link href="/" className="flex items-center gap-1">
+          <span className="text-2xl md:text-3xl font-black text-primaryRed tracking-tighter uppercase font-sans">
+            NETFLIX
+          </span>
+          <span className="hidden sm:inline-block text-[10px] font-bold text-white/70 bg-white/10 px-1.5 py-0.5 rounded tracking-widest uppercase ml-1">
+            ANIME
+          </span>
+        </Link>
+
+        {/* Desktop Navigation (Lightswind NavigationMenu + DropdownMenu) */}
+        <NavigationMenu className="hidden lg:flex">
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <Link
+                href="/"
+                className={cn(navigationMenuTriggerStyle(), NAV_LINK, pathname === "/" && NAV_LINK_ACTIVE)}
+              >
+                Trang chủ
+              </Link>
+            </NavigationMenuItem>
+
+            {isMenuLoading &&
+              [112, 100, 88, 84].map((width) => (
+                <NavigationMenuItem key={width}>
+                  <Skeleton className="h-9 rounded-full bg-white/10" width={width} />
+                </NavigationMenuItem>
+              ))}
+
+            {menus.map((menu) => (
+              <NavigationMenuItem key={menu.label}>
+                <NavDropdown menu={menu} currentPath={currentPath} />
+              </NavigationMenuItem>
+            ))}
+
+            <NavigationMenuItem>
+              <Link
+                href="/favorites"
+                className={cn(navigationMenuTriggerStyle(), NAV_LINK, pathname === "/favorites" && NAV_LINK_ACTIVE)}
+              >
+                Danh sách của tôi
+              </Link>
+            </NavigationMenuItem>
+
+            <NavigationMenuItem>
+              <Link
+                href="/history"
+                className={cn(navigationMenuTriggerStyle(), NAV_LINK, pathname === "/history" && NAV_LINK_ACTIVE)}
+              >
+                Lịch sử
+              </Link>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
+
+      {/* Right Quick Actions */}
+      <div className="flex items-center gap-2 md:gap-3">
+        {/* Search: always shown from md up; on smaller screens the icon opens it over the header */}
+        <form
+          ref={searchBoxRef}
+          onSubmit={handleSearchSubmit}
+          className={cn(
+            "items-center gap-1",
+            isSearchOpen ? "absolute inset-x-0 top-0 z-10 flex h-16 bg-[#141414] px-4 md:static md:h-auto md:bg-transparent md:px-0" : "hidden md:flex"
+          )}
+        >
+          <div className="relative w-full md:w-64 xl:w-80">
+            <FontAwesomeIcon icon={faMagnifyingGlass} className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <Input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Tìm kiếm anime..."
+              title="Tìm kiếm (Ctrl+K)"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsResultsOpen(true);
+              }}
+              onFocus={() => setIsResultsOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") closeSearch();
+              }}
+              className="h-9 rounded-full border-white/20 bg-black/60 pl-9 text-sm text-white focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+
+            {/* Live results */}
+            {showResults && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#181818] shadow-2xl md:w-[400px]">
+                {searchResults.length > 0 ? (
+                  <>
+                    <ul className="max-h-[60vh] overflow-y-auto p-1.5">
+                      {searchResults.slice(0, 8).map((item) => (
+                        <li key={item.slug}>
+                          <Link
+                            href={`/watch?slug=${encodeURIComponent(item.slug)}`}
+                            onClick={closeSearch}
+                            className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/10"
+                          >
+                            <img
+                              src={item.poster || item.image || ""}
+                              alt=""
+                              loading="lazy"
+                              className="h-14 w-10 flex-shrink-0 rounded bg-white/10 object-cover"
+                            />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-semibold text-white">{item.title}</span>
+                              {(item.latestEpisode || item.episode) && (
+                                <span className="block truncate text-xs text-gray-400">
+                                  {item.latestEpisode || item.episode}
+                                </span>
+                              )}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                      onClick={closeSearch}
+                      className="block border-t border-white/10 px-4 py-2.5 text-center text-sm font-semibold text-gray-200 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      Xem tất cả {searchResults.length} kết quả
+                    </Link>
+                  </>
+                ) : isWaiting ? (
+                  <div className="space-y-1.5 p-1.5">
+                    {[0, 1, 2].map((row) => (
+                      <div key={row} className="flex items-center gap-3 p-2">
+                        <Skeleton className="h-14 w-10 flex-shrink-0 rounded bg-white/10" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-3.5 w-3/4 bg-white/10" />
+                          <Skeleton className="h-3 w-1/3 bg-white/10" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="px-4 py-6 text-center text-sm text-gray-400">
+                    Không tìm thấy anime nào cho &ldquo;{searchQuery.trim()}&rdquo;.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="unstyled"
+            size="unstyled"
+            aria-label="Đóng tìm kiếm"
+            onClick={closeSearch}
+            className={cn(ICON_BUTTON, "flex-shrink-0 md:hidden")}
+          >
+            <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+          </Button>
+        </form>
+
+        <Button
+          variant="unstyled"
+          size="unstyled"
+          aria-label="Tìm kiếm"
+          onClick={() => {
+            setIsSearchOpen(true);
+            setTimeout(() => searchInputRef.current?.focus(), 0);
+          }}
+          className={cn(ICON_BUTTON, "md:hidden")}
+        >
+          <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4" />
+        </Button>
+      </div>
+    </header>
+  );
+};

@@ -1,0 +1,5 @@
+# Sites allowed to use the bridge (content script match + declarativeNetRequest initiatorDomains).
+# Add the production host of frontend-vite here (host only, no scheme/port), then rebuild.
+hosts:
+  - localhost
+  - 127.0.0.1
