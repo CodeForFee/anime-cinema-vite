@@ -1,25 +1,23 @@
 
 import React, { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "@/lib/router";
-import { useAnimeDetailQuery, useStreamQuery } from "../hooks/useAnimeQuery";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS, useAnimeDetailQuery, useStreamQuery } from "../hooks/useAnimeQuery";
+import { animeApi } from "../lib/api";
 import { useHistoryStore } from "../stores/useHistoryStore";
 import { CinemaPlayer } from "../components/player/CinemaPlayer";
+import { AmbientBackdrop } from "../components/layout/AmbientBackdrop";
+import { progressKey } from "../components/player/player-logic";
+import { episodeNumberOf, searchNames } from "../logic/skip-times";
 import { EpisodeGrid } from "../components/player/EpisodeGrid";
 import { MovieShelf } from "../components/movie/MovieShelf";
 import { InfoModal } from "../components/movie/InfoModal";
 import { AnimeDetailTabs } from "../components/movie/AnimeDetailTabs";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowLeft,
-  faCircleExclamation,
-  faHeart as faHeartSolid,
-} from "@fortawesome/free-solid-svg-icons";
-import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { Button, buttonVariants } from "../components/lightswind/button";
 import { Skeleton } from "../components/lightswind/skeleton";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { Link } from "@/lib/router";
-import { Sparkles } from "lucide-react";
+import { ArrowLeft, CircleAlert, Heart, SkipForward, Sparkles } from "lucide-react";
 import { formatEpisodeName } from "../lib/utils";
 import { Episode } from "../types/anime";
 
@@ -58,6 +56,8 @@ function WatchContent() {
     data: detailRes,
     isLoading: isAnimeLoading,
     error: animeError,
+    // another part of the same show is loading: the page stays, only the player and episodes wait
+    isPlaceholderData: switchingPart,
   } = useAnimeDetailQuery(slug);
   const anime = detailRes?.data;
 
@@ -80,7 +80,8 @@ function WatchContent() {
   // 2. Determine Active Episode
   const episodes = anime?.episodes || [];
   const currentEpisode: Episode | null = useMemo(() => {
-    if (episodes.length === 0) return null;
+    // the list on screen still belongs to the previous part: no episode, so no stream is asked for
+    if (switchingPart || episodes.length === 0) return null;
     if (epParam) {
       const match = episodes.find((e) => matchEpisode(e, epParam));
       if (match) return match;
@@ -93,7 +94,7 @@ function WatchContent() {
       }
     }
     return episodes[0];
-  }, [episodes, epParam, slug, mounted, getAnimeHistory]);
+  }, [episodes, epParam, slug, mounted, getAnimeHistory, switchingPart]);
 
   const episodeHash = currentEpisode?.hash || "";
   const episodeId = currentEpisode?.id || "";
@@ -115,6 +116,7 @@ function WatchContent() {
         title: anime.title,
         poster: anime.poster || anime.image || "",
         episodeSlug: currentEpisode.name,
+        episodeId: currentEpisode.id,
         episodeName: formatEpisodeName(currentEpisode.name),
         timestamp: Date.now(),
       });
@@ -127,6 +129,17 @@ function WatchContent() {
 
   const currentEpIndex = episodes.findIndex((e) => e.id === currentEpisode?.id);
   const hasNextEpisode = currentEpIndex >= 0 && currentEpIndex < episodes.length - 1;
+
+  const queryClient = useQueryClient();
+  const prefetchNextEpisode = () => {
+    const next = hasNextEpisode ? episodes[currentEpIndex + 1] : undefined;
+    if (next?.hash && next.id)
+      void queryClient.prefetchQuery({
+        queryKey: QUERY_KEYS.STREAM(next.hash, next.id, next.play || "api"),
+        queryFn: () => animeApi.getStreamUrl(next.hash, next.id, next.play || "api"),
+        staleTime: 15 * 60 * 1000,
+      });
+  };
 
   const handleNextEpisode = () => {
     if (hasNextEpisode) {
@@ -141,7 +154,7 @@ function WatchContent() {
   if (animeError || !anime) {
     return (
       <div className="max-w-xl mx-auto my-20 p-8 rounded-3xl bg-[#10121A] border border-white/10 text-center space-y-4">
-        <FontAwesomeIcon icon={faCircleExclamation} className="w-14 h-14 text-primaryRed mx-auto" />
+        <CircleAlert className="w-14 h-14 text-primaryRed mx-auto" />
         <h2 className="text-xl font-bold text-white">Không thể tải thông tin phim</h2>
         <p className="text-sm text-gray-400">
           Vui lòng kiểm tra kết nối hoặc quay lại trang chủ.
@@ -172,13 +185,15 @@ function WatchContent() {
           : "max-w-6xl lg:max-w-[min(72rem,calc((100vh_-_11rem)*16/9_+_4rem))]"
       }`}
     >
+      <AmbientBackdrop src={anime.backdrop || anime.poster} />
+
       {/* Top Back & Quick Action Bar */}
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+          className="glass-pill inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium text-gray-200 transition-colors hover:text-white"
         >
-          <FontAwesomeIcon icon={faArrowLeft} className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-3.5 h-3.5" />
           <span>Quay lại</span>
         </Link>
 
@@ -196,13 +211,13 @@ function WatchContent() {
                 rating: anime.rating,
               })
             }
-            className={`h-9 rounded-full border px-4 text-sm font-semibold transition-colors flex items-center gap-2 ${
+            className={`h-9 rounded-full px-4 text-sm font-semibold transition-colors flex items-center gap-2 ${
               isFavorite
-                ? "border-primaryRed/40 bg-primaryRed/15 text-primaryRed"
-                : "border-white/15 bg-white/5 text-gray-200 hover:border-white/40 hover:text-white"
+                ? "border border-primaryRed/50 bg-primaryRed/20 text-white shadow-[0_0_18px_rgba(229,9,20,0.35)]"
+                : "glass-pill text-gray-200 hover:text-white"
             }`}
           >
-            <FontAwesomeIcon icon={isFavorite ? faHeartSolid : faHeartRegular} className="w-3.5 h-3.5" />
+            <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current" : ""}`} />
             <span>{isFavorite ? "Đã yêu thích" : "Yêu thích"}</span>
           </Button>
         </div>
@@ -215,22 +230,65 @@ function WatchContent() {
         failed={isStreamError}
         title={anime.title}
         episodeName={currentEpisode ? formatEpisodeName(currentEpisode.name) : ""}
+        progressKey={currentEpisode ? progressKey(anime.slug, currentEpisode.id) : undefined}
         episodes={episodes}
-        currentEpisodeSlug={currentEpisode?.name || ""}
+        currentEpisodeId={currentEpisode?.id}
         onSelectEpisode={handleSelectEpisode}
         onRefresh={() => refetchStream()}
         onNextEpisode={handleNextEpisode}
         hasNextEpisode={hasNextEpisode}
+        onNearEnd={prefetchNextEpisode}
+        skipLookup={{
+          slug: anime.slug,
+          names: searchNames(anime.title, anime.subTitle),
+          year: Number(anime.year) || undefined,
+          episode: currentEpisode ? episodeNumberOf(currentEpisode.name) : null,
+        }}
       />
 
+      {/* Now playing */}
+      <div className="glass-card flex items-center gap-3 rounded-3xl p-3 pr-4 md:p-4">
+        <img
+          src={anime.poster || anime.image}
+          alt=""
+          decoding="async"
+          className="h-16 w-12 shrink-0 rounded-xl object-cover shadow-lg md:h-20 md:w-14"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-primaryRed">Đang xem</p>
+          <h1 className="truncate font-display text-base font-bold text-white md:text-xl">{anime.title}</h1>
+          <p className="truncate text-xs text-gray-400 md:text-sm">
+            {currentEpisode ? formatEpisodeName(currentEpisode.name) : ""}
+            {episodes.length > 0 && ` · ${episodes.length} tập`}
+          </p>
+        </div>
+        {hasNextEpisode && (
+          <Button
+            variant="unstyled"
+            size="unstyled"
+            onClick={handleNextEpisode}
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-bold text-black transition active:scale-95"
+          >
+            <SkipForward className="h-4 w-4 fill-current" />
+            <span className="hidden sm:inline">Tập tiếp</span>
+          </Button>
+        )}
+      </div>
+
       {/* Episode Selector Grid with Seasons Switcher */}
-      <EpisodeGrid
-        episodes={anime.episodes || []}
-        currentEpisodeSlug={currentEpisode?.name || ""}
-        onSelectEpisode={handleSelectEpisode}
-        seasons={anime.seasons || []}
-        currentSlug={anime.slug}
-      />
+      <div
+        aria-busy={switchingPart}
+        className={switchingPart ? "pointer-events-none animate-pulse opacity-50 transition-opacity" : "transition-opacity"}
+      >
+        <EpisodeGrid
+          episodes={anime.episodes || []}
+          currentEpisodeSlug={currentEpisode?.name || ""}
+          onSelectEpisode={handleSelectEpisode}
+          seasons={anime.seasons || []}
+          // the picked part shows at once, even while its episodes load
+          currentSlug={slug}
+        />
+      </div>
 
       {/* Rich Anime Information, Trailer, Cast & Gallery Tabs */}
       <AnimeDetailTabs anime={anime} />

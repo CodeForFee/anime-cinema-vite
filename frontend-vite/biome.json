@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": ["src/**", "vite.config.ts", "scripts/**", "!src/logic/new-dha/pkg", "!src/logic/dha"]
+  },
+  "formatter": { "enabled": false },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "useKeyWithClickEvents": "warn",
+        "noStaticElementInteractions": "warn",
+        "useAltText": "warn",
+        "useAriaPropsSupportedByRole": "warn",
+        "useButtonType": "warn"
+      },
+      "correctness": { "useExhaustiveDependencies": "warn" },
+      "suspicious": { "noArrayIndexKey": "warn", "useIterableCallbackReturn": "warn", "noAssignInExpressions": "warn" }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.css"],
+      "linter": { "rules": { "suspicious": { "noUnknownAtRules": "off" } } }
+    },
+    {
+      "includes": ["src/apis/**"],
+      "linter": { "rules": { "correctness": { "useHookAtTopLevel": "off" } } }
+    }
+  ],
+  "assist": { "actions": { "source": { "organizeImports": "off" } } }
+}

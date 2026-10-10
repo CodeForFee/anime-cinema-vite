@@ -1,12 +1,13 @@
 
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useMemo, useRef } from "react";
 import { Link } from "@/lib/router";
 import { useSearchParams } from "@/lib/router";
-import { MovieCard } from "../components/movie/MovieCard";
+import { PosterTile } from "../components/movie/PosterTile";
+import { AmbientBackdrop } from "../components/layout/AmbientBackdrop";
 import { InfoModal } from "../components/movie/InfoModal";
 import { buttonVariants } from "../components/lightswind/button";
 import { PosterGridSkeleton } from "../components/movie/Skeletons";
-import { useBrowseQuery, useHomeQuery, useMenuQuery } from "../hooks/useAnimeQuery";
+import { useBrowseInfiniteQuery, useHomeQuery, useMenuQuery } from "../hooks/useAnimeQuery";
 import { cn } from "../lib/utils";
 
 // Older links use ?type=...; each maps to the source list it always meant
@@ -23,28 +24,50 @@ const TYPE_PATHS: Record<string, { path: string; label: string }> = {
   "top-year": { path: "/bang-xep-hang/year.html", label: "Top Anime Theo Năm" },
 };
 
-const exploreLink = (path: string, page = 1) =>
-  `/explore?path=${encodeURIComponent(path)}${page > 1 ? `&page=${page}` : ""}`;
+const exploreLink = (path: string) => `/explore?path=${encodeURIComponent(path)}`;
 
 const PILL = "h-9 flex-shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors";
-const PILL_IDLE = "border-white/15 bg-white/5 text-gray-300 hover:border-white/40 hover:text-white";
+const PILL_IDLE = "glass-pill text-gray-200 hover:text-white";
 const PILL_ACTIVE = "border-white bg-white text-black";
-const GRID = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-5 gap-y-8 sm:gap-x-6 sm:gap-y-9";
+const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-5 xl:grid-cols-6";
 
 function ExploreContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get("type") || "";
   const path = searchParams.get("path") || TYPE_PATHS[type]?.path || "";
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
 
   const { data: menus = [] } = useMenuQuery();
   // No list picked -> the home page's featured titles
   const { data: homeRes, isLoading: isHomeLoading } = useHomeQuery();
-  const { data: browseRes, isLoading: isBrowseLoading, isError } = useBrowseQuery(path, page);
+  const browse = useBrowseInfiniteQuery(path);
+  const isError = browse.isError;
 
-  const items = path ? browseRes?.items || [] : homeRes?.featured?.length ? homeRes.featured : homeRes?.latest || [];
-  const totalPages = path ? browseRes?.totalPages || 1 : 1;
-  const loading = path ? isBrowseLoading : isHomeLoading;
+  // pages can overlap when the source list moves between two requests: one card per title
+  const items = useMemo(() => {
+    if (!path) return homeRes?.featured?.length ? homeRes.featured : homeRes?.latest || [];
+    const seen = new Set<string>();
+    return (browse.data?.pages ?? []).flatMap((p) => p.items).filter((item) => {
+      const key = item.slug || item.title;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [path, homeRes, browse.data]);
+  const loading = path ? browse.isLoading : isHomeLoading;
+
+  // Scrolling near the end asks for the next page, well before the viewer gets there
+  const sentinel = useRef<HTMLDivElement>(null);
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = browse;
+  useEffect(() => {
+    const node = sentinel.current;
+    if (!node || !hasNextPage) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => entry.isIntersecting && !isFetchingNextPage && void fetchNextPage(),
+      { rootMargin: "1200px 0px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length]);
 
   // Name of the list: the menu entry it came from, with its group for genres / seasons / rankings
   const group = menus.find((g) => g.items.some((i) => i.path === path));
@@ -60,8 +83,9 @@ function ExploreContent() {
   const quickLinks = menus[0]?.items || [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
-      <h1 className="text-2xl md:text-3xl font-bold text-white">{title}</h1>
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6">
+      <AmbientBackdrop src={items[0]?.poster || items[0]?.image} />
+      <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h1>
 
       {/* Quick filter: the main anime types */}
       <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-2 pt-1">
@@ -89,7 +113,7 @@ function ExploreContent() {
       {loading ? (
         <PosterGridSkeleton count={18} />
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-16 text-center">
+        <div className="glass-card rounded-3xl px-6 py-12">
           <p className="text-base font-semibold text-white">
             {isError ? "Không tải được danh sách này." : "Chưa có phim nào trong mục này."}
           </p>
@@ -98,32 +122,23 @@ function ExploreContent() {
       ) : (
         <div className={GRID}>
           {items.map((anime) => (
-            <MovieCard key={anime.slug || anime.title} anime={anime} className="w-full" />
+            // PosterTile skips layout and paint while off screen: long lists stay smooth
+            <PosterTile key={anime.slug || anime.title} anime={anime} />
           ))}
         </div>
       )}
 
-      {/* Pagination */}
-      {path && totalPages > 1 && (
-        <nav aria-label="Phân trang" className="flex items-center justify-center gap-3 pt-2">
-          {page > 1 ? (
-            <Link href={exploreLink(path, page - 1)} className={buttonVariants({ variant: "unstyled", size: "unstyled", className: cn(PILL, PILL_IDLE) })}>
-              Trang trước
-            </Link>
+      {/* Next page: loads by itself as the sentinel nears the screen */}
+      {path && hasNextPage && (
+        <div ref={sentinel} className="flex justify-center py-6" aria-live="polite">
+          {isFetchingNextPage ? (
+            <span className="h-7 w-7 animate-spin rounded-full border-2 border-white/20 border-t-white" aria-label="Đang tải thêm" />
           ) : (
-            <span className={cn(PILL, "inline-flex items-center border-white/10 text-gray-600")}>Trang trước</span>
+            <button type="button" onClick={() => void fetchNextPage()} className={cn(PILL, PILL_IDLE)}>
+              Tải thêm
+            </button>
           )}
-          <span className="text-sm tabular-nums text-gray-300">
-            Trang {page} / {totalPages}
-          </span>
-          {page < totalPages ? (
-            <Link href={exploreLink(path, page + 1)} className={buttonVariants({ variant: "unstyled", size: "unstyled", className: cn(PILL, PILL_IDLE) })}>
-              Trang sau
-            </Link>
-          ) : (
-            <span className={cn(PILL, "inline-flex items-center border-white/10 text-gray-600")}>Trang sau</span>
-          )}
-        </nav>
+        </div>
       )}
 
       {/* Global Info Modal */}

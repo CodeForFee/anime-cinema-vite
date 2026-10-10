@@ -2,16 +2,12 @@
 import React, { useRef, useState } from "react";
 import { Link } from "@/lib/router";
 import { Button, Tooltip, ScrollShadow } from "@heroui/react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChevronLeft,
-  faChevronRight,
-  faPlay,
-} from "@fortawesome/free-solid-svg-icons";
 import type { LucideIcon } from "lucide-react";
 import { AnimeItem } from "../../types/anime";
 import { LazyImage } from "../movie/LazyImage";
+import { partLabel, StackCarousel } from "./StackCarousel";
 import { useUIStore } from "../../stores/useUIStore";
+import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 
 interface Top10ShelfProps {
   items: AnimeItem[];
@@ -24,7 +20,6 @@ interface Top10ShelfProps {
 export const Top10Shelf: React.FC<Top10ShelfProps> = ({
   items,
   title = "Phim Nổi Bật Đề Cử",
-  icon: Icon,
   seeMoreHref = "/explore?type=trending",
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -64,29 +59,27 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
 
       {/* Section Header */}
       <div className="flex items-center justify-between mb-4 px-4 md:px-12">
-        <div className="flex items-center gap-2.5">
-          {Icon && <Icon aria-hidden className="h-6 w-6 flex-shrink-0 text-primaryRed" strokeWidth={2.25} />}
-          <h3 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            <span>{title}</span>
-          </h3>
-        </div>
+        {/* same header as MovieShelf */}
+        <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">{title}</h3>
 
         {seeMoreHref && (
-          <Link href={seeMoreHref}>
-            <Button
-              size="sm"
-              variant="light"
-              className="text-xs md:text-sm font-semibold text-gray-400 hover:text-white"
-              endContent={<FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />}
-            >
-              Xem tất cả
-            </Button>
+          <Link
+            href={seeMoreHref}
+            className="glass-pill flex h-8 items-center gap-1 rounded-full pl-3.5 pr-2.5 text-xs font-semibold text-gray-200 transition hover:text-white"
+          >
+            Xem tất cả
+            <ChevronRight aria-hidden className="h-3.5 w-3.5" />
           </Link>
         )}
       </div>
 
-      {/* Horizontal Cards Scroll Container */}
-      <div className="relative px-4 md:px-12">
+      {/* Phones: stacked cards, swipe to move */}
+      <div className="md:hidden">
+        <StackCarousel items={items} />
+      </div>
+
+      {/* Horizontal Cards Scroll Container (tablet and up) */}
+      <div className="relative hidden px-4 md:block md:px-12">
         {/* Left Arrow Button */}
         <Tooltip content="Cuộn trái" placement="right">
           <Button
@@ -97,7 +90,7 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
             onPress={() => handleScroll("left")}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-black/80 hover:bg-primaryRed text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/top10:opacity-100 transition-all duration-300 shadow-2xl"
           >
-            <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" />
           </Button>
         </Tooltip>
 
@@ -121,17 +114,8 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
               ? "url(#rank-card-slope-up)"
               : "url(#rank-card-slope-down)";
 
-            // Extract genuine Season/Part from title or metadata - DO NOT show if not present
-            let seasonText: string | null = null;
-            const seasonMatch = anime.title.match(/(?:Season|Mùa|Phần|SS|Part)\s*(\d+|[IVXLCDM]+)/i);
-            if (seasonMatch) {
-              seasonText = `Phần ${seasonMatch[1]}`;
-            } else if ((anime as any).metadata?.["Season"]) {
-              const metaSeason = String((anime as any).metadata["Season"]).trim();
-              if (metaSeason && metaSeason !== "1" && metaSeason !== "Phần 1") {
-                seasonText = metaSeason.startsWith("Phần") ? metaSeason : `Phần ${metaSeason}`;
-              }
-            }
+            // the part only when the title has one
+            const seasonText = partLabel(anime);
 
             return (
               <div
@@ -170,7 +154,7 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
                     {/* Center Play Button Overlay on Hover */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                       <div className="w-12 h-12 rounded-full bg-primaryRed text-white flex items-center justify-center shadow-xl shadow-red-600/50 transform group-hover:scale-110 transition-transform">
-                        <FontAwesomeIcon icon={faPlay} className="w-5 h-5 fill-current ml-0.5" />
+                        <Play className="fill-current w-5 h-5 fill-current ml-0.5" />
                       </div>
                     </div>
 
@@ -207,16 +191,14 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
                       </p>
                     )}
 
-                    {/* Metadata line: P • [Phần X] • Tập Y (Do not show Phần if not present) */}
-                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400">
-                      <span className="text-white font-bold">P</span>
+                    {/* Metadata line: [Phần X •] Tập Y, the part only when the title has one */}
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
                       {seasonText && (
                         <>
-                          <span>•</span>
                           <span className="text-gray-300">{seasonText}</span>
+                          <span aria-hidden>•</span>
                         </>
                       )}
-                      <span>•</span>
                       <span className="text-primaryRed font-bold">
                         {cleanEpNumber ? `Tập ${cleanEpNumber}` : "Tập mới"}
                       </span>
@@ -238,7 +220,7 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
             onPress={() => handleScroll("right")}
             className="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-black/80 hover:bg-primaryRed text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/top10:opacity-100 transition-all duration-300 shadow-2xl"
           >
-            <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" />
           </Button>
         </Tooltip>
       </div>

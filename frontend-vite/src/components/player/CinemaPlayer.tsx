@@ -1,12 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
+import type React from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertCircle, RotateCw } from "lucide-react";
 import { Button } from "../lightswind/button";
 import { usePlayerStore } from "../../stores/usePlayerStore";
+import { useQuery } from "@tanstack/react-query";
 import { usePlayerBridge } from "../../hooks/usePlayerBridge";
-import { cn } from "../../lib/utils";
-import { Episode, StreamSource } from "../../types/anime";
-import { mountSource } from "./HlsPlayer";
-import { MobilePlayerControls } from "./MobilePlayerControls";
+import { findMalId, getSkipTimes } from "../../logic/skip-times";
+import { onBack } from "../../logic/back";
+import { cn, formatEpisodeName } from "../../lib/utils";
+import type { Episode, StreamSource } from "../../types/anime";
+import { resumePoint, useProgressStore } from "./player-logic";
+import { NextUpCard, ResumePrompt, SkipIntroButton } from "./PlayerOverlays";
+import { EpisodeSheet, SpeedSheet } from "./PlayerSheets";
+import { TouchControls } from "./TouchControls";
 
 interface CinemaPlayerProps {
   /** The source's own player page; when set it is embedded and `sources` is ignored */
@@ -16,12 +22,18 @@ interface CinemaPlayerProps {
   failed?: boolean;
   title: string;
   episodeName: string;
+  /** Where the watch position of this episode is kept (player-logic.ts progressKey) */
+  progressKey?: string;
   episodes?: Episode[];
-  currentEpisodeSlug?: string;
+  currentEpisodeId?: string;
   onSelectEpisode?: (ep: Episode) => void;
   onRefresh?: () => void;
   onNextEpisode?: () => void;
   hasNextEpisode?: boolean;
+  /** Called once per episode at 80 %: time to fetch the next one so switching is instant */
+  onNearEnd?: () => void;
+  /** What to look the opening / ending up by (logic/skip-times.ts); no skip button without it */
+  skipLookup?: { slug: string; names: string[]; year?: number; episode: number | null };
 }
 
 /** Set by the Android app (MainActivity.java): rotates to landscape and hides the system bars */
@@ -31,15 +43,26 @@ const nativeShell = () => (window as unknown as { AvsNative?: NativeShell }).Avs
 // Phones and tablets get the app's own touch controls; a mouse keeps the player's controls
 const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches;
 
+const SAVE_EVERY_MS = 5000;
+// "Bỏ qua giới thiệu": most TV openings are ~90 s and start within the first 2.5 min
+// without ending times, the next-episode card comes this many seconds before the end
+const NEXT_UP_BEFORE_END = 20;
+
 export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
   embedUrl,
   sources,
   failed,
   title,
   episodeName,
+  progressKey,
+  episodes,
+  currentEpisodeId,
+  onSelectEpisode,
   onRefresh,
   onNextEpisode,
   hasNextEpisode,
+  onNearEnd,
+  skipLookup,
 }) => {
   const frameRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -50,13 +73,76 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [brightness, setBrightness] = useState(1);
+  const [sheet, setSheet] = useState<"speed" | "episodes" | null>(null);
 
   const source = embedUrl ? undefined : sources?.[0];
   const [touch] = useState(isTouchDevice);
   const bridge = usePlayerBridge(iframeRef, embedUrl, touch);
-  const controlled = bridge.ready && bridge.state !== null;
+  const state = bridge.ready ? bridge.state : null;
 
-  // (Re)mount the stream whenever the source changes
+  // ---- per-episode state: resume point, dismissed cards ----
+  const [resumeAt, setResumeAt] = useState<number | null>(null);
+  const [introSkipped, setIntroSkipped] = useState(false);
+  const [nextDismissed, setNextDismissed] = useState(false);
+  const lastSave = useRef(0);
+  const nearEndSent = useRef(false);
+
+  useEffect(() => {
+    setResumeAt(progressKey ? resumePoint(useProgressStore.getState().entries[progressKey]) : null);
+    setIntroSkipped(false);
+    setNextDismissed(false);
+    lastSave.current = 0;
+    nearEndSent.current = false;
+  }, [progressKey]);
+
+  // Our saved position wins; else the one the player's own (hidden) resume box offers
+  const offeredAt = resumeAt ?? bridge.resumeOffer;
+  // the player's box comes before its video loads; our own position waits for the video to be there
+  const askResume =
+    offeredAt !== null && (bridge.resumeOffer !== null || (state !== null && state.duration > 0));
+
+  // Hold the episode while the viewer picks "Xem tiếp" or "Xem từ đầu"
+  useEffect(() => {
+    if (askResume) bridge.send("pause");
+  }, [askResume, bridge.send]);
+
+  const answerResume = (resume: boolean) => {
+    const seconds = resume ? offeredAt ?? 0 : 0;
+    if (bridge.resumeOffer !== null) {
+      // let the player close its box its own way; for our own position it only needs dismissing
+      const playerResumes = resume && resumeAt === null;
+      bridge.send("resume", playerResumes ? 1 : 0);
+      bridge.clearResumeOffer();
+      if (playerResumes) {
+        setResumeAt(null);
+        return;
+      }
+    }
+    // after the player's "Từ đầu" has run its own seek to 0
+    setTimeout(() => {
+      bridge.send("seek", seconds);
+      bridge.send("play");
+    }, bridge.resumeOffer !== null ? 400 : 0);
+    setResumeAt(null);
+  };
+
+  useEffect(() => {
+    if (!state || nearEndSent.current || state.duration <= 0 || state.currentTime / state.duration < 0.8) return;
+    nearEndSent.current = true;
+    onNearEnd?.();
+  }, [state, onNearEnd]);
+
+  // Keep the position; never while the prompt is up, or the 0:00 under it would overwrite the saved one
+  useEffect(() => {
+    if (!state || !progressKey || offeredAt !== null || state.duration <= 0) return;
+    const now = Date.now();
+    if (now - lastSave.current < SAVE_EVERY_MS && !state.paused && !state.ended) return;
+    lastSave.current = now;
+    useProgressStore.getState().save(progressKey, state.currentTime, state.duration);
+  }, [state, progressKey, offeredAt]);
+
+  // (Re)mount the stream whenever the source changes; hls.js and the decryptor load only for this path
   useEffect(() => {
     setIsLoading(true);
     setHasError(false);
@@ -64,20 +150,21 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
     const video = videoRef.current;
     if (!video || !source) return;
 
-    return mountSource(video, source, (message) => {
-      console.warn("[Player]", message);
-      setIsLoading(false);
-      setHasError(true);
+    let cleanup: (() => void) | undefined;
+    let cancelled = false;
+    void import("./HlsPlayer").then(({ mountSource }) => {
+      if (cancelled) return;
+      cleanup = mountSource(video, source, (message) => {
+        console.warn("[Player]", message);
+        setIsLoading(false);
+        setHasError(true);
+      });
     });
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
   }, [embedUrl, source?.file, source?.type]);
-
-  // The embedded player reports its end through the bridge (the plain <video> uses onEnded below)
-  const ended = bridge.state?.ended ?? false;
-  useEffect(() => {
-    if (ended && autoPlayNext && hasNextEpisode && onNextEpisode) onNextEpisode();
-    // only when `ended` flips
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ended]);
 
   // Browser full screen can end without our button (system back, Esc)
   useEffect(() => {
@@ -86,6 +173,10 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
+
+  // Android back leaves full screen first, before it leaves the page
+  // biome-ignore lint/correctness/useExhaustiveDependencies: toggleFullscreen is a new closure every render
+  useEffect(() => (isFullscreen ? onBack(toggleFullscreen) : undefined), [isFullscreen]);
 
   // Never leave the app rotated after the player is gone
   useEffect(() => () => nativeShell()?.postMessage("fullscreen:off"), []);
@@ -108,6 +199,34 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
   };
 
   const showError = hasError || failed;
+  const nextEpisode = episodes && currentEpisodeId ? episodes[episodes.findIndex((e) => e.id === currentEpisodeId) + 1] : undefined;
+  const remaining = state && state.duration > 0 ? state.duration - state.currentTime : Infinity;
+  // This episode's real opening / ending: MyAnimeList id once per title, times once per episode and cut
+  const duration = Math.round(state?.duration ?? 0);
+  const { data: malId } = useQuery({
+    queryKey: ["skip", "mal-id", skipLookup?.slug],
+    queryFn: () => findMalId(skipLookup?.names ?? [], skipLookup?.year),
+    enabled: Boolean(skipLookup?.names.length),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 7 * 24 * 60 * 60 * 1000,
+  });
+  const { data: skipTimes } = useQuery({
+    queryKey: ["skip", "times", malId, skipLookup?.episode, duration],
+    queryFn: () => getSkipTimes(malId as number, skipLookup?.episode as number, duration),
+    enabled: Boolean(malId && skipLookup?.episode && duration > 0),
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+  const op = skipTimes?.op;
+  const ed = skipTimes?.ed;
+  const now = state?.currentTime ?? 0;
+
+  const inEnding = ed !== undefined && now >= ed[0] && ed[1] >= duration - 30;
+  const showNextUp =
+    !askResume && !nextDismissed && hasNextEpisode && onNextEpisode && state !== null &&
+    (state.ended || remaining <= NEXT_UP_BEFORE_END || inEnding);
+  // only while the opening is actually playing: resuming past it never shows the button
+  const showSkipIntro =
+    !askResume && !introSkipped && state !== null && op !== undefined && now >= op[0] && now < op[1] - 2;
 
   return (
     <div
@@ -122,11 +241,12 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
         className={cn(
           "relative mx-auto w-full aspect-video overflow-hidden bg-black",
           "lg:max-w-[min(100%,calc((100vh_-_11rem)*16/9))]",
-          isFullscreen && "!fixed inset-0 z-[100] !aspect-auto h-[100dvh] w-screen !max-w-none"
+          // anchored by inset, not 100vw/100dvh: those lag behind a rotation on Android WebView
+          isFullscreen && "!fixed !inset-0 z-[100] !m-0 !aspect-auto !h-auto !w-auto !max-w-none"
         )}
       >
         {isLoading && !showError && (
-          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black text-white">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black">
             <span className="h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-primaryRed" />
             <p className="text-sm text-gray-300">Đang tải video...</p>
           </div>
@@ -160,15 +280,16 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
             src={embedUrl}
             title={`${title} - ${episodeName}`}
             className="absolute inset-0 z-[5] h-full w-full border-0"
+            style={brightness !== 1 ? { filter: `brightness(${brightness})` } : undefined}
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             onLoad={() => setIsLoading(false)}
           />
         )}
 
-        {controlled && bridge.state && !showError && (
-          <MobilePlayerControls
-            state={bridge.state}
+        {touch && state && !showError && (
+          <TouchControls
+            state={state}
             send={bridge.send}
             title={title}
             episodeName={episodeName}
@@ -176,14 +297,51 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
             onNextEpisode={onNextEpisode}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
+            brightness={brightness}
+            onBrightness={setBrightness}
+            onOpenSpeed={() => setSheet("speed")}
+            onOpenEpisodes={isFullscreen && episodes && episodes.length > 1 && onSelectEpisode ? () => setSheet("episodes") : undefined}
           />
         )}
 
+        {showSkipIntro && (
+          <SkipIntroButton
+            onSkip={() => {
+              bridge.send("seek", op[1]);
+              setIntroSkipped(true);
+            }}
+          />
+        )}
+
+        {showNextUp && (
+          <NextUpCard
+            key={progressKey}
+            label={nextEpisode ? formatEpisodeName(nextEpisode.name) : "Tập tiếp"}
+            ended={state.ended}
+            autoPlay={autoPlayNext}
+            onPlay={onNextEpisode}
+            onDismiss={() => setNextDismissed(true)}
+          />
+        )}
+
+        {askResume && (
+          <ResumePrompt key={progressKey} at={offeredAt} onResume={() => answerResume(true)} onRestart={() => answerResume(false)} />
+        )}
+
+        {sheet === "speed" && state && (
+          <SpeedSheet rate={state.rate} onSelect={(rate) => bridge.send("rate", rate)} onClose={() => setSheet(null)} />
+        )}
+        {sheet === "episodes" && episodes && onSelectEpisode && (
+          <EpisodeSheet episodes={episodes} currentId={currentEpisodeId} onSelect={onSelectEpisode} onClose={() => setSheet(null)} />
+        )}
+
+        {/* biome-ignore lint/a11y/useMediaCaption: the streams are hardsubbed, there is no caption track */}
         <video
           ref={videoRef}
           hidden={Boolean(embedUrl)}
           aria-label={`${title} - ${episodeName}`}
           className="absolute inset-0 h-full w-full bg-black"
+          style={brightness !== 1 ? { filter: `brightness(${brightness})` } : undefined}
           controls
           autoPlay
           playsInline
@@ -196,7 +354,7 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
             }
           }}
           onEnded={() => {
-            if (hasNextEpisode && onNextEpisode) onNextEpisode();
+            if (autoPlayNext && hasNextEpisode && onNextEpisode) onNextEpisode();
           }}
         />
       </div>

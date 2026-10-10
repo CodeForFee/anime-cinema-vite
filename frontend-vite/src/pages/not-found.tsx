@@ -1,13 +1,12 @@
 import { Link } from "@/lib/router";
 import { Button } from "@heroui/react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFilm } from "@fortawesome/free-solid-svg-icons";
+import { Film } from "lucide-react";
 
 export default function NotFound() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 space-y-6">
       <div className="w-20 h-20 rounded-3xl bg-primaryRed/10 border border-primaryRed/20 flex items-center justify-center text-primaryRed shadow-2xl">
-        <FontAwesomeIcon icon={faFilm} className="w-8 h-8" />
+        <Film className="w-8 h-8" />
       </div>
 
       <div className="space-y-2 max-w-md">

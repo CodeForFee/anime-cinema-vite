@@ -9,6 +9,8 @@ import {
   useSearchParams as useRouterSearchParams
 } from "react-router-dom"
 
+import { preloadRoute } from "./routes"
+
 type ViewTransitionDocument = Document & { startViewTransition?: (update: () => void) => unknown }
 
 /**
@@ -31,7 +33,7 @@ type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
 }
 
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
-  { href, prefetch: _prefetch, scroll: _scroll, onClick, ...props },
+  { href, prefetch: _prefetch, scroll: _scroll, onClick, onPointerEnter, onTouchStart, ...props },
   ref
 ) {
   const navigate = useNavigate()
@@ -42,6 +44,14 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
       ref={ref}
       to={href}
       {...props}
+      onPointerEnter={(event) => {
+        onPointerEnter?.(event)
+        preloadRoute(href)
+      }}
+      onTouchStart={(event) => {
+        onTouchStart?.(event)
+        preloadRoute(href)
+      }}
       onClick={(event) => {
         onClick?.(event)
         // leave new-tab clicks and handled events to the browser / the caller

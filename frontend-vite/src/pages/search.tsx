@@ -3,12 +3,11 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "@/lib/router";
 import { Input, Chip } from "@heroui/react";
 import { PosterGridSkeleton } from "../components/movie/Skeletons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faCircleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { MovieCard } from "../components/movie/MovieCard";
 import { InfoModal } from "../components/movie/InfoModal";
 import { useSearchQuery } from "../hooks/useAnimeQuery";
 import { useDebounce } from "../hooks/useDebounce";
+import { CircleAlert, Search } from "lucide-react";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -38,12 +37,12 @@ function SearchContent() {
       {/* Search Header */}
       <div className="max-w-2xl">
         <div className="flex items-center gap-2 text-primaryRed text-sm font-semibold uppercase tracking-wider mb-2">
-          <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3.5 h-3.5" />
+          <Search className="w-3.5 h-3.5" />
           <span>Tìm Kiếm Trực Tuyến</span>
         </div>
         <h1 className="text-3xl font-extrabold text-white mb-6">Tìm Kiếm Anime Yêu Thích</h1>
 
-        {/* Big Search Input with HeroUI & FontAwesome */}
+        {/* Big Search Input */}
         <Input
           size="lg"
           variant="bordered"
@@ -53,7 +52,7 @@ function SearchContent() {
           placeholder="Nhập tên anime (Ví dụ: One Piece, Jujutsu Kaisen, Conan...)"
           value={searchTerm}
           onValueChange={setSearchTerm}
-          startContent={<FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-primaryRed mr-2" />}
+          startContent={<Search className="w-4 h-4 text-primaryRed mr-2" />}
           classNames={{
             inputWrapper: "glass-field h-14 focus-within:!border-primaryRed",
             input: "text-base text-white placeholder:text-gray-400",
@@ -102,7 +101,7 @@ function SearchContent() {
         </div>
       ) : debouncedSearch.trim() ? (
         <div className="p-16 rounded-3xl bg-[#10121A] border border-white/10 text-center text-gray-400 space-y-3">
-          <FontAwesomeIcon icon={faCircleExclamation} className="w-10 h-10 text-gray-400 mx-auto" />
+          <CircleAlert className="w-10 h-10 text-gray-400 mx-auto" />
           <p className="text-base font-semibold text-white">
             Không tìm thấy kết quả nào cho &ldquo;{debouncedSearch}&rdquo;
           </p>

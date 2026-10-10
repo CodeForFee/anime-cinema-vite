@@ -1,4 +1,4 @@
-# Anime Cinema (Vite)
+# Capynime (Vite)
 
 Client-side version of the site: no backend. Every request leaves the viewer's browser through the
 `avs-helper-extension` (sibling folder), the same way `anime-vsub/desktop-web` works.
@@ -13,21 +13,46 @@ cd ../avs-helper-extension && pnpm i && pnpm --filter ./manifest-v3 build
 cd ../frontend-vite && pnpm i && pnpm dev      # http://localhost:4100
 ```
 
-`pnpm test` runs the parser specs, `pnpm build` type-checks and builds.
+`pnpm test` runs the specs, `pnpm lint` (Biome, errors only), `pnpm build` type-checks and builds,
+`pnpm analyze` writes `dist/stats.html`.
+
+Stack: Vite 8 (Rolldown) + React 19 with React Compiler (UI only: `src/apis` and `src/logic` are excluded in
+`vite.config.ts`, their `use*` helpers are not hooks), TanStack Query persisted to IndexedDB, Zustand,
+react-router with one lazy chunk per page (`src/lib/routes.ts`, preloaded on hover/touch), PWA shell via
+vite-plugin-pwa (web only; the Android app unregisters it).
+
+## Deploy (Vercel)
+
+Root directory `frontend-vite`. `vercel.json` pins pnpm 11.15.1, rewrites routes to `index.html` (paths with a
+dot are left alone, so a stale chunk 404s instead of coming back as HTML), caches `/assets` immutable and
+revalidates `index.html`/`sw.js`. Node >= 22.12 (`engines`). The production host must be in the extension
+allowlist.
+
+## Icons
+
+`pnpm icons` makes every icon from `assets/app-icon.png`: `public/app-icon.png` (in-app logo), favicon, PWA and
+maskable icons, Android launcher icons and splash screens (`scripts/icons.mjs` + `pwa-assets.config.ts`).
 
 ## Android app (no extension needed)
 
 ```sh
-pnpm build:apk      # vite build + cap sync + gradlew assembleDebug
+pnpm build:apk          # debug: android/app/build/outputs/apk/debug/Capynime-<version>-debug.apk
+pnpm release [patch|minor|major]   # bump version, signed APK + AAB -> release/Capynime-<version>.apk|.aab
 ```
 
-The APK lands in `android/app/build/outputs/apk/debug/app-debug.apk`. Gradle needs JDK 21: point `JAVA_HOME`
-at one if the build stops with `invalid source release: 21`. It is a debug-signed build, fine to install by
-hand; a store or long-lived build needs its own signing key.
+`pnpm release` bumps `package.json` (versionCode follows: 2.3.4 -> 20304, so every release can update the
+installed app), builds, signs and copies the files to `release/`; on failure it puts the version back. It finds a
+JDK 21+ itself (JAVA_HOME, Android Studio jbr, Adoptium). Commit `package.json` after a release.
+
+Signing reads `android/keystore.properties` + `android/capynime-release.jks` (both git-ignored; back them up:
+without them installed apps can no longer be updated). The script refuses to build without them. App id
+`app.capynime`. Phones warn about any APK installed outside Google Play; that is normal for sideloading, not a
+fault of the build. An install that fails is almost always a different signing key on the copy already installed.
+
 
 Inside the app `src/logic/bridge.ts` sends requests through the native HTTP stack instead of the extension, and
 `capacitor.config.ts` serves the bundled web under the source host so the embedded player gets the Referer it
-expects. Not yet run on a device.
+expects. Checked on a Xiaomi (Android 16): home, header under the status bar, landscape full screen, sheets.
 
 ## How it is wired
 
@@ -47,9 +72,9 @@ Two channels to the extension:
 
 The source host is `src/constants.ts`; keep it equal to the Referer in `../avs-helper-extension/map-referer.json`.
 
-## Known state (2026-10-10)
+## Known state (2026-10-11)
 
-Home, detail, episode lists and playback work on localhost with the extension loaded.
+Home, detail, episode lists and playback work on localhost with the extension loaded, and in the Android app.
 
 Playback embeds the CDN player page in an iframe (`embedUrl` in `src/lib/api.ts`); the URL tag makes the
 extension send the source Referer with the frame request. The player then runs on the CDN origin and talks to
@@ -57,8 +82,11 @@ it from the viewer IP.
 
 `public/player-bridge.js` is injected into that frame (by the extension as a content script, by the Android app
 from `MainActivity.java`). It carries the ad shield and a postMessage remote control. On touch devices the app
-draws its own controls over the player (`src/components/player/MobilePlayerControls.tsx`) and gets the end of an
-episode from the bridge; with a mouse the player keeps its own controls. There is no resume position yet.
+draws its own controls over the player (`src/components/player/TouchControls.tsx`: double tap 10 s, swipe to
+seek, in full screen swipe right = volume / left = brightness, speed and episode sheets); with a mouse the
+player keeps its own controls and the bridge only reports the position. Positions are kept per episode
+(`useProgressStore` in `src/components/player/player-logic.ts`) for "Xem tiếp". The CDN player's own resume box
+(`#avs-resume-overlay`) is hidden by the bridge and answered through the app's prompt.
 
 The upstream decryptor path (`src/logic/new-dha/pkg`, release build of 2026-06-14) is only used when the source
 answers with something other than its iframe player. For the iframe player it is rejected by the CDN

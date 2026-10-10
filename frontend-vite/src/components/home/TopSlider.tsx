@@ -2,15 +2,9 @@
 import React, { useRef } from "react";
 import { Link } from "@/lib/router";
 import { Button, Tooltip, ScrollShadow } from "@heroui/react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChevronLeft,
-  faChevronRight,
-  faStar,
-  faPlay,
-} from "@fortawesome/free-solid-svg-icons";
 import { AnimeItem } from "../../types/anime";
 import { useUIStore } from "../../stores/useUIStore";
+import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
 
 interface TopSliderProps {
   items: AnimeItem[];
@@ -42,7 +36,7 @@ export const TopSlider: React.FC<TopSliderProps> = ({ items }) => {
             onPress={() => handleScroll("left")}
             className="absolute left-1 top-1/2 -translate-y-1/2 z-30 bg-black/80 hover:bg-primaryRed text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/topslider:opacity-100 transition-all duration-300 shadow-xl"
           >
-            <FontAwesomeIcon icon={faChevronLeft} className="w-3.5 h-3.5" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </Button>
         </Tooltip>
 
@@ -73,7 +67,7 @@ export const TopSlider: React.FC<TopSliderProps> = ({ items }) => {
 
                   {/* Rating Badge Top-Left */}
                   <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-black/80 backdrop-blur-md border border-white/10 text-amber-400 font-black text-[10px] sm:text-xs px-1.5 py-0.5 rounded-md shadow-md">
-                    <FontAwesomeIcon icon={faStar} className="w-2.5 h-2.5 text-amber-400" />
+                    <Star className="fill-current w-2.5 h-2.5 text-amber-400" />
                     <span>{anime.rating || anime.vote || "9.5"}</span>
                   </div>
 
@@ -89,7 +83,7 @@ export const TopSlider: React.FC<TopSliderProps> = ({ items }) => {
                   {/* Center Play Icon Hover Overlay */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <div className="w-9 h-9 rounded-full bg-primaryRed/90 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                      <FontAwesomeIcon icon={faPlay} className="w-3.5 h-3.5 text-white ml-0.5" />
+                      <Play className="fill-current w-3.5 h-3.5 text-white ml-0.5" />
                     </div>
                   </div>
 
@@ -115,7 +109,7 @@ export const TopSlider: React.FC<TopSliderProps> = ({ items }) => {
             onPress={() => handleScroll("right")}
             className="absolute right-1 top-1/2 -translate-y-1/2 z-30 bg-black/80 hover:bg-primaryRed text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/topslider:opacity-100 transition-all duration-300 shadow-xl"
           >
-            <FontAwesomeIcon icon={faChevronRight} className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </Button>
         </Tooltip>
       </div>
