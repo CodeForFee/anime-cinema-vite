@@ -6,6 +6,7 @@ import { QUERY_KEYS, useAnimeDetailQuery, useStreamQuery } from "../hooks/useAni
 import { animeApi } from "../lib/api";
 import { useHistoryStore } from "../stores/useHistoryStore";
 import { CinemaPlayer } from "../components/player/CinemaPlayer";
+import { AmbientBackdrop } from "../components/layout/AmbientBackdrop";
 import { progressKey } from "../components/player/player-logic";
 import { EpisodeGrid } from "../components/player/EpisodeGrid";
 import { MovieShelf } from "../components/movie/MovieShelf";
@@ -54,6 +55,8 @@ function WatchContent() {
     data: detailRes,
     isLoading: isAnimeLoading,
     error: animeError,
+    // another part of the same show is loading: the page stays, only the player and episodes wait
+    isPlaceholderData: switchingPart,
   } = useAnimeDetailQuery(slug);
   const anime = detailRes?.data;
 
@@ -76,7 +79,8 @@ function WatchContent() {
   // 2. Determine Active Episode
   const episodes = anime?.episodes || [];
   const currentEpisode: Episode | null = useMemo(() => {
-    if (episodes.length === 0) return null;
+    // the list on screen still belongs to the previous part: no episode, so no stream is asked for
+    if (switchingPart || episodes.length === 0) return null;
     if (epParam) {
       const match = episodes.find((e) => matchEpisode(e, epParam));
       if (match) return match;
@@ -89,7 +93,7 @@ function WatchContent() {
       }
     }
     return episodes[0];
-  }, [episodes, epParam, slug, mounted, getAnimeHistory]);
+  }, [episodes, epParam, slug, mounted, getAnimeHistory, switchingPart]);
 
   const episodeHash = currentEpisode?.hash || "";
   const episodeId = currentEpisode?.id || "";
@@ -180,18 +184,7 @@ function WatchContent() {
           : "max-w-6xl lg:max-w-[min(72rem,calc((100vh_-_11rem)*16/9_+_4rem))]"
       }`}
     >
-      {/* Ambient backdrop: the title's art, blurred once and fixed, gives the glass cards something to tint */}
-      {(anime.backdrop || anime.poster) && (
-        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <img
-            src={anime.backdrop || anime.poster}
-            alt=""
-            decoding="async"
-            className="h-full w-full scale-125 object-cover opacity-60 blur-3xl saturate-150 [transform:translateZ(0)]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#141414]/20 via-[#141414]/50 to-[#141414]/85" />
-        </div>
-      )}
+      <AmbientBackdrop src={anime.backdrop || anime.poster} />
 
       {/* Top Back & Quick Action Bar */}
       <div className="flex items-center justify-between gap-4">
@@ -276,13 +269,19 @@ function WatchContent() {
       </div>
 
       {/* Episode Selector Grid with Seasons Switcher */}
-      <EpisodeGrid
-        episodes={anime.episodes || []}
-        currentEpisodeSlug={currentEpisode?.name || ""}
-        onSelectEpisode={handleSelectEpisode}
-        seasons={anime.seasons || []}
-        currentSlug={anime.slug}
-      />
+      <div
+        aria-busy={switchingPart}
+        className={switchingPart ? "pointer-events-none animate-pulse opacity-50 transition-opacity" : "transition-opacity"}
+      >
+        <EpisodeGrid
+          episodes={anime.episodes || []}
+          currentEpisodeSlug={currentEpisode?.name || ""}
+          onSelectEpisode={handleSelectEpisode}
+          seasons={anime.seasons || []}
+          // the picked part shows at once, even while its episodes load
+          currentSlug={slug}
+        />
+      </div>
 
       {/* Rich Anime Information, Trailer, Cast & Gallery Tabs */}
       <AnimeDetailTabs anime={anime} />

@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { animeApi } from "../lib/api";
 import type { AnimeItem, HomeDataResponse } from "../types/anime";
 
@@ -60,6 +60,10 @@ export function useAnimeDetailQuery(slug: string) {
     queryFn: () => animeApi.getAnimeDetails(slug),
     enabled: Boolean(slug),
     staleTime: 10 * 60 * 1000,
+    // Switching to another part of the same show keeps the page up (isPlaceholderData) instead of a
+    // full-page skeleton; any other title starts clean
+    placeholderData: (previous) =>
+      previous?.data.seasons?.some((season) => season.slug === slug) ? previous : undefined,
   });
 }
 
@@ -91,6 +95,18 @@ export function useMenuQuery() {
     queryFn: () => animeApi.getMenu(),
     staleTime: 60 * 60 * 1000,
     gcTime: 2 * 60 * 60 * 1000,
+  });
+}
+
+// 5d. A whole list, one page more each time the viewer nears the end (pages/explore.tsx)
+export function useBrowseInfiniteQuery(path: string) {
+  return useInfiniteQuery({
+    queryKey: ["anime", "browse-all", path] as const,
+    queryFn: ({ pageParam }) => animeApi.browse(path, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last, all) => (all.length < (last.totalPages || 1) ? all.length + 1 : undefined),
+    enabled: Boolean(path),
+    staleTime: 5 * 60 * 1000,
   });
 }
 

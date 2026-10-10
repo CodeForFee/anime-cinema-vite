@@ -3,13 +3,13 @@ import React, { useRef } from "react";
 import { Link } from "@/lib/router";
 import { Button, ScrollShadow, Tooltip } from "@heroui/react";
 import type { LucideIcon } from "lucide-react";
-import { MovieCard } from "./MovieCard";
+import { PosterTile } from "./PosterTile";
 import { AnimeItem } from "../../types/anime";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MovieShelfProps {
   title: string;
-  /** Icon shown before the title */
+  /** Kept for callers; the glass shelves show the title alone */
   icon?: LucideIcon;
   items: AnimeItem[];
   seeMoreHref?: string;
@@ -17,7 +17,6 @@ interface MovieShelfProps {
 
 export const MovieShelf: React.FC<MovieShelfProps> = ({
   title,
-  icon: Icon,
   items,
   seeMoreHref,
 }) => {
@@ -35,21 +34,15 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
     <section className="my-8 relative group/shelf">
       {/* Shelf Header */}
       <div className="flex items-center justify-between mb-3 px-4 md:px-12">
-        <h3 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-          {Icon && <Icon aria-hidden className="h-6 w-6 flex-shrink-0 text-primaryRed" strokeWidth={2.25} />}
-          <span>{title}</span>
-        </h3>
+        <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">{title}</h3>
 
         {seeMoreHref && (
-          <Link href={seeMoreHref}>
-            <Button
-              size="sm"
-              variant="light"
-              className="text-xs md:text-sm font-semibold text-gray-400 hover:text-white"
-              endContent={<ChevronRight className="w-3 h-3" />}
-            >
-              Xem tất cả
-            </Button>
+          <Link
+            href={seeMoreHref}
+            className="glass-pill flex h-8 items-center gap-1 rounded-full pl-3.5 pr-2.5 text-xs font-semibold text-gray-200 transition hover:text-white"
+          >
+            Xem tất cả
+            <ChevronRight aria-hidden className="h-3.5 w-3.5" />
           </Link>
         )}
       </div>
@@ -64,7 +57,7 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
             radius="full"
             variant="flat"
             onPress={() => handleScroll("left")}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-black/80 text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-300 hover:bg-primaryRed shadow-xl"
+            className="glass-button absolute left-2 top-1/2 -translate-y-1/2 z-30 text-white opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-300"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -74,13 +67,12 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
           ref={scrollContainerRef}
           orientation="horizontal"
           hideScrollBar
-          className="flex items-center gap-4 snap-shelf overflow-x-auto scroll-smooth py-2"
+          className="flex items-start gap-3 snap-shelf overflow-x-auto scroll-smooth py-2 md:gap-4"
         >
           {items.map((anime) => (
-            <MovieCard
-              key={anime.slug || anime.title}
-              anime={anime}
-            />
+            <div key={anime.slug || anime.title} className="w-44 shrink-0 md:w-52">
+              <PosterTile anime={anime} />
+            </div>
           ))}
         </ScrollShadow>
 
@@ -92,7 +84,7 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
             radius="full"
             variant="flat"
             onPress={() => handleScroll("right")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-black/80 text-white border border-white/10 backdrop-blur-md opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-300 hover:bg-primaryRed shadow-xl"
+            className="glass-button absolute right-2 top-1/2 -translate-y-1/2 z-30 text-white opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-300"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>

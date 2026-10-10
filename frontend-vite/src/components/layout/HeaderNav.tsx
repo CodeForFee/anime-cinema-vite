@@ -105,6 +105,12 @@ export const HeaderNav: React.FC = () => {
   const isWaiting = isSearching || debouncedQuery !== searchQuery.trim();
   const showResults = isResultsOpen && searchQuery.trim().length > 0;
 
+  useEffect(() => {
+    const phone = window.matchMedia("(max-width: 767.98px)").matches;
+    document.documentElement.toggleAttribute("data-search", isSearchOpen && phone);
+    return () => document.documentElement.removeAttribute("data-search");
+  }, [isSearchOpen]);
+
   const closeSearch = () => {
     setIsResultsOpen(false);
     setIsSearchOpen(false);
@@ -212,16 +218,20 @@ export const HeaderNav: React.FC = () => {
 
       {/* Right Quick Actions */}
       <div className="flex items-center gap-2 md:gap-3">
-        {/* Search: always shown from md up; on smaller screens the icon opens it over the header */}
+        {/* Search: always shown from md up. Phones: the icon opens it as a spotlight popup near the top
+            of the screen over a dimmed page; tapping the dimmed part closes it */}
         <form
           ref={searchBoxRef}
           onSubmit={handleSearchSubmit}
+          onClick={(e) => isSearchOpen && e.target === e.currentTarget && closeSearch()}
           className={cn(
             "items-center gap-1",
-            isSearchOpen ? "absolute inset-x-0 top-0 z-10 flex h-16 bg-[#141414] px-4 md:static md:h-auto md:bg-transparent md:px-0" : "hidden md:flex"
+            isSearchOpen
+              ? "cn-fade fixed inset-0 z-[200] flex items-start gap-2 bg-black/60 px-4 pt-[calc(var(--inset-top)+6vh)] backdrop-blur-sm md:static md:z-auto md:items-center md:gap-1 md:bg-transparent md:p-0 md:backdrop-blur-none md:[animation:none]"
+              : "hidden md:flex"
           )}
         >
-          <div className="relative w-full md:w-64 xl:w-80">
+          <div className={cn("relative w-full md:w-64 xl:w-80", isSearchOpen && "cn-pop max-md:flex-1")}>
             <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
             <Input
               ref={searchInputRef}
@@ -237,32 +247,36 @@ export const HeaderNav: React.FC = () => {
               onKeyDown={(e) => {
                 if (e.key === "Escape") closeSearch();
               }}
-              className="h-9 rounded-full border-white/20 bg-black/60 pl-9 text-sm text-white focus-visible:ring-0 focus-visible:ring-offset-0"
+              className={cn(
+                "h-9 rounded-full border-white/20 bg-black/60 pl-9 text-sm text-white focus-visible:ring-0 focus-visible:ring-offset-0",
+                // phones: a large glass field in the popup
+                "search-field"
+              )}
             />
 
             {/* Live results */}
             {showResults && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#181818] shadow-2xl md:w-[400px]">
+              <div className="absolute right-0 top-full z-50 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#181818] shadow-2xl search-results cn-pop max-md:left-0 max-md:right-[-3.5rem] max-md:w-auto md:w-[400px]">
                 {searchResults.length > 0 ? (
                   <>
-                    <ul className="max-h-[60vh] overflow-y-auto p-1.5">
+                    <ul className="max-h-[60vh] overflow-y-auto overscroll-contain p-1.5 max-md:max-h-[calc(100dvh-var(--inset-top)-6vh-9rem)] max-md:p-2">
                       {searchResults.slice(0, 8).map((item) => (
                         <li key={item.slug}>
                           <Link
                             href={`/watch?slug=${encodeURIComponent(item.slug)}`}
                             onClick={closeSearch}
-                            className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/10"
+                            className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/10 max-md:gap-4 max-md:rounded-2xl max-md:p-2.5 active:bg-white/10"
                           >
                             <img
                               src={item.poster || item.image || ""}
                               alt=""
                               loading="lazy"
-                              className="h-14 w-10 flex-shrink-0 rounded bg-white/10 object-cover"
+                              className="h-14 w-10 flex-shrink-0 rounded bg-white/10 object-cover max-md:h-24 max-md:w-16 max-md:rounded-xl"
                             />
                             <span className="min-w-0">
-                              <span className="block truncate text-sm font-semibold text-white">{item.title}</span>
+                              <span className="block truncate text-sm font-semibold text-white max-md:line-clamp-2 max-md:whitespace-normal max-md:text-base max-md:leading-snug">{item.title}</span>
                               {(item.latestEpisode || item.episode) && (
-                                <span className="block truncate text-xs text-gray-400">
+                                <span className="block truncate text-xs text-gray-400 max-md:mt-1 max-md:text-sm">
                                   {item.latestEpisode || item.episode}
                                 </span>
                               )}
@@ -305,9 +319,9 @@ export const HeaderNav: React.FC = () => {
             size="unstyled"
             aria-label="Đóng tìm kiếm"
             onClick={closeSearch}
-            className={cn(ICON_BUTTON, "flex-shrink-0 md:hidden")}
+            className={cn(ICON_BUTTON, "glass-button h-12 w-12 flex-shrink-0 rounded-2xl md:hidden")}
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </Button>
         </form>
 

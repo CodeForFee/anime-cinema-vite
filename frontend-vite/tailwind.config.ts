@@ -34,8 +34,9 @@ const config: Config = {
         shimmer: { "100%": { transform: "translateX(100%)" } },
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "Inter", "sans-serif"],
-        display: ["var(--font-display)", "Outfit", "sans-serif"],
+        // a single typeface; "display" stays as an alias so headings keep their class
+        sans: ["\"Be Vietnam Pro\"", "system-ui", "sans-serif"],
+        display: ["\"Be Vietnam Pro\"", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

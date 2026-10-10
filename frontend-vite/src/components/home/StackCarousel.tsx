@@ -1,0 +1,183 @@
+import { useDrag } from "@use-gesture/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useUIStore } from "../../stores/useUIStore";
+import type { AnimeItem } from "../../types/anime";
+import { clamp } from "../player/player-logic";
+import { LazyImage } from "../movie/LazyImage";
+
+/** "02" from "TẬP 02" */
+export const episodeNumber = (anime: AnimeItem) => (anime.episode || "").replace(/^TẬP\s*/i, "").trim();
+
+/** "Phần 2" when the title or its metadata names a part, otherwise null (part 1 is not worth saying) */
+export function partLabel(anime: AnimeItem): string | null {
+  const inTitle = anime.title.match(/(?:Season|Mùa|Phần|SS|Part)\s*(\d+|[IVXLCDM]+)/i);
+  if (inTitle) return `Phần ${inTitle[1]}`;
+  const meta = String((anime as { metadata?: Record<string, string> }).metadata?.Season ?? "").trim();
+  if (!meta || meta === "1" || meta === "Phần 1") return null;
+  return meta.startsWith("Phần") ? meta : `Phần ${meta}`;
+}
+
+// how far a neighbour sits from the centre, as a share of the card width
+const STEP = 0.62;
+const VISIBLE = 2;
+const SETTLE = "transform 420ms cubic-bezier(0.32, 0.72, 0, 1), opacity 420ms";
+
+/**
+ * Phones: the ranked list as a stack of cards. The current one is large in the middle, its neighbours
+ * shrink and darken behind it; swipe sideways to move, tap the middle card to open it.
+ * While the finger moves, transforms are written straight to the cards (no React render per frame);
+ * React only renders when the current card changes.
+ */
+export function StackCarousel({ items }: { items: AnimeItem[] }) {
+  const [index, setIndex] = useState(0);
+  const cards = useRef(new Map<number, HTMLButtonElement>());
+  const shades = useRef(new Map<number, HTMLSpanElement>());
+  const openInfoModal = useUIStore((state) => state.openInfoModal);
+  const last = items.length - 1;
+
+  /** Places every mounted card for a drag of `drag` cards (0 = at rest) */
+  const layout = (drag: number, animate: boolean) => {
+    for (const [i, card] of cards.current) {
+      const offset = i - index + drag;
+      const distance = Math.min(Math.abs(offset), VISIBLE + 1);
+      card.style.transition = animate ? SETTLE : "none";
+      card.style.transform = `translate3d(calc(-50% + ${offset * STEP * 100}%), 0, 0) scale(${1 - Math.min(distance, VISIBLE) * 0.13})`;
+      card.style.zIndex = String(10 - Math.round(distance));
+      card.style.opacity = distance > VISIBLE + 0.4 ? "0" : "1";
+      const shade = shades.current.get(i);
+      if (shade) {
+        shade.style.transition = animate ? "opacity 420ms" : "none";
+        shade.style.opacity = String(Math.min(distance, VISIBLE) * 0.32);
+      }
+    }
+  };
+
+  // a new current card slides into place
+  // biome-ignore lint/correctness/useExhaustiveDependencies: layout reads the refs, index is the trigger
+  useLayoutEffect(() => layout(0, true), [index]);
+
+  const bind = useDrag(
+    ({ active, movement: [mx], velocity: [vx], direction: [dx], tap }) => {
+      if (tap) return;
+      const width = cards.current.get(index)?.offsetWidth || 240;
+      // rubber band at both ends
+      let drag = mx / (width * STEP);
+      if ((index === 0 && drag > 0) || (index === last && drag < 0)) drag *= 0.35;
+      if (active) return layout(drag, false);
+
+      const flick = vx > 0.35 ? -dx : 0;
+      const step = Math.abs(mx) > width * 0.2 ? -Math.sign(mx) : flick;
+      const next = clamp(index + step, 0, last);
+      if (next === index) layout(0, true);
+      else setIndex(next);
+    },
+    { axis: "x", filterTaps: true, pointer: { touch: true } }
+  );
+
+  if (items.length === 0) return null;
+  const current = items[index] ?? items[0];
+  const currentPart = partLabel(current);
+  const currentEpisode = episodeNumber(current);
+
+  return (
+    <div className="px-4">
+      <div {...bind()} className="relative mx-auto h-[min(93vw,420px)] touch-pan-y select-none">
+        {items.map((anime, i) => {
+          if (Math.abs(i - index) > VISIBLE + 1) return null;
+          const episode = episodeNumber(anime);
+          return (
+            <button
+              type="button"
+              key={anime.slug || i}
+              ref={(node) => {
+                if (node) cards.current.set(i, node);
+                else cards.current.delete(i);
+              }}
+              tabIndex={i === index ? 0 : -1}
+              aria-label={anime.title}
+              onClick={() => (i === index ? openInfoModal(anime) : setIndex(i))}
+              className="absolute left-1/2 top-0 aspect-[2/3] w-[min(62vw,280px)] overflow-hidden rounded-[1.75rem] bg-[#1c1c1f] text-left shadow-[0_24px_50px_rgba(0,0,0,0.55)] ring-1 ring-white/15 [backface-visibility:hidden] will-change-transform"
+              // first paint before the layout effect runs: already roughly in place
+              style={{ transform: `translate3d(calc(-50% + ${(i - index) * STEP * 100}%), 0, 0)` }}
+            >
+              <LazyImage src={anime.poster || anime.image} alt="" className="h-full w-full object-cover" />
+              {/* cards behind the middle one sink into the dark */}
+              <span
+                ref={(node) => {
+                  if (node) shades.current.set(i, node);
+                  else shades.current.delete(i);
+                }}
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-black"
+              />
+              {/* same badges as the desktop ranked cards */}
+              <span className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5">
+                <span className="rounded border border-white/15 bg-[#202020]/90 px-2 py-0.5 text-[11px] font-bold text-gray-200 shadow-sm">
+                  PĐ. {episode || "Full"}
+                </span>
+                <span className="rounded border border-emerald-400/30 bg-emerald-600/90 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
+                  TM. {episode || "HD"}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+
+        {/* for those who tap rather than swipe */}
+        {index > 0 && (
+          <button
+            type="button"
+            aria-label="Phim trước"
+            onClick={() => setIndex(index - 1)}
+            className="glass-button absolute left-0 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white transition active:scale-90"
+          >
+            <ChevronLeft aria-hidden className="h-5 w-5" />
+          </button>
+        )}
+        {index < last && (
+          <button
+            type="button"
+            aria-label="Phim sau"
+            onClick={() => setIndex(index + 1)}
+            className="glass-button absolute right-0 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white transition active:scale-90"
+          >
+            <ChevronRight aria-hidden className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {/* the middle card: same rank / title / part • episode as the desktop shelf */}
+      <div key={current.slug || index} className="cn-pop mx-auto mt-3 flex max-w-[min(70vw,300px)] items-center gap-3 px-1">
+        <span className="select-none text-5xl font-black italic leading-none tracking-tighter text-amber-400 drop-shadow-[0_2px_12px_rgba(251,191,36,0.6)]">
+          {index + 1}
+        </span>
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <h4 className="line-clamp-1 text-sm font-bold leading-snug text-white drop-shadow">{current.title}</h4>
+          {current.subTitle && current.subTitle !== current.title && (
+            <p className="line-clamp-1 text-xs italic text-gray-400">{current.subTitle}</p>
+          )}
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
+            {currentPart && (
+              <>
+                <span className="text-gray-300">{currentPart}</span>
+                <span aria-hidden>•</span>
+              </>
+            )}
+            <span className="font-bold text-primaryRed">{currentEpisode ? `Tập ${currentEpisode}` : "Tập mới"}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* position */}
+      <div className="mt-3 flex justify-center gap-1.5" aria-hidden>
+        {items.map((anime, i) => (
+          <span
+            key={anime.slug || i}
+            className={`h-1.5 rounded-full transition-all duration-300 ${i === index ? "w-5 bg-white" : "w-1.5 bg-white/30"}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

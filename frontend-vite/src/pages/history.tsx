@@ -1,141 +1,129 @@
-
-import React from "react";
-import { Link } from "@/lib/router";
-import { Card, CardBody, Button, Chip, Image, Tooltip } from "@heroui/react";
-import { useHistoryStore } from "../stores/useHistoryStore";
-import { progressKey, useProgressStore } from "../components/player/player-logic";
-import type { HistoryItem } from "../types/history";
+import { Play, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AmbientBackdrop, EmptyShelf } from "../components/layout/AmbientBackdrop";
 import { InfoModal } from "../components/movie/InfoModal";
+import { progressKey, useProgressStore } from "../components/player/player-logic";
+import { Link } from "@/lib/router";
 import { formatTimeAgo } from "../lib/utils";
-import { Clock, History, Play, Trash2 } from "lucide-react";
+import { useHistoryStore } from "../stores/useHistoryStore";
+import type { HistoryItem } from "../types/history";
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** "Hôm nay" / "Hôm qua" / "Tuần này" / "Trước đó", by local calendar day */
+function dayGroup(timestamp: number) {
+  const startOfToday = new Date().setHours(0, 0, 0, 0);
+  if (timestamp >= startOfToday) return "Hôm nay";
+  if (timestamp >= startOfToday - DAY) return "Hôm qua";
+  if (timestamp >= startOfToday - 6 * DAY) return "Tuần này";
+  return "Trước đó";
+}
 
 export default function HistoryPage() {
   const history = useHistoryStore((state) => state.history);
   const removeFromHistory = useHistoryStore((state) => state.removeFromHistory);
   const clearHistory = useHistoryStore((state) => state.clearHistory);
   const progress = useProgressStore((state) => state.entries);
-  const watchedPercent = (item: HistoryItem) => {
+
+  // "Xoá hết" asks once more in place instead of a dialog
+  const [confirmClear, setConfirmClear] = useState(false);
+  useEffect(() => {
+    if (!confirmClear) return;
+    const timer = setTimeout(() => setConfirmClear(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirmClear]);
+
+  const watched = (item: HistoryItem) => {
     const entry = item.episodeId && progress[progressKey(item.slug, item.episodeId)];
-    return entry && entry.d > 0 ? Math.min(100, (entry.t / entry.d) * 100) : 0;
+    return entry && entry.d > 0 ? { percent: Math.min(100, (entry.t / entry.d) * 100), left: Math.max(0, entry.d - entry.t) } : null;
   };
 
+  const groups: [string, HistoryItem[]][] = [];
+  for (const item of history) {
+    const label = dayGroup(item.updatedAt);
+    const group = groups.find(([name]) => name === label);
+    if (group) group[1].push(item);
+    else groups.push([label, [item]]);
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="mx-auto max-w-3xl space-y-8 px-4 py-6 md:px-8 md:py-10">
+      <AmbientBackdrop src={history[0]?.poster} />
+
+      <header className="flex items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-primaryRed text-sm font-semibold uppercase tracking-wider mb-1">
-            <History className="w-3.5 h-3.5" />
-            <span>Lịch Sử Phát Video</span>
-          </div>
-          <h1 className="text-3xl font-extrabold text-white">Tiếp Tục Xem Phim</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">Đang xem</h1>
+          {history.length > 0 && <p className="mt-1 text-sm text-gray-400">{history.length} phim, mới nhất ở trên</p>}
         </div>
-
         {history.length > 0 && (
-          <Button
-            size="sm"
-            color="danger"
-            variant="flat"
-            radius="full"
-            onPress={clearHistory}
-            className="text-xs"
-            startContent={<Trash2 className="w-3 h-3" />}
+          <button
+            type="button"
+            onClick={() => (confirmClear ? (clearHistory(), setConfirmClear(false)) : setConfirmClear(true))}
+            className={`h-9 shrink-0 rounded-full px-4 text-sm font-medium transition ${
+              confirmClear ? "bg-primaryRed text-white" : "glass-pill text-gray-300 hover:text-white"
+            }`}
           >
-            Xóa toàn bộ lịch sử
-          </Button>
+            {confirmClear ? "Bấm lần nữa để xoá" : "Xoá hết"}
+          </button>
         )}
-      </div>
+      </header>
 
-      {/* History List */}
       {history.length === 0 ? (
-        <div className="p-16 rounded-3xl bg-[#10121A] border border-white/10 text-center text-gray-400 space-y-4">
-          <History className="w-14 h-14 text-gray-400 mx-auto" />
-          <h3 className="text-lg font-bold text-white">Chưa có lịch sử xem phim</h3>
-          <p className="text-xs max-w-sm mx-auto">
-            Khi bạn xem bất kỳ tập anime nào, tiến trình phát và tập phim sẽ tự động được lưu tại đây.
-          </p>
-          <Link href="/">
-            <Button color="danger" radius="full" className="bg-primaryRed text-white mt-2">
-              Khám Phá Phim Ngay
-            </Button>
-          </Link>
-        </div>
+        <EmptyShelf line="Chưa xem phim nào." hint="Tập bạn xem sẽ nằm ở đây, kèm chỗ đang dừng." />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {history.map((item) => (
-            <Card
-              key={item.slug}
-              className="bg-[#10121A] border border-white/10 hover:border-white/20 transition-all duration-300 rounded-2xl overflow-hidden"
-            >
-              <CardBody className="p-3 flex flex-row gap-4 items-center">
-                {/* Poster */}
-                <div className="relative w-20 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-black">
-                  <Image
-                    removeWrapper
-                    loading="lazy"
-                    src={item.poster}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
-                  {watchedPercent(item) > 0 && (
-                    <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/25">
-                      <div className="h-full bg-primaryRed" style={{ width: `${watchedPercent(item)}%` }} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0 space-y-2">
-                  <h4 className="text-sm font-bold text-white truncate">{item.title}</h4>
-
-                  <div className="flex items-center gap-2">
-                    <Chip size="sm" color="danger" variant="solid" className="font-bold text-[11px] h-6">
-                      {item.episodeName || item.episodeSlug}
-                    </Chip>
-                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-gray-400" />
-                      <span>{formatTimeAgo(item.updatedAt)}</span>
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <Link
-                      href={`/watch?slug=${item.slug}&ep=${encodeURIComponent(item.episodeSlug)}`}
-                      className="flex-1"
-                    >
-                      <Button
-                        size="sm"
-                        color="danger"
-                        radius="lg"
-                        className="w-full bg-primaryRed text-white font-semibold text-xs h-8 shadow-md shadow-red-600/30"
-                        startContent={<Play className="fill-current w-3 h-3 text-white mr-1" />}
-                      >
-                        Xem Tiếp
-                      </Button>
+        groups.map(([label, items]) => (
+          <section key={label} className="space-y-3">
+            <h2 className="text-sm font-semibold text-gray-400">{label}</h2>
+            <ul className="space-y-3">
+              {items.map((item) => {
+                const progressInfo = watched(item);
+                const href = `/watch?slug=${item.slug}&ep=${encodeURIComponent(item.episodeSlug)}`;
+                return (
+                  <li key={item.slug} className="glass-card group relative flex items-center gap-4 rounded-3xl p-3 pr-4">
+                    <Link href={href} className="relative block h-[92px] w-16 shrink-0 overflow-hidden rounded-2xl bg-white/5">
+                      {item.poster && (
+                        <img src={item.poster} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                      )}
+                      {progressInfo && (
+                        <span className="absolute inset-x-0 bottom-0 h-1 bg-black/50">
+                          <span className="block h-full bg-primaryRed" style={{ width: `${progressInfo.percent}%` }} />
+                        </span>
+                      )}
                     </Link>
 
-                    <Tooltip content="Xóa khỏi lịch sử" placement="top">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="flat"
-                        radius="lg"
-                        onPress={() => removeFromHistory(item.slug)}
-                        className="bg-white/5 text-gray-400 hover:text-danger h-8 w-8 min-w-8"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </Tooltip>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
+                    <Link href={href} className="min-w-0 flex-1">
+                      <p className="line-clamp-2 font-semibold leading-snug text-white">{item.title}</p>
+                      <p className="mt-1 text-sm text-gray-400">
+                        {item.episodeName || item.episodeSlug}
+                        {progressInfo && progressInfo.left > 60 && ` · còn ${Math.round(progressInfo.left / 60)} phút`}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">{formatTimeAgo(item.updatedAt)}</p>
+                    </Link>
+
+                    <Link
+                      href={href}
+                      aria-label={`Xem tiếp ${item.title}`}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-black transition active:scale-90"
+                    >
+                      <Play className="h-5 w-5 translate-x-px fill-current" />
+                    </Link>
+
+                    <button
+                      type="button"
+                      aria-label={`Xoá ${item.title} khỏi lịch sử`}
+                      onClick={() => removeFromHistory(item.slug)}
+                      className="glass-pill absolute -right-1.5 -top-1.5 flex h-7 w-7 items-center justify-center rounded-full text-gray-300 opacity-100 transition hover:text-white md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))
       )}
 
-      {/* Global Info Modal */}
       <InfoModal />
     </div>
   );

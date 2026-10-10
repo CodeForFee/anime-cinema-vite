@@ -5,6 +5,7 @@ import { Button, Tooltip, ScrollShadow } from "@heroui/react";
 import type { LucideIcon } from "lucide-react";
 import { AnimeItem } from "../../types/anime";
 import { LazyImage } from "../movie/LazyImage";
+import { partLabel, StackCarousel } from "./StackCarousel";
 import { useUIStore } from "../../stores/useUIStore";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 
@@ -80,8 +81,13 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
         )}
       </div>
 
-      {/* Horizontal Cards Scroll Container */}
-      <div className="relative px-4 md:px-12">
+      {/* Phones: stacked cards, swipe to move */}
+      <div className="md:hidden">
+        <StackCarousel items={items} />
+      </div>
+
+      {/* Horizontal Cards Scroll Container (tablet and up) */}
+      <div className="relative hidden px-4 md:block md:px-12">
         {/* Left Arrow Button */}
         <Tooltip content="Cuộn trái" placement="right">
           <Button
@@ -116,17 +122,8 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
               ? "url(#rank-card-slope-up)"
               : "url(#rank-card-slope-down)";
 
-            // Extract genuine Season/Part from title or metadata - DO NOT show if not present
-            let seasonText: string | null = null;
-            const seasonMatch = anime.title.match(/(?:Season|Mùa|Phần|SS|Part)\s*(\d+|[IVXLCDM]+)/i);
-            if (seasonMatch) {
-              seasonText = `Phần ${seasonMatch[1]}`;
-            } else if ((anime as any).metadata?.["Season"]) {
-              const metaSeason = String((anime as any).metadata["Season"]).trim();
-              if (metaSeason && metaSeason !== "1" && metaSeason !== "Phần 1") {
-                seasonText = metaSeason.startsWith("Phần") ? metaSeason : `Phần ${metaSeason}`;
-              }
-            }
+            // the part only when the title has one
+            const seasonText = partLabel(anime);
 
             return (
               <div
@@ -202,16 +199,14 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
                       </p>
                     )}
 
-                    {/* Metadata line: P • [Phần X] • Tập Y (Do not show Phần if not present) */}
-                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400">
-                      <span className="text-white font-bold">P</span>
+                    {/* Metadata line: [Phần X •] Tập Y, the part only when the title has one */}
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
                       {seasonText && (
                         <>
-                          <span>•</span>
                           <span className="text-gray-300">{seasonText}</span>
+                          <span aria-hidden>•</span>
                         </>
                       )}
-                      <span>•</span>
                       <span className="text-primaryRed font-bold">
                         {cleanEpNumber ? `Tập ${cleanEpNumber}` : "Tập mới"}
                       </span>

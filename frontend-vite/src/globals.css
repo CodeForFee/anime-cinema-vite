@@ -16,7 +16,7 @@
 body {
   background-color: #08090D;
   color: #ECEDEE;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
   overflow-x: hidden;
 }
 
@@ -361,4 +361,30 @@ body {
   background: linear-gradient(150deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile search popup (HeaderNav). While it is open <html data-search> hides the dock and stops the page scrolling */
+@media (max-width: 767.98px) {
+  .search-field {
+    height: 3.25rem !important;
+    border-radius: 1.1rem !important;
+    padding-left: 2.75rem !important;
+    font-size: 1rem !important;
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 12px 40px rgba(0, 0, 0, 0.45);
+  }
+  .search-results {
+    border-radius: 1.25rem !important;
+    background: linear-gradient(160deg, rgba(40, 40, 52, 0.86), rgba(14, 14, 20, 0.92)) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  }
+}
+html[data-search] .app-dock {
+  display: none;
+}
+html[data-search] body {
+  overflow: hidden;
 }

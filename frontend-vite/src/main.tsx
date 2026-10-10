@@ -1,5 +1,10 @@
-import "@fontsource-variable/inter"
-import "@fontsource-variable/outfit"
+// One typeface for the whole app, drawn for Vietnamese. Each weight downloads only the subsets a page uses
+import "@fontsource/be-vietnam-pro/400.css"
+import "@fontsource/be-vietnam-pro/500.css"
+import "@fontsource/be-vietnam-pro/600.css"
+import "@fontsource/be-vietnam-pro/700.css"
+import "@fontsource/be-vietnam-pro/800.css"
+import "@fontsource/be-vietnam-pro/900.css"
 import "./globals.css"
 
 import React from "react"
