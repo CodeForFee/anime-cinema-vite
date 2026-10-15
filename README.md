@@ -2,11 +2,11 @@
 
 # 🎬 Capynime
 
-**Xem anime Vietsub nhanh, gọn, không cần backend.**
+**Watch Vietsub anime fast and clean, with no backend.**
 
-Web app + ứng dụng Android. Mọi request đều đi thẳng từ thiết bị của người xem.
+A web app plus an Android app. Every request goes straight from the viewer's own device.
 
-[![Tải APK](https://img.shields.io/badge/Android-tải%20APK-3DDC84?logo=android&logoColor=white)](../../releases/latest)
+[![Download APK](https://img.shields.io/badge/Android-download%20APK-3DDC84?logo=android&logoColor=white)](../../releases/latest)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
@@ -16,72 +16,73 @@ Web app + ứng dụng Android. Mọi request đều đi thẳng từ thiết b�
 
 ---
 
-## ✨ Tính năng
+## ✨ Features
 
-- 🏠 **Trang chủ** gọn: slider nổi bật, top 10, các kệ phim cuộn mượt, lazy-load.
-- 🔎 **Khám phá** theo thể loại, tìm kiếm nhanh, lịch sử xem và danh sách yêu thích.
-- ▶️ **Player riêng của app** vẽ trên player nguồn, một giao diện cho mọi thiết bị:
-  - Chạm hai lần hai bên để tua ±10 giây, vuốt ngang để tua.
-  - Toàn màn hình: vuốt dọc bên phải chỉnh âm lượng, bên trái chỉnh độ sáng.
-  - Tốc độ phát và chọn tập mở dạng **popup dropup** ngay trên nút (desktop).
-  - **Chế độ rạp phim** căn giữa, phóng to dần, phím tắt `T`.
-  - Phím tắt desktop: `Space`/`K` phát/dừng, `←` `→` tua, `↑` `↓` âm lượng, `M` tắt tiếng, `F` toàn màn hình, `T` chế độ rạp.
-  - Nhớ vị trí từng tập ("Xem tiếp"), gợi ý tập tiếp, bỏ qua intro.
-- 🛡️ **Chặn quảng cáo** ở tầng mạng và trong trang player.
-- 📱 **PWA** trên web và **app Android** (không cần extension).
+- 🏠 **Home**: featured slider, top 10, smooth lazy-loaded shelves.
+- 🔎 **Explore** by genre, fast search, watch history and favorites.
+- ▶️ **The app's own player**, drawn over the source player, one UI on every device:
+  - Double tap either side to seek ±10 s, swipe sideways to scrub.
+  - Full screen: swipe up/down on the right for volume, on the left for brightness.
+  - Speed and episode menus open as **drop-up popups** anchored to their button (desktop).
+  - **Cinema mode**: centered, grows smoothly, shortcut `T`.
+  - Desktop shortcuts: `Space`/`K` play/pause, `←` `→` seek, `↑` `↓` volume, `M` mute, `F` full screen, `T` cinema mode.
+  - Remembers the position of every episode ("Continue watching"), next-episode card, skip intro.
+- 🛡️ **Ad blocking** at the network layer and inside the player page.
+- 📱 **PWA** on the web and an **Android app** (no extension needed).
 
-## 🧱 Cấu trúc
+## 🧱 Structure
 
-| Thư mục | Nội dung | Giấy phép |
+| Folder | What | License |
 |---|---|---|
-| [`frontend-vite/`](frontend-vite/) | Web app Vite + React + TypeScript, cũng là gốc của app Android (Capacitor) | GPL-3.0-only (xem `NOTICE.md`) |
-| [`avs-helper-extension/`](avs-helper-extension/) | Extension Chrome/Edge (Manifest V3) mà bản web cần | MIT |
+| [`frontend-vite/`](frontend-vite/) | Vite + React + TypeScript web app, also the base of the Android app (Capacitor) | GPL-3.0-only (see `NOTICE.md`) |
+| [`avs-helper-extension/`](avs-helper-extension/) | Chrome/Edge extension (Manifest V3) the web build needs | MIT |
 
-## 🚀 Chạy thử
+## 🚀 Run
 
 ```sh
-# 1. Build extension, rồi nạp avs-helper-extension/manifest-v3/extension bằng "Load unpacked"
+# 1. Build the extension, then load avs-helper-extension/manifest-v3/extension as "Load unpacked"
 cd avs-helper-extension && pnpm i && pnpm build
 
-# 2. Chạy web
+# 2. Start the web app
 cd ../frontend-vite && pnpm i && pnpm dev      # http://localhost:4100
 ```
 
-Sau khi build lại extension, nhớ **reload** nó trong `chrome://extensions`.
+After rebuilding the extension, **reload** it in `chrome://extensions`.
 
-| Lệnh (trong `frontend-vite`) | Việc |
+| Command (in `frontend-vite`) | What it does |
 |---|---|
-| `pnpm test` | Chạy các spec (Vitest) |
-| `pnpm lint` | Biome, chỉ báo lỗi |
-| `pnpm build` | Kiểm tra kiểu và build ra `dist/` |
-| `pnpm build:apk` | APK debug |
-| `pnpm release [patch\|minor\|major]` | Tăng phiên bản, build APK + AAB đã ký vào `release/` |
+| `pnpm test` | Run the specs (Vitest) |
+| `pnpm lint` | Biome, errors only |
+| `pnpm build` | Type-check and build to `dist/` |
+| `pnpm build:apk` | Debug APK |
+| `pnpm release [patch\|minor\|major]` | Bump the version, build the signed APK + AAB into `release/` |
 
-> `pnpm release` cần JDK 21 và `android/keystore.properties`. Chi tiết trong [frontend-vite/README.md](frontend-vite/README.md).
+> `pnpm release` needs JDK 21 and `android/keystore.properties`. Details in [frontend-vite/README.md](frontend-vite/README.md).
 
-## 📲 Cài app Android
+## 📲 Install the Android app
 
-Tải file `.apk` mới nhất ở trang **[Releases](../../releases/latest)** rồi cài. Điện thoại sẽ cảnh báo vì APK
-ngoài Google Play, đó là bình thường. Nếu cài không được, thường là do bản đang cài ký bằng khoá khác: gỡ bản cũ rồi cài lại.
+Download the latest `.apk` from **[Releases](../../releases/latest)** and install it. The phone warns about any APK
+installed outside Google Play; that is normal. If the install fails, the copy already installed is usually signed
+with a different key: uninstall it and install again.
 
-## 🌐 Triển khai
+## 🌐 Deploy
 
-Web là file tĩnh (`pnpm build` → `frontend-vite/dist`), cần rewrite mọi đường dẫn về `index.html` (đã có
-`vercel.json` cho Vercel). Máy chủ không liên lạc với trang nguồn nên IP của nó không quan trọng.
+The web app is static files (`pnpm build` → `frontend-vite/dist`); rewrite every path to `index.html`
+(`vercel.json` already does this for Vercel). The server never contacts the source site, so its IP does not matter.
 
-Extension chỉ hoạt động trên các host trong [`avs-helper-extension/allowlist.yaml`](avs-helper-extension/allowlist.yaml):
-thêm host production vào đó, build lại và cho người xem cài bản đó.
+The extension only works on the hosts listed in [`avs-helper-extension/allowlist.yaml`](avs-helper-extension/allowlist.yaml):
+add the production host there, rebuild, and have viewers install that build.
 
-## 🔗 Host nguồn
+## 🔗 Source host
 
-Host nguồn hiện là `animevietsub.sale` (player ở `*.googleapiscdn.com`). Khi đổi, sửa đồng thời:
+The source host is currently `animevietsub.sale` (player on `*.googleapiscdn.com`). To change it, update all of:
 
 1. `frontend-vite/src/constants.ts`
 2. `frontend-vite/capacitor.config.ts`
 3. `avs-helper-extension/map-referer.json`
 
-rồi build lại extension và app.
+then rebuild the extension and the app.
 
-## ⚖️ Giấy phép
+## ⚖️ License
 
-Web: GPL-3.0-only, vì lớp dữ liệu và player có nguồn gốc từ `anime-vsub/desktop-web`. Extension: MIT.
+Web app: GPL-3.0-only, because the data and player layers are derived from `anime-vsub/desktop-web`. Extension: MIT.
