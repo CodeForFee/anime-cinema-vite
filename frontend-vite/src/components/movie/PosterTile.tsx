@@ -19,15 +19,18 @@ export function PosterTile({ anime }: { anime: AnimeItem }) {
       : anime.latestEpisode || anime.episode || anime.quality;
 
   return (
-    <div className="relative [contain-intrinsic-size:auto_330px] [content-visibility:auto]">
+    // skipped off-screen tiles keep the card's own 2:3 height: a guessed intrinsic size taller than the card
+    // left an empty band under every shelf row
+    <div className="relative aspect-[2/3] [content-visibility:auto]">
       <button
         type="button"
         onClick={() => openInfoModal(anime)}
         aria-label={anime.title}
-        className="group block w-full overflow-hidden rounded-2xl bg-white/5 text-left ring-1 ring-white/10 transition active:scale-[0.97]"
+        className="card-lift group relative block w-full overflow-hidden rounded-xl bg-white/5 text-left transition active:scale-[0.97]"
       >
         <span className="relative block aspect-[2/3]">
           <LazyImage
+            art={anime}
             src={anime.poster || anime.image}
             alt=""
             className="h-full w-full object-cover transition-[transform,opacity] duration-500 md:group-hover:scale-105"
@@ -52,6 +55,7 @@ export function PosterTile({ anime }: { anime: AnimeItem }) {
             )}
           </span>
         </span>
+        <span aria-hidden className="glass-rim absolute inset-0" />
       </button>
       <button
         type="button"

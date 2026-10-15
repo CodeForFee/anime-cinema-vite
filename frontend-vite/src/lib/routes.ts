@@ -20,7 +20,19 @@ export const pages = {
   notFound: lazy(() => import("../pages/not-found"))
 }
 
-export function preloadRoute(href: string) {
+export function preloadRoute(href: string): Promise<unknown> {
   const { pathname } = new URL(href, location.href)
-  loaders[pathname as keyof typeof loaders]?.().catch(() => {})
+  return loaders[pathname as keyof typeof loaders]?.().catch(() => {}) ?? Promise.resolve()
+}
+
+// The dock's tabs (components/layout/SidebarDock.tsx)
+const TAB_PATHS = new Set(["/", "/explore", "/search", "/favorites", "/history"])
+
+/**
+ * How a page change animates (globals.css, html[data-nav]): tab to tab cross-fades, the player comes up
+ * from the bottom like an iOS modal, anything else slides in from the side
+ */
+export function navKind(from: string, to: string): "tab" | "push" | "up" {
+  if (to === "/watch" && from !== "/watch") return "up"
+  return TAB_PATHS.has(from) && TAB_PATHS.has(to) ? "tab" : "push"
 }

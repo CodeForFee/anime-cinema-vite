@@ -31,7 +31,7 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
   if (!items || items.length === 0) return null;
 
   return (
-    <section className="my-8 relative group/shelf">
+    <section className="my-5 md:my-8 relative group/shelf">
       {/* Shelf Header */}
       <div className="flex items-center justify-between mb-3 px-4 md:px-12">
         <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">{title}</h3>

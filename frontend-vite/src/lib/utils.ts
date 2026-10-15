@@ -1,8 +1,25 @@
+import { Capacitor } from "@capacitor/core";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * A short tick under the finger, as iOS gives on taps that change something; silent where unsupported.
+ * The Android app uses the phone's haptic engine (a crisp "light impact"), browsers the plain vibrator.
+ */
+export function haptic() {
+  if (Capacitor.isNativePlatform()) {
+    void import("@capacitor/haptics")
+      .then(({ Haptics, ImpactStyle }) => Haptics.impact({ style: ImpactStyle.Light }))
+      .catch(() => {});
+    return;
+  }
+  try {
+    navigator.vibrate?.(8);
+  } catch {}
 }
 
 export function formatEpisodeName(name: string | number): string {

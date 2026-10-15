@@ -23,10 +23,31 @@ export function loopOffset(i: number, current: number, count: number) {
   return raw > count / 2 ? raw - count : raw;
 }
 
-// how far a neighbour sits from the centre, as a share of the card width
-const STEP = 0.62;
+// how far the first neighbour sits from the centre, as a share of the card width; further ones fan in closer.
+// Turned 48° and seen in perspective, a neighbour's inner edge clears the middle card only from ~0.89 up:
+// 0.92 leaves a small gap between them
+const STEP = 0.92;
+const FAN = 0.3;
+// how far a neighbour is turned away (degrees) and pushed back (px)
+const TURN = 48;
+const DEPTH = 120;
 const VISIBLE = 2;
-const SETTLE = "transform 420ms cubic-bezier(0.32, 0.72, 0, 1), opacity 420ms";
+const SETTLE = "transform 460ms cubic-bezier(0.32, 0.72, 0, 1), opacity 460ms";
+
+/**
+ * Cover flow: the middle card faces the viewer, the ones beside it are turned inward on its edges like
+ * open doors. A card at `offset` (fractional while dragging) is placed and turned continuously, so a swipe
+ * swings the next card round to the front instead of sliding one card over another.
+ */
+export function coverflow(offset: number) {
+  const side = Math.sign(offset);
+  const near = Math.min(Math.abs(offset), 1);
+  const far = Math.max(Math.abs(offset) - 1, 0);
+  const x = side * (near * STEP + far * FAN) * 100;
+  const z = -(near + far * 0.6) * DEPTH;
+  // a right-hand card turns its outer (right) edge away: negative rotateY
+  return `translate3d(calc(-50% + ${x}%), 0, ${z}px) rotateY(${-side * near * TURN}deg)`;
+}
 
 /**
  * Phones: the ranked list as a stack of cards. The current one is large in the middle, its neighbours
@@ -49,13 +70,14 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
       const offset = around(i) + drag;
       const distance = Math.min(Math.abs(offset), VISIBLE + 1);
       card.style.transition = animate ? SETTLE : "none";
-      card.style.transform = `translate3d(calc(-50% + ${offset * STEP * 100}%), 0, 0) scale(${1 - Math.min(distance, VISIBLE) * 0.13})`;
+      card.style.transform = coverflow(offset);
       card.style.zIndex = String(10 - Math.round(distance));
       card.style.opacity = distance > VISIBLE + 0.4 ? "0" : "1";
       const shade = shades.current.get(i);
       if (shade) {
         shade.style.transition = animate ? "opacity 420ms" : "none";
-        shade.style.opacity = String(Math.min(distance, VISIBLE) * 0.32);
+        // the middle card stays clear; one step out is already well in the dark
+        shade.style.opacity = String(Math.min(Math.min(distance, VISIBLE) * 0.42, 0.78));
       }
     }
   };
@@ -86,7 +108,10 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
 
   return (
     <div className="px-4">
-      <div {...bind()} className="relative mx-auto h-[min(93vw,420px)] touch-pan-y select-none">
+      <div
+        {...bind()}
+        className="relative mx-auto h-[min(93vw,420px)] touch-pan-y select-none [perspective:1000px]"
+      >
         {items.map((anime, i) => {
           // the list loops: the last titles sit to the left of the first
           if (Math.abs(around(i)) > VISIBLE + 1) return null;
@@ -102,11 +127,13 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
               tabIndex={i === index ? 0 : -1}
               aria-label={anime.title}
               onClick={() => (i === index ? openInfoModal(anime) : setIndex(i))}
-              className="absolute left-1/2 top-0 aspect-[2/3] w-[min(62vw,280px)] overflow-hidden rounded-[1.75rem] bg-[#1c1c1f] text-left shadow-[0_14px_28px_rgba(0,0,0,0.5)] ring-1 ring-white/15 [backface-visibility:hidden] will-change-transform"
+              className={`absolute left-1/2 top-0 aspect-[2/3] w-[min(62vw,280px)] overflow-hidden rounded-xl bg-[#1c1c1f] text-left [backface-visibility:hidden] will-change-transform ${
+                i === index ? "stack-card-front" : "shadow-[0_10px_20px_rgba(0,0,0,0.55)] ring-1 ring-white/10"
+              }`}
               // first paint before the layout effect runs: already roughly in place
-              style={{ transform: `translate3d(calc(-50% + ${around(i) * STEP * 100}%), 0, 0)` }}
+              style={{ transform: coverflow(around(i)) }}
             >
-              <LazyImage src={anime.poster || anime.image} alt="" className="h-full w-full object-cover" />
+              <LazyImage art={anime} src={anime.poster || anime.image} alt="" className="h-full w-full object-cover" />
               {/* cards behind the middle one sink into the dark */}
               <span
                 ref={(node) => {
@@ -115,6 +142,11 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
                 }}
                 aria-hidden
                 className="pointer-events-none absolute inset-0 bg-black"
+              />
+              {/* the middle card wears a liquid-glass rim and sheen (globals.css) */}
+              <span
+                aria-hidden
+                className={`glass-rim absolute inset-0 ${i === index ? "opacity-100" : "opacity-0"}`}
               />
               {/* same badges as the desktop ranked cards */}
               <span className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5">

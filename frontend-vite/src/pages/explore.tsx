@@ -83,7 +83,7 @@ function ExploreContent() {
   const quickLinks = menus[0]?.items || [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 pt-4 pb-6 md:py-10 space-y-5 md:space-y-6">
       <AmbientBackdrop src={items[0]?.poster || items[0]?.image} />
       <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h1>
 

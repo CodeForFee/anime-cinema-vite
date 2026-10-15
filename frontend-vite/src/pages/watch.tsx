@@ -18,6 +18,7 @@ import { Skeleton } from "../components/lightswind/skeleton";
 import { usePlayerStore } from "../stores/usePlayerStore";
 import { Link } from "@/lib/router";
 import { ArrowLeft, CircleAlert, Heart, SkipForward, Sparkles } from "lucide-react";
+import { PosterImg } from "@/components/movie/LazyImage";
 import { formatEpisodeName } from "../lib/utils";
 import { Episode } from "../types/anime";
 
@@ -177,7 +178,8 @@ function WatchContent() {
 
   return (
     <div
-      className={`mx-auto px-4 md:px-8 py-6 space-y-6 transition-[max-width] duration-300 ${
+      // phones: the back / favourite bar sits right under the header, not a band lower
+      className={`mx-auto px-4 md:px-8 pt-3 pb-6 md:pt-6 space-y-4 md:space-y-6 transition-[max-width] duration-300 ${
         // On desktop the column is never wider than a 16:9 player that still fits the screen height
         // (4rem = the column's side padding), so the player fills it with no black bars at the sides
         isTheaterMode
@@ -248,7 +250,8 @@ function WatchContent() {
 
       {/* Now playing */}
       <div className="glass-card flex items-center gap-3 rounded-3xl p-3 pr-4 md:p-4">
-        <img
+        <PosterImg
+          art={anime}
           src={anime.poster || anime.image}
           alt=""
           decoding="async"

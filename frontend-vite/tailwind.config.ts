@@ -29,6 +29,12 @@ const config: Config = {
         input: "#3f3f46",
         ring: "#E50914",
       },
+      // Softer corners app-wide: cards are near-square with a light round (Tailwind's defaults are .75/1/1.5rem)
+      borderRadius: {
+        xl: "0.5rem",
+        "2xl": "0.5rem",
+        "3xl": "0.75rem",
+      },
       // Used by the Lightswind Skeleton's shimmer sweep
       keyframes: {
         shimmer: { "100%": { transform: "translateX(100%)" } },

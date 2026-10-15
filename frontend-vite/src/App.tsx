@@ -1,10 +1,11 @@
 import { HeroUIProvider } from "@heroui/react"
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister"
-import { QueryClient } from "@tanstack/react-query"
+import { onlineManager, QueryClient } from "@tanstack/react-query"
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
 import { del, get, set } from "idb-keyval"
-import { Suspense, useEffect } from "react"
-import { Route, Routes, useLocation } from "react-router-dom"
+import { WifiOff } from "lucide-react"
+import { Suspense, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react"
+import { Route, Routes, useLocation, useNavigationType } from "react-router-dom"
 
 import { ExtensionGate } from "./components/layout/ExtensionGate"
 import { Footer } from "./components/layout/Footer"
@@ -37,13 +38,56 @@ const persistOptions = {
   }
 }
 
-// Next.js scrolled to the top on every page change; react-router leaves that to us
-function ScrollToTop() {
-  const { pathname } = useLocation()
+const scrollByKey = new Map<string, number>()
+
+// A new page starts at the top; back returns to where that page was left, as native apps do. Layout effect:
+// the position is in place before the back slide captures the page (lib/router.tsx goBack).
+function ScrollMemory() {
+  const { key, pathname } = useLocation()
+  const type = useNavigationType()
+  const last = useRef({ key, pathname: "" })
+
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
+    history.scrollRestoration = "manual"
+    const save = () => scrollByKey.set(last.current.key, scrollY)
+    addEventListener("scroll", save, { passive: true })
+    return () => removeEventListener("scroll", save)
+  }, [])
+
+  useLayoutEffect(() => {
+    const samePage = last.current.pathname === pathname
+    last.current = { key, pathname }
+    // switching episode or filter on the same page keeps the position
+    if (type !== "POP" && samePage) return
+    const target = type === "POP" ? (scrollByKey.get(key) ?? 0) : 0
+    let tries = 0
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const restore = () => {
+      scrollTo(0, target)
+      // the page may still be filling in: retry until it is tall enough
+      if (Math.abs(scrollY - target) > 1 && ++tries < 30) timer = setTimeout(restore, 16)
+    }
+    restore()
+    return () => clearTimeout(timer)
+  }, [key, pathname, type])
+
   return null
+}
+
+// While the device is offline: one quiet line above the tab bar. Nothing to press: requests wait and the
+// lists refetch by themselves when the connection is back (logic/network.ts).
+function OfflineNotice() {
+  const online = useSyncExternalStore(
+    (listener) => onlineManager.subscribe(listener),
+    () => onlineManager.isOnline()
+  )
+  if (online) return null
+  return (
+    <div role="status" className="app-toast flex items-center gap-2">
+      <WifiOff aria-hidden className="h-4 w-4 text-amber-400" />
+      Mất kết nối mạng
+    </div>
+  )
 }
 
 export default function App() {
@@ -51,11 +95,11 @@ export default function App() {
     <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <HeroUIProvider>
         <ExtensionGate>
-          <ScrollToTop />
+          <ScrollMemory />
           <HeaderNav />
           <div className="flex flex-col min-h-[calc(100vh-64px)] pb-24 lg:pb-0 w-full overflow-x-hidden">
             <main className="flex-1 w-full max-w-full">
-              <Suspense fallback={<div className="min-h-[60vh]" />}>
+              <Suspense fallback={<div className="min-h-[60vh]" data-route-fallback />}>
                 <Routes>
                   <Route path="/" element={<pages.home />} />
                   <Route path="/explore" element={<pages.explore />} />
@@ -70,6 +114,7 @@ export default function App() {
             <Footer />
           </div>
           <SidebarDock />
+          <OfflineNotice />
         </ExtensionGate>
       </HeroUIProvider>
     </PersistQueryClientProvider>

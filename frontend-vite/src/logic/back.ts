@@ -1,6 +1,7 @@
 // Android back button inside the app. Open layers (sheet, full-screen player, detail modal) register a
 // handler; back closes the newest one first, then goes back a page, and at home needs a second press
 // within 2 s to leave the app.
+import { goBack } from "../lib/router"
 import { isNativeApp } from "./bridge"
 
 type Handler = () => void
@@ -43,7 +44,7 @@ export function installBackButton() {
           layers[layers.length - 1]()
           break
         case "page":
-          history.back()
+          goBack()
           break
         case "exit":
           void App.exitApp()

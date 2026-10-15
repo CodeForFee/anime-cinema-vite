@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest"
 
 import { highResBanner } from "./banner"
 
-const big = "https://cdn.animevietsub.nl/data/big_banner/2026/a.jpg"
-const small = "https://cdn.animevietsub.nl/data/banner/2026/a.jpg"
+const big = "https://cdn.animevietsub.sale/data/big_banner/2026/a.jpg"
+const small = "https://cdn.animevietsub.sale/data/banner/2026/a.jpg"
 
 describe("highResBanner", () => {
   test("prefers big_banner over everything else", () => {

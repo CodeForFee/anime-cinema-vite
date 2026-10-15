@@ -140,16 +140,19 @@ export const Top10Shelf: React.FC<Top10ShelfProps> = ({
                   {/* Inner Image Container */}
                   <div
                     className="relative w-full h-full bg-[#141414] overflow-hidden"
+                    // the angled clip cuts any outer shadow; the glass rim is drawn inside (globals.css)
                     style={{
                       clipPath: clipPathStyle,
                       WebkitClipPath: clipPathStyle,
                     }}
                   >
                     <LazyImage
+                      art={anime}
                       src={anime.poster || anime.image || ""}
                       alt={anime.title}
                       className="w-full h-full object-cover object-center group-hover:scale-105 transition-[transform,opacity] duration-500"
                     />
+                    <span aria-hidden className="glass-rim absolute inset-0 z-[5]" />
 
                     {/* Center Play Button Overlay on Hover */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">

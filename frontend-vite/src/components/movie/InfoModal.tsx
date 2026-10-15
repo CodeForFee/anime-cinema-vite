@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "@/lib/router";
-import { Dialog, DialogContent } from "../lightswind/dialog";
+import { Dialog, DialogContent, isPhoneWidth, SHEET_EXIT_MS } from "../lightswind/dialog";
+import { preloadRoute } from "@/lib/routes";
 import { Button } from "../lightswind/button";
 import { PickerDropdown } from "./PickerDropdown";
 import { LazyImage } from "./LazyImage";
@@ -10,7 +11,7 @@ import { useHistoryStore } from "../../stores/useHistoryStore";
 import { useUIStore } from "../../stores/useUIStore";
 import { onBack } from "../../logic/back";
 import { useAnimeDetailQuery } from "../../hooks/useAnimeQuery";
-import { cn, formatEpisodeName } from "../../lib/utils";
+import { cn, formatEpisodeName, haptic } from "../../lib/utils";
 import { Check, Play, Plus, ThumbsUp, Volume2, VolumeX, X } from "lucide-react";
 
 export const InfoModal: React.FC = () => {
@@ -164,14 +165,17 @@ export const InfoModal: React.FC = () => {
   };
 
   const handlePlay = (epSlug?: string) => {
+    haptic();
     onClose();
-    if (epSlug) {
-      // Episodes belong to whichever season is picked in the list
-      router.push(`/watch?slug=${encodeURIComponent(activeSlug)}&ep=${encodeURIComponent(epSlug)}`);
-    } else {
-      const slug = anime?.slug || selectedAnime?.slug || "";
-      router.push(`/watch?slug=${encodeURIComponent(slug)}`);
-    }
+    // Episodes belong to whichever season is picked in the list
+    const url = epSlug
+      ? `/watch?slug=${encodeURIComponent(activeSlug)}&ep=${encodeURIComponent(epSlug)}`
+      : `/watch?slug=${encodeURIComponent(anime?.slug || selectedAnime?.slug || "")}`;
+    preloadRoute(url);
+    // On a phone the sheet first drops away completely, then the player rises (lib/router.tsx "up"):
+    // starting both at once froze a half-closed sheet into the page change
+    if (isPhoneWidth()) setTimeout(() => router.push(url), SHEET_EXIT_MS);
+    else router.push(url);
   };
 
   // Stays mounted while closed, so the dialog can play its closing animation
@@ -193,7 +197,8 @@ export const InfoModal: React.FC = () => {
               {/* =========================================================================
                   1. CINEMATIC HERO BANNER (16:9 Live Video Trailer + Action Buttons)
                  ========================================================================= */}
-              <div className="relative w-full sm:aspect-video bg-[#181818] sm:bg-black overflow-hidden select-none">
+              {/* on phones, dragging the hero pulls the sheet down to close (lightswind/dialog.tsx) */}
+              <div data-sheet-handle className="relative w-full sm:aspect-video bg-[#181818] sm:bg-black overflow-hidden select-none">
                 {/* Live YouTube Trailer Playing in Background (Muted by default) */}
                 {ytEmbedUrl ? (
                   <iframe
@@ -258,7 +263,8 @@ export const InfoModal: React.FC = () => {
 
                       {/* Add to List / Favorite Circle Button */}
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          haptic();
                           toggleFavorite({
                             slug: anime?.slug || selectedAnime?.slug || "",
                             title,
@@ -266,8 +272,8 @@ export const InfoModal: React.FC = () => {
                             genres: rawGenres,
                             year: anime?.year,
                             rating: anime?.rating,
-                          })
-                        }
+                          });
+                        }}
                         type="button"
                         title={isFavorite ? "Xóa khỏi danh sách của tôi" : "Thêm vào danh sách của tôi"}
                         className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer ${
@@ -572,6 +578,7 @@ export const InfoModal: React.FC = () => {
                           {/* Thumbnail Container with Duration Badge */}
                           <div className="relative aspect-video w-full bg-black/40 overflow-hidden">
                             <LazyImage
+                              art={item}
                               src={item.image || item.poster || poster}
                               alt={item.title}
                               className="w-full h-full object-cover"

@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../lightswind/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "../lightswind/avatar";
 import { AnimeDetail } from "../../types/anime";
 import { CalendarDays, Clock, Eye, ImageIcon, Star, Users, Video } from "lucide-react";
+import { PosterImg } from "@/components/movie/LazyImage";
 
 interface AnimeDetailTabsProps {
   anime: AnimeDetail;
@@ -53,7 +54,8 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
       {/* Overview: poster, title, key facts, synopsis */}
       {/* Phones: small poster beside the title, synopsis full width below. Desktop: poster column + one text column. */}
       <div className="grid grid-cols-[6rem_1fr] items-start gap-x-4 gap-y-4 md:grid-cols-[11rem_1fr] md:gap-x-6">
-        <img
+        <PosterImg
+          art={anime}
           src={anime.poster || anime.image}
           alt={anime.title}
           loading="lazy"

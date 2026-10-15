@@ -44,16 +44,18 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
       onClick={handleCardClick}
       className={cn(
         // flex-shrink-0: in a horizontal shelf the card must keep its width and scroll, not squeeze to fit the row
-        "group relative flex-shrink-0 bg-[#10121A]/90 border border-white/10 hover:border-red-500/50 hover:shadow-[0_10px_30px_rgba(229,9,20,0.25)] transition-all duration-300 rounded-xl overflow-hidden select-none cursor-pointer",
+        "card-lift group relative flex-shrink-0 bg-[#10121A]/90 hover:shadow-[0_10px_30px_rgba(229,9,20,0.25)] transition-all duration-300 rounded-xl overflow-hidden select-none cursor-pointer",
         // Grids pass w-full and size the card by their columns; everywhere else it gets the shelf width
         !className?.includes("w-full") && "w-44 md:w-52",
         className
       )}
     >
       <div className="p-0 overflow-hidden relative aspect-[2/3] bg-black/40">
-        {/* Main Poster Image */}
+        {/* Main Poster Image, under the card's glass rim (globals.css) */}
+        <span aria-hidden className="glass-rim absolute inset-0 z-[5] rounded-t-xl" />
         <LazyImage
           alt={anime.title}
+          art={anime}
           src={anime.poster || anime.image || fallbackImage}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-[transform,opacity] duration-500"
           fallbackSrc={fallbackImage}

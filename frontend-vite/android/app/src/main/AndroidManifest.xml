@@ -38,4 +38,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- VIBRATE (tap feedback) and ACCESS_NETWORK_STATE (offline notice) come from the @capacitor/haptics
+         and @capacitor/network plugins' own manifests -->
+
 </manifest>

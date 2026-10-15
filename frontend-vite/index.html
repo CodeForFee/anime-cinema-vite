@@ -9,6 +9,8 @@
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/pwa-64x64.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <!-- the launch intro's first frame (below) -->
+    <link rel="preload" as="image" href="/app-icon.png" />
     <!-- the CDN serving the embedded player and its segments -->
     <link rel="preconnect" href="https://storage.googleapiscdn.com" />
   </head>
@@ -22,6 +24,160 @@
       </filter>
     </svg>
     <div id="root"></div>
+    <!-- Launch intro, Netflix style: picks up from the Android splash (icon on the same dark), the name is
+         revealed left to right with a red light under it, then the logo bursts out in place and opens onto the app.
+         Plain HTML/CSS so it is on screen before the app's code arrives (and hides that load). It must stay
+         smooth while that code loads and the home page renders underneath, so only transform, opacity and one
+         filter animate (the compositor runs those without the busy main thread); glows are static, and the
+         font is the system one, so no web font swaps in mid-animation. Once per launch, never with reduced motion. -->
+    <div id="intro" aria-hidden="true">
+      <div class="intro-logo">
+        <img class="intro-icon" src="/app-icon.png" alt="" />
+        <div class="intro-word">
+          <span>Capy</span><span class="red">nime</span>
+          <i class="intro-wipe"></i>
+        </div>
+        <div class="intro-bar"></div>
+      </div>
+    </div>
+    <style>
+      /* the app's own dark, before its stylesheet arrives: the intro never opens onto a white page */
+      html,
+      body {
+        background: #141414;
+      }
+      /* the page underneath does not scroll (or show its scrollbar) while the intro is up */
+      html.intro-on,
+      html.intro-on body {
+        overflow: hidden;
+      }
+      /* held on its first frame until the Android splash has gone (script below) */
+      html.intro-wait #intro,
+      html.intro-wait #intro * {
+        animation-play-state: paused !important;
+      }
+      #intro {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483000;
+        display: grid;
+        place-items: center;
+        background: #0b0b0f;
+        will-change: opacity;
+        animation: intro-out 0.55s 1.7s cubic-bezier(0.2, 0, 0, 1) forwards;
+      }
+      .intro-logo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+      /* the ending: every part bursts out where it sits (scaled about its own centre), so nothing drifts
+         up the screen; slow start, quick middle, soft end */
+      .intro-icon {
+        width: 96px;
+        height: 96px;
+        border-radius: 22px;
+        box-shadow: 0 0 26px rgba(229, 9, 20, 0.35);
+        will-change: transform, opacity;
+        animation:
+          intro-beat 0.8s 0.05s cubic-bezier(0.4, 0, 0.2, 1) both,
+          intro-burst-icon 0.7s 1.4s cubic-bezier(0.45, 0, 0.25, 1) forwards;
+      }
+      .intro-word {
+        position: relative;
+        overflow: hidden;
+        padding: 0 6px;
+        font: 900 40px/1.15 system-ui, Roboto, "Segoe UI", sans-serif;
+        letter-spacing: -0.02em;
+        color: #fff;
+        text-shadow: 0 0 18px rgba(229, 9, 20, 0.45);
+        will-change: transform, opacity, filter;
+        animation: intro-burst-word 0.8s 1.4s cubic-bezier(0.45, 0, 0.25, 1) forwards;
+      }
+      .intro-word .red {
+        color: #e50914;
+      }
+      /* the dark cover sliding off to the right reveals the name from left to right */
+      .intro-wipe {
+        position: absolute;
+        inset: 0 -40% 0 0;
+        background: linear-gradient(90deg, transparent, #0b0b0f 22%);
+        will-change: transform;
+        animation: intro-wipe 0.75s 0.3s cubic-bezier(0.45, 0, 0.2, 1) both;
+      }
+      .intro-bar {
+        width: 150px;
+        height: 3px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, transparent, #e50914 20%, #ff5a5f 50%, #e50914 80%, transparent);
+        box-shadow: 0 0 14px 2px rgba(229, 9, 20, 0.65);
+        transform: scaleX(0);
+        transform-origin: left;
+        will-change: transform, opacity;
+        animation:
+          intro-bar 0.75s 0.4s cubic-bezier(0.45, 0, 0.2, 1) forwards,
+          intro-fade 0.4s 1.4s ease-out forwards;
+      }
+      @keyframes intro-beat {
+        0% { transform: scale(1); }
+        45% { transform: scale(0.94); }
+        100% { transform: scale(1); }
+      }
+      @keyframes intro-burst-icon {
+        to { transform: scale(1.8); opacity: 0; }
+      }
+      @keyframes intro-burst-word {
+        to { transform: scale(2.6); opacity: 0; filter: blur(6px); }
+      }
+      @keyframes intro-fade {
+        to { opacity: 0; }
+      }
+      @keyframes intro-wipe {
+        /* the cover's soft edge starts just left of the first letter: the whole name is hidden */
+        from { transform: translateX(-25%); }
+        to { transform: translateX(100%); }
+      }
+      @keyframes intro-bar {
+        to { transform: scaleX(1); }
+      }
+      @keyframes intro-out {
+        to { opacity: 0; visibility: hidden; }
+      }
+    </style>
+    <script>
+      ;(function () {
+        var intro = document.getElementById("intro")
+        var root = document.documentElement
+        // Android app: the system splash still covers the page (capacitor.config.ts SplashScreen). Ask it
+        // to go now that the intro's first frame exists; it fades over 200 ms.
+        var cap = window.Capacitor
+        var native = Boolean(cap && cap.isNativePlatform && cap.isNativePlatform() && cap.nativePromise)
+        if (native) {
+          try {
+            cap.nativePromise("SplashScreen", "hide", {}).catch(function () {})
+          } catch (e) {}
+        }
+        try {
+          if (sessionStorage.getItem("capynime-intro") || matchMedia("(prefers-reduced-motion: reduce)").matches)
+            return intro.remove()
+          sessionStorage.setItem("capynime-intro", "1")
+        } catch (e) {}
+        root.classList.add("intro-on")
+        function play() {
+          root.classList.remove("intro-wait")
+          setTimeout(function () {
+            intro.remove()
+            root.classList.remove("intro-on")
+          }, 2300)
+        }
+        // the intro holds its first frame while the splash fades over it, then plays from the start
+        if (native) {
+          root.classList.add("intro-wait")
+          setTimeout(play, 180)
+        } else play()
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Bookmark, Compass, History, Home, Search } from "lucide-react";
 import { Link } from "@/lib/router";
 import { usePathname } from "@/lib/router";
-import { cn } from "../../lib/utils";
+import { cn, haptic } from "../../lib/utils";
 
 const MOBILE_NAV_LINKS = [
   { label: "Trang chủ", href: "/", icon: Home },
@@ -37,6 +37,7 @@ export const SidebarDock: React.FC = () => {
               href={href}
               aria-label={label}
               aria-current={isActive ? "page" : undefined}
+              onClick={() => !isActive && haptic()}
               className={cn(
                 "relative flex h-11 flex-1 items-center justify-center rounded-full transition-colors duration-200",
                 isActive ? "text-[#1c1300]" : "text-white/85 active:text-white"

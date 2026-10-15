@@ -1,6 +1,7 @@
 
 import { motion } from "framer-motion";
 import { useEnrichedItem } from "../../hooks/useAnimeQuery";
+import { useHdArt } from "../../hooks/useHdArt";
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "@/lib/router";
 import { Button, buttonVariants } from "../lightswind/button";
@@ -10,6 +11,7 @@ import { useUIStore } from "../../stores/useUIStore";
 import { useHistoryStore } from "../../stores/useHistoryStore";
 import { cn } from "../../lib/utils";
 import { Heart, Info, Play, Star } from "lucide-react";
+import { PosterImg } from "@/components/movie/LazyImage";
 import { loopOffset } from "../home/StackCarousel";
 
 interface HeroBannerProps {
@@ -57,11 +59,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
   const current = useEnrichedItem(slides[currentIndex] || slides[0]);
   useEnrichedItem(slides.length > 1 ? slides[(currentIndex + 1) % slides.length] : undefined);
 
+  const hd = useHdArt(current);
+
   if (slides.length === 0 || !current) return null;
 
-  // Resolve sharpest backdrop and poster
+  // Resolve sharpest backdrop and poster. The phone card is taller than wide: the 720 px source banner is
+  // blown up 3x there, the 460x650 cover far less, so phones take the cover once it is known.
   const posterImg = current.poster || current.image || "";
-  const backdropImg = current.backdrop || current.banner || posterImg;
+  const wideBackdrop = current.backdrop || current.banner || posterImg;
+  const backdropImg = hd?.cover && !matchMedia("(min-width: 1024px)").matches ? hd.cover : wideBackdrop;
 
   const genres = (Array.isArray(current.genres) ? current.genres : [])
     .map((g) => (typeof g === "string" ? g : ((g as unknown) as { name?: string })?.name || ""))
@@ -244,7 +250,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
                     opacity: distance === 0 ? 1 : distance === 1 ? 0.9 : distance >= 4 ? 0 : 0.55,
                   }}
                 >
-                  <img src={item.poster || item.image || ""} alt="" loading="lazy" className="aspect-[2/3] w-full object-cover" />
+                  <PosterImg art={item} src={item.poster || item.image || ""} alt="" loading="lazy" className="aspect-[2/3] w-full object-cover" />
                 </button>
               );
             })}
@@ -278,7 +284,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
                       : "scale-90 border-transparent opacity-55 md:scale-100 md:border-[#2e2e33] md:opacity-80 md:hover:opacity-100 md:hover:border-white/60"
                 )}
               >
-                <img
+                <PosterImg
+                  art={item}
                   src={item.poster || item.image || ""}
                   alt={item.title}
                   loading="lazy"
