@@ -215,7 +215,9 @@ Viewers need the extension build that lists your production host in `allowlist.y
 | Allowed web hosts | `avs-helper-extension/allowlist.yaml` | Hosts that may use the extension bridge |
 | Player host | `avs-helper-extension/manifest-v3/src/manifest.ts`, `lib/background/logic/ad-rules.ts`, `MainActivity.java` | The player CDN (`*.googleapiscdn.com`) the bridge and ad rules apply to |
 
-After changing any of these, rebuild the extension and the app.
+After changing any of these, rebuild the extension and the app. Known alternate source domains, the official
+announcement channels and the exact switch steps are in [`docs/SOURCE-DOMAINS.md`](docs/SOURCE-DOMAINS.md); run
+`pnpm domains` in `frontend-vite` to see which host is current.
 
 ## Disclaimer
 
