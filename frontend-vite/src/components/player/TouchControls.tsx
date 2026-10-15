@@ -121,6 +121,20 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   const seekBy = (delta: number) =>
     send("seek", Math.min(Math.max(0, state.currentTime + delta), state.duration || state.currentTime + delta));
 
+  // A moving mouse shows the controls. Only a real mouse: after every tap a touch screen fires a synthetic
+  // mouse move, which would re-show the controls the tap just toggled off (and made them look unresponsive)
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      setVisible(true);
+      setActivity((n) => n + 1);
+    };
+    surface.addEventListener("pointermove", onMove);
+    return () => surface.removeEventListener("pointermove", onMove);
+  }, []);
+
   // Desktop: the usual player keys
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -235,10 +249,6 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     <section
       ref={surfaceRef}
       {...bind()}
-      onMouseMove={() => {
-        setVisible(true);
-        setActivity((n) => n + 1);
-      }}
       aria-label="Điều khiển video"
       className="absolute inset-0 z-10 select-none text-white"
       // full screen owns every swipe; inline, a vertical swipe still scrolls the page

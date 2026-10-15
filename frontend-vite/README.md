@@ -81,10 +81,10 @@ extension send the source Referer with the frame request. The player then runs o
 it from the viewer IP.
 
 `public/player-bridge.js` is injected into that frame (by the extension as a content script, by the Android app
-from `MainActivity.java`). It carries the ad shield and a postMessage remote control. On touch devices the app
+from `MainActivity.java`). It carries the ad shield and a postMessage remote control. On every device the app
 draws its own controls over the player (`src/components/player/TouchControls.tsx`: double tap 10 s, swipe to
-seek, in full screen swipe right = volume / left = brightness, speed and episode sheets); with a mouse the
-player keeps its own controls and the bridge only reports the position. Positions are kept per episode
+seek, in full screen swipe right = volume / left = brightness; on desktop also keyboard shortcuts, drop-up
+speed / episode menus anchored to their button, and a cinema mode). Positions are kept per episode
 (`useProgressStore` in `src/components/player/player-logic.ts`) for "Xem tiếp". The CDN player's own resume box
 (`#avs-resume-overlay`) is hidden by the bridge and answered through the app's prompt.
 
