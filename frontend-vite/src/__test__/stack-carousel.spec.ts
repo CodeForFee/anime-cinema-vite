@@ -1,4 +1,4 @@
-import { episodeNumber, loopOffset, partLabel } from "src/components/home/StackCarousel"
+import { coverflow, episodeNumber, loopOffset, partLabel } from "src/components/home/StackCarousel"
 import type { AnimeItem } from "src/types/anime"
 
 const item = (title: string, extra: Record<string, unknown> = {}) => ({ slug: "x", title, ...extra }) as AnimeItem
@@ -27,5 +27,13 @@ describe("looping stack", () => {
     expect(loopOffset(5, 0, 10)).toBe(5)
     expect(loopOffset(6, 0, 10)).toBe(-4)
     expect(loopOffset(3, 3, 10)).toBe(0)
+  })
+
+  test("cover flow: the middle faces front, neighbours turn inward symmetrically, mid-swipe in between", () => {
+    expect(coverflow(0)).toBe("translate3d(calc(-50% + 0%), 0, 0px) rotateY(0deg)")
+    expect(coverflow(1)).toContain("rotateY(-48deg)")
+    expect(coverflow(-1)).toContain("rotateY(48deg)")
+    expect(coverflow(2)).toContain("rotateY(-48deg)")
+    expect(coverflow(0.5)).toContain("rotateY(-24deg)")
   })
 })

@@ -24,6 +24,7 @@ import { useMenuQuery, useSearchQuery } from "../../hooks/useAnimeQuery";
 import { useDebounce } from "../../hooks/useDebounce";
 import { MenuGroup } from "../../lib/api";
 import { ChevronDown, Search, X } from "lucide-react";
+import { PosterImg } from "@/components/movie/LazyImage";
 
 // Link to the explore page for one of the source site's lists
 const exploreLink = (path: string) => `/explore?path=${encodeURIComponent(path)}`;
@@ -164,7 +165,10 @@ export const HeaderNav: React.FC = () => {
   const currentPath = pathname === "/explore" ? searchParams.get("path") : null;
 
   return (
-    <header className="sticky top-0 z-50 flex h-[calc(4rem+var(--inset-top))] w-full items-center justify-between gap-4 border-b border-white/10 bg-[#141414] px-4 pt-[var(--inset-top)] md:px-12">
+    <header
+      // its own view-transition layer: it stays put while pages slide (globals.css)
+      style={{ viewTransitionName: "header" } as React.CSSProperties}
+      className="sticky top-0 z-50 flex h-[calc(4rem+var(--inset-top))] w-full items-center justify-between gap-4 border-b border-white/10 bg-[#141414] px-4 pt-[var(--inset-top)] md:px-12">
       {/* Left Branding & Navigation */}
       <div className="flex items-center gap-4 md:gap-8">
         {/* Brand */}
@@ -272,7 +276,8 @@ export const HeaderNav: React.FC = () => {
                             onClick={closeSearch}
                             className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/10 max-md:gap-4 max-md:rounded-2xl max-md:p-2.5 active:bg-white/10"
                           >
-                            <img
+                            <PosterImg
+                              art={item}
                               src={item.poster || item.image || ""}
                               alt=""
                               loading="lazy"

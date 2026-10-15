@@ -7,7 +7,7 @@ export default function FavoritesPage() {
   const favorites = useHistoryStore((state) => state.favorites);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 md:px-8 md:py-10">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 pt-4 pb-6 md:space-y-8 md:px-8 md:py-10">
       <AmbientBackdrop src={favorites[0]?.poster} />
 
       <header>

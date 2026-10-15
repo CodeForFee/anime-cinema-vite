@@ -43,7 +43,7 @@ export const LazyShelf: React.FC<LazyShelfProps> = ({ title, icon, path, seeMore
       {data ? (
         <MovieShelf title={title} icon={icon} items={data.items} seeMoreHref={seeMoreHref} />
       ) : (
-        <div className="my-8" aria-busy="true" aria-label={`Đang tải ${title}`}>
+        <div className="my-5 md:my-8" aria-busy="true" aria-label={`Đang tải ${title}`}>
           <ShelfSkeleton />
         </div>
       )}

@@ -5,6 +5,7 @@ import { Button, Tooltip, ScrollShadow } from "@heroui/react";
 import { AnimeItem } from "../../types/anime";
 import { useUIStore } from "../../stores/useUIStore";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
+import { PosterImg } from "@/components/movie/LazyImage";
 
 interface TopSliderProps {
   items: AnimeItem[];
@@ -54,11 +55,13 @@ export const TopSlider: React.FC<TopSliderProps> = ({ items }) => {
               <div
                 key={anime.slug || idx}
                 onClick={() => openInfoModal(anime)}
-                className="group relative flex-shrink-0 w-28 sm:w-36 md:w-40 cursor-pointer rounded-xl overflow-hidden border border-white/10 hover:border-primaryRed transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_24px_rgba(229,9,20,0.35)] bg-[#181818]"
+                className="card-lift group relative flex-shrink-0 w-28 sm:w-36 md:w-40 cursor-pointer rounded-xl overflow-hidden hover:border-primaryRed transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_24px_rgba(229,9,20,0.35)] bg-[#181818]"
               >
                 {/* Poster Image Container */}
                 <div className="relative aspect-[2/3] w-full overflow-hidden bg-black/40">
-                  <img
+                  <span aria-hidden className="glass-rim absolute inset-0 z-[5] rounded-t-xl" />
+                  <PosterImg
+                    art={anime}
                     src={anime.poster || anime.image || ""}
                     alt={anime.title}
                     className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"

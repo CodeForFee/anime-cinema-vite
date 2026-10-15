@@ -2,25 +2,42 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Skeleton } from "../lightswind/skeleton";
 import { cn } from "../../lib/utils";
+import { type Titled, useHdArt } from "../../hooks/useHdArt";
+
+// ponytail: grows with every poster of the session; a few KB of URLs, cap it if sessions get that long
+const shown = new Set<string>();
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   /** Shown instead when the image fails to load */
   fallbackSrc?: string;
+  /** The title this poster belongs to: its sharp AniList cover replaces src once found (hooks/useHdArt.ts) */
+  art?: Titled;
 }
+
+/** A plain <img> poster that switches to the title's sharp cover once it is known */
+export const PosterImg: React.FC<React.ImgHTMLAttributes<HTMLImageElement> & { art?: Titled }> = ({ art, src, ...props }) => {
+  const hd = useHdArt(art)?.cover;
+  return <img src={hd || src} {...props} />;
+};
 
 /**
  * Image that is only fetched when it nears the viewport, with a skeleton in its place until it has loaded.
  * The parent must be positioned (relative/absolute) and sized, since the skeleton fills it.
  */
-export const LazyImage: React.FC<LazyImageProps> = ({ src, fallbackSrc, className, loading = "lazy", ...props }) => {
+export const LazyImage: React.FC<LazyImageProps> = ({ src: sourceSrc, art, fallbackSrc: givenFallback, className, loading = "lazy", ...props }) => {
+  const src = useHdArt(art)?.cover || sourceSrc;
+  // a cover that fails to load falls back to the source's own poster
+  const fallbackSrc = src !== sourceSrc ? sourceSrc : givenFallback;
   const ref = useRef<HTMLImageElement>(null);
-  const [loaded, setLoaded] = useState(false);
+  // Shown before (going back to a page): in place at once, so the back slide does not reveal skeletons
+  const seen = Boolean(src && shown.has(src));
+  const [loaded, setLoaded] = useState(seen);
   const [failed, setFailed] = useState(false);
 
   // A cached image can finish before React attaches onLoad, so ask the element itself
   useEffect(() => {
     setFailed(false);
-    setLoaded(Boolean(ref.current?.complete && ref.current.naturalWidth > 0));
+    setLoaded(Boolean(src && shown.has(src)) || Boolean(ref.current?.complete && ref.current.naturalWidth > 0));
   }, [src]);
 
   return (
@@ -29,14 +46,17 @@ export const LazyImage: React.FC<LazyImageProps> = ({ src, fallbackSrc, classNam
       <img
         ref={ref}
         src={failed && fallbackSrc ? fallbackSrc : src}
-        loading={loading}
-        decoding="async"
-        onLoad={() => setLoaded(true)}
+        loading={seen ? "eager" : loading}
+        decoding={seen ? "auto" : "async"}
+        onLoad={() => {
+          if (src) shown.add(src);
+          setLoaded(true);
+        }}
         onError={() => {
           if (fallbackSrc && !failed) setFailed(true);
           else setLoaded(true);
         }}
-        className={cn("transition-opacity duration-300", loaded ? "opacity-100" : "opacity-0", className)}
+        className={cn(!seen && "transition-opacity duration-300", loaded ? "opacity-100" : "opacity-0", className)}
         {...props}
       />
     </>

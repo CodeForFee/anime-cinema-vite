@@ -14,6 +14,7 @@ import { BrowserRouter } from "react-router-dom"
 import App from "./App"
 import { installBackButton } from "./logic/back"
 import { isNativeApp } from "./logic/bridge"
+import { watchNetwork } from "./logic/network"
 
 // Only Chromium renders an SVG filter as backdrop-filter; elsewhere .glass stays a plain blur
 if ("userAgentData" in navigator) document.documentElement.dataset.liquid = ""
@@ -35,6 +36,10 @@ if (!isNativeApp) {
 else void navigator.serviceWorker?.getRegistrations().then((all) => all.forEach((worker) => worker.unregister()))
 
 installBackButton()
+watchNetwork()
+// The Android splash is held until the launch intro has painted (index.html asks first; this is the backstop
+// in case that inline call ran before the bridge was ready)
+if (isNativeApp) void import("@capacitor/splash-screen").then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 200 })).catch(() => {})
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

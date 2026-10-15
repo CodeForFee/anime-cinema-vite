@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { cn } from "../../lib/utils"; // Assuming a utility for classnames
+import { cn, haptic } from "../../lib/utils"; // Assuming a utility for classnames
 import { X } from "lucide-react";
 import { motion, AnimatePresence, HTMLMotionProps, useDragControls } from "framer-motion";
 
@@ -131,7 +131,10 @@ interface DialogContentProps extends OmittedDialogContentHTMLAttributes {
 }
 
 // Tailwind's "sm" breakpoint: below it the dialog may turn into a sheet
-const isPhoneWidth = () => window.matchMedia("(max-width: 639px)").matches;
+export const isPhoneWidth = () => window.matchMedia("(max-width: 639px)").matches;
+
+/** A phone sheet's closing slide, fixed (not a spring) so what follows it can start right after (InfoModal play) */
+export const SHEET_EXIT_MS = 280;
 
 const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
     ({ className, children, hideCloseButton, sheetOnMobile, ...props }, ref) => {
@@ -174,7 +177,8 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+                            // no blur behind a phone sheet: blurring the whole page every frame of the slide stutters
+                            className={cnFunction("absolute inset-0", sheet ? "bg-black/60" : "bg-background/80 backdrop-blur-sm")}
                             onClick={() => setOpen(false)}
                         />
 
@@ -183,20 +187,33 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
                             ref={ref}
                             initial={sheet ? { y: "100%" } : { opacity: 0, scale: 0.3 }}
                             animate={sheet ? { y: 0 } : { opacity: 1, scale: 1 }}
-                            exit={sheet ? { y: "100%" } : { opacity: 0, scale: 0.3 }}
+                            exit={
+                                sheet
+                                    ? { y: "100%", transition: { type: "tween", duration: SHEET_EXIT_MS / 1000, ease: [0.32, 0.72, 0, 1] } }
+                                    : { opacity: 0, scale: 0.3 }
+                            }
                             transition={
                                 sheet
-                                    ? { type: "tween", duration: 0.34, ease: [0.32, 0.72, 0, 1] }
+                                    ? { type: "spring", damping: 32, stiffness: 320, mass: 0.9 }
                                     : { type: "spring", damping: 25, stiffness: 400, opacity: { duration: 0.2 } }
                             }
-                            // The sheet is dragged by its grabber only, so its content keeps scrolling normally
+                            // The sheet is dragged by its grabber or a [data-sheet-handle] area only, so the rest
+                            // of its content keeps scrolling normally
                             drag={sheet ? "y" : false}
                             dragControls={dragControls}
                             dragListener={false}
                             dragConstraints={{ top: 0, bottom: 0 }}
                             dragElastic={{ top: 0, bottom: 0.6 }}
+                            onPointerDown={(event: React.PointerEvent) => {
+                                const target = event.target as Element;
+                                if (sheet && target.closest("[data-sheet-handle]") && !target.closest("button, a, input"))
+                                    dragControls.start(event);
+                            }}
                             onDragEnd={(_event, info) => {
-                                if (info.offset.y > 120 || info.velocity.y > 600) setOpen(false);
+                                if (info.offset.y > 120 || info.velocity.y > 600) {
+                                    haptic();
+                                    setOpen(false);
+                                }
                             }}
                             className={cnFunction(
                                 `relative z-[9999] w-full max-w-lg rounded-2xl border 

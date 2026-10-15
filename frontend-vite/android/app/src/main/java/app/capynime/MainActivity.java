@@ -54,6 +54,10 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         WebView webView = getBridge().getWebView();
+        // The WebView's own scrollbar flashed up as the page loaded (over the launch intro); the app has no
+        // use for a browser scrollbar
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
 
         getBridge().setWebViewClient(
             new BridgeWebViewClient(getBridge()) {

@@ -1,4 +1,5 @@
 import { Play, X } from "lucide-react";
+import { PosterImg } from "@/components/movie/LazyImage";
 import { useEffect, useState } from "react";
 import { AmbientBackdrop, EmptyShelf } from "../components/layout/AmbientBackdrop";
 import { InfoModal } from "../components/movie/InfoModal";
@@ -47,7 +48,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-6 md:px-8 md:py-10">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 pt-4 pb-6 md:space-y-8 md:px-8 md:py-10">
       <AmbientBackdrop src={history[0]?.poster} />
 
       <header className="flex items-end justify-between gap-4">
@@ -82,8 +83,9 @@ export default function HistoryPage() {
                   <li key={item.slug} className="glass-card group relative flex items-center gap-4 rounded-3xl p-3 pr-4">
                     <Link href={href} className="relative block h-[92px] w-16 shrink-0 overflow-hidden rounded-2xl bg-white/5">
                       {item.poster && (
-                        <img src={item.poster} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                        <PosterImg art={item} src={item.poster} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                       )}
+                      <span aria-hidden className="glass-rim absolute inset-0" />
                       {progressInfo && (
                         <span className="absolute inset-x-0 bottom-0 h-1 bg-black/50">
                           <span className="block h-full bg-primaryRed" style={{ width: `${progressInfo.percent}%` }} />
