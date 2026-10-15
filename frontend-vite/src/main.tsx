@@ -15,6 +15,7 @@ import App from "./App"
 import { installBackButton } from "./logic/back"
 import { isNativeApp } from "./logic/bridge"
 import { watchNetwork } from "./logic/network"
+import { resolveSourceHost } from "./logic/source-host"
 
 // Only Chromium renders an SVG filter as backdrop-filter; elsewhere .glass stays a plain blur
 if ("userAgentData" in navigator) document.documentElement.dataset.liquid = ""
@@ -37,6 +38,8 @@ else void navigator.serviceWorker?.getRegistrations().then((all) => all.forEach(
 
 installBackButton()
 watchNetwork()
+// If the source moved to another domain, find it (docs/SOURCE-DOMAINS.md); in the background, the page does not wait
+void resolveSourceHost()
 // The Android splash is held until the launch intro has painted (index.html asks first; this is the backstop
 // in case that inline call ran before the bridge was ready)
 if (isNativeApp) void import("@capacitor/splash-screen").then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 200 })).catch(() => {})

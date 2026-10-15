@@ -15,11 +15,13 @@ import { installReferrers } from "./logic/install-referers"
 import { installRules } from "./logic/install-rules"
 
 // setup install rules default
+// (the Referer sets go one after the other: each one replaces the Referer rules the previous one installed)
 const setup = Promise.all([
   installRules(adRules),
-  installReferrers(referrersDefault),
-  getReferrers().then((referrers) =>
-    installReferrers(referrers as Record<string, string>)
+  installReferrers(referrersDefault).then(() =>
+    getReferrers().then((referrers) =>
+      installReferrers(referrers as Record<string, string>)
+    )
   )
 ])
 

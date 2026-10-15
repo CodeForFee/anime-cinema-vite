@@ -11,7 +11,14 @@ export function installReferrer(name: string, value: string) {
 
   return installRules(createRule(name, value))
 }
-export function installReferrers(referers: Record<string, string>) {
+// Rule ids below this belong to the Referer rules (create-rule.ts counts up from 1); ad-rules.ts starts at 9000
+const REFERER_RULE_LIMIT = 9000
+
+/**
+ * Installs the Referer rules for `referers`, replacing the ones installed before. Without that, asking for a
+ * new host (set:referrers) would leave the old rule next to the new one, both setting the same header.
+ */
+export async function installReferrers(referers: Record<string, string>) {
   const rules = Object.entries(referers).reduce((rules, [name, value]) => {
     rules.push(...createRule(name, value))
     return rules
@@ -19,5 +26,12 @@ export function installReferrers(referers: Record<string, string>) {
   }, [] as chrome.declarativeNetRequest.Rule[])
   // eslint-disable-next-line no-undef
   if (__DEV__) console.log(rules)
+  if (!rules.length) return
+  if (__MV3__) {
+    const stale = (await chrome.declarativeNetRequest.getDynamicRules())
+      .filter((rule) => rule.id < REFERER_RULE_LIMIT)
+      .map((rule) => rule.id)
+    await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: stale })
+  }
   return installRules(rules)
 }

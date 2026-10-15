@@ -37,6 +37,19 @@ common, so check a new one against the official channels below before trusting i
 - X / Twitter: `@AnimeVsub`
 - Facebook page: `facebook.com/animevietsub.info`
 
+## Automatic fallback (built in)
+
+The hosts above are compiled into the app (`SOURCE_HOSTS` in `frontend-vite/src/constants.ts`). On start,
+`src/logic/source-host.ts` checks the current host in the background. If it does not answer, it tries the other
+hosts in order, follows redirects to the final host, remembers the one that works (local storage), tells the
+extension the new Referer (`setReferrers`) and reloads the page once. So when the source moves to a host already on
+the list, the web app and the Android app recover by themselves, no rebuild needed.
+
+Limits: a domain that is not on the list still needs the manual switch below (add it to `SOURCE_HOSTS` and
+`HOSTS` in `scripts/check-domains.mjs`). In the Android app the embedded player's Referer comes from the WebView
+hostname in `capacitor.config.ts`, which is fixed at build time, so a move needs a new APK for the player to
+keep working even though the app's own requests follow the new host.
+
 ## Switching the source host
 
 Replace the old host with the new one in:
