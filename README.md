@@ -37,6 +37,78 @@ A web app plus an Android app. Every request goes straight from the viewer's own
 | [`frontend-vite/`](frontend-vite/) | Vite + React + TypeScript web app, also the base of the Android app (Capacitor) | GPL-3.0-only (see `NOTICE.md`) |
 | [`avs-helper-extension/`](avs-helper-extension/) | Chrome/Edge extension (Manifest V3) the web build needs | MIT |
 
+## 🏗️ Architecture
+
+There is no backend. The app only ever talks to the source site, and it does so from the viewer's own device,
+through one of two transports that expose the same `Http.get / Http.post` API.
+
+```mermaid
+flowchart LR
+  subgraph Viewer["Viewer's device"]
+    UI["React UI<br/>pages · components · stores"]
+    API["lib/api.ts<br/>animeApi adapter"]
+    W["Web Workers<br/>HTML parsers"]
+    BR["logic/bridge.ts<br/>one Http API"]
+    UI --> API --> BR
+    API --> W
+    BR -- "browser" --> EXT["AVS Helper extension<br/>background worker"]
+    BR -- "Android app" --> NAT["Capacitor native HTTP"]
+    UI -- "iframe + postMessage" --> PL["Source player page<br/>+ player-bridge.js"]
+  end
+  EXT --> SRC[("Source site<br/>animevietsub.sale")]
+  NAT --> SRC
+  PL --> CDN[("Player / stream CDN<br/>*.googleapiscdn.com")]
+```
+
+### Web app (`frontend-vite/src`)
+
+| Path | Role |
+|---|---|
+| `pages/` | One lazy route per page: `home`, `explore`, `search`, `watch`, `history`, `favorites`. Routes are listed in `lib/routes.ts` and preloaded on hover/touch. |
+| `components/` | `home/` slider and shelves, `layout/` header, sidebar dock, extension gate, `movie/` cards and detail views, `player/` the video player UI, `lightswind/` small UI primitives. |
+| `lib/api.ts` | The `animeApi` adapter the UI calls. It turns source pages into typed data and builds the player `embedUrl`. |
+| `apis/runs`, `apis/parser`, `apis/workers` | One module per source endpoint. A `run` does the request, a `parser` turns HTML into data, and parsing runs in a Web Worker (`wrap-worker.ts`). |
+| `logic/` | Transport (`bridge.ts`, `http.ts`), HLS loading and decryption, native volume/brightness, Android back button, skip-intro times. |
+| `stores/`, `contexts/` | Zustand stores (UI, player, history) and React contexts. |
+| `hooks/` | `usePlayerBridge` (remote control of the player frame), data hooks, debounce, local storage. |
+| `constants.ts` | `HOST_CURL`, the single source host everything derives from. |
+
+State and data: TanStack Query caches catalog answers and persists them to IndexedDB (`idb-keyval`), so returning
+viewers see pages at once while they refresh. Zustand holds UI/player state. Watch history, favorites and episode
+positions live in the browser's local storage.
+
+### Player
+
+1. `watch.tsx` asks `lib/api.ts` for the episode; the source answers with a link to its player page.
+2. `CinemaPlayer.tsx` embeds that page in an `<iframe>` (`embedUrl`, tagged `#animevsub-vsub_extra`, so the Referer is added).
+3. `public/player-bridge.js` runs inside the frame. It neutralizes the player's ads, hides its own controls and
+   exposes a `postMessage` remote control (play, pause, seek, rate, volume, resume) plus a state feed.
+4. `usePlayerBridge` talks to the bridge; `TouchControls.tsx` draws the app's controls (gestures, shortcuts,
+   drop-up menus, cinema mode) and sends commands through it.
+5. If the source ever answers with a plain stream instead of its iframe, `HlsPlayer.ts` plays it with a patched hls.js.
+
+The bridge is injected by the extension (content script) on the web and by `MainActivity.java` in the Android app.
+
+### Extension (`avs-helper-extension`)
+
+| Path | Role |
+|---|---|
+| `lib/background/` | Manifest V3 service worker. Performs the fetches the page asks for and installs the `declarativeNetRequest` rules: `create-rule.ts` (Referer/Origin/User-Agent by URL tag, CORS headers), `ad-rules.ts` (ad domains), `install-referers.ts`. |
+| `lib/contentScripts/` | Runs on allowlisted hosts. Relays `http:request` DOM events from the page to the worker and the answer back as `http:response`. |
+| `manifest-v3/` | Build setup (`src/manifest.ts` generates `manifest.json`, `tsup` bundles to `extension/dist`). Also holds `assets/player-bridge.js` for the player frame. |
+| `allowlist.yaml` | Hosts allowed to use the bridge (content-script matches). |
+| `map-referer.json` | URL tag → Referer the extension sends. Keep it equal to `HOST_CURL`. |
+
+URL tags are how the app asks for header changes: `#animevsub-vsub` sends the source Referer, `..._extra` also adds
+CORS headers so images and HLS segments can be fetched by the page itself.
+
+### Android app (`frontend-vite/android`)
+
+Capacitor wraps the same built web app. `bridge.ts` swaps the extension for Capacitor's native HTTP, and
+`capacitor.config.ts` serves the bundle under the source host so the embedded player sees the right Referer.
+`MainActivity.java` injects `player-bridge.js`, blocks ad URLs in the WebView, and implements native full screen,
+volume and brightness.
+
 ## 🚀 Run
 
 ```sh
