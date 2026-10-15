@@ -5,6 +5,7 @@ import {
   ListVideo,
   Lock,
   Maximize,
+  RectangleHorizontal,
   Minimize,
   Pause,
   Play,
@@ -42,9 +43,11 @@ interface TouchControlsProps {
   onNextEpisode?: () => void;
   brightness: number;
   onBrightness: (value: number) => void;
-  onOpenSpeed: () => void;
+  onOpenSpeed: (anchorX: number) => void;
+  isTheater: boolean;
+  onToggleTheater: () => void;
   /** Only offered in full screen: inline, the episode grid is right under the player */
-  onOpenEpisodes?: () => void;
+  onOpenEpisodes?: (anchorX: number) => void;
 }
 
 const SEEK_STEP = 10;
@@ -77,6 +80,8 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   brightness,
   onBrightness,
   onOpenSpeed,
+  isTheater,
+  onToggleTheater,
   onOpenEpisodes,
 }) => {
   const surfaceRef = useRef<HTMLElement>(null);
@@ -115,6 +120,33 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
 
   const seekBy = (delta: number) =>
     send("seek", Math.min(Math.max(0, state.currentTime + delta), state.duration || state.currentTime + delta));
+
+  // Desktop: the usual player keys
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || (e.target as Element).closest("input, textarea, select, [contenteditable]")) return;
+      const volume = (delta: number) => send("volume", Math.round(Math.min(1, Math.max(0, (state.volume ?? 1) + delta)) * 100) / 100);
+      const key = e.key.toLowerCase();
+      if (key === " " || key === "k") send(state.paused ? "play" : "pause");
+      else if (key === "arrowleft") seekBy(-SEEK_STEP);
+      else if (key === "arrowright") seekBy(SEEK_STEP);
+      else if (key === "arrowup") volume(0.1);
+      else if (key === "arrowdown") volume(-0.1);
+      else if (key === "m") send("volume", state.volume ? 0 : 1);
+      else if (key === "f") onToggleFullscreen();
+      else if (key === "t") onToggleTheater();
+      else return;
+      e.preventDefault();
+      setVisible(true);
+      setActivity((n) => n + 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  // x of a button inside the player: where its drop-up popup is centred
+  const anchorOf = (button: HTMLElement) =>
+    button.getBoundingClientRect().left + button.offsetWidth / 2 - (surfaceRef.current?.getBoundingClientRect().left ?? 0);
 
   const act = (handler: () => void) => () => {
     setActivity((n) => n + 1);
@@ -185,7 +217,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
 
       if (last) hudTimer.current = setTimeout(() => setHud(null), 600);
     },
-    { axis: "lock", filterTaps: true, pointer: { touch: true } }
+    { axis: "lock", filterTaps: true, pointer: { touch: window.matchMedia("(pointer: coarse)").matches } }
   );
 
   const commitScrub = () => {
@@ -203,6 +235,10 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     <section
       ref={surfaceRef}
       {...bind()}
+      onMouseMove={() => {
+        setVisible(true);
+        setActivity((n) => n + 1);
+      }}
       aria-label="Điều khiển video"
       className="absolute inset-0 z-10 select-none text-white"
       // full screen owns every swipe; inline, a vertical swipe still scrolls the page
@@ -329,16 +365,16 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none]">
-              <button type="button" aria-label={`Tốc độ phát, đang ${state.rate}x`} onClick={act(onOpenSpeed)} className={CHIP}>
+              <button type="button" aria-label={`Tốc độ phát, đang ${state.rate}x`} onClick={(e) => act(() => onOpenSpeed(anchorOf(e.currentTarget)))()} className={CHIP}>
                 <Gauge aria-hidden className="h-4 w-4" />
                 {state.rate}x
               </button>
-              <button type="button" onClick={act(() => setLocked(true))} className={CHIP}>
+              <button type="button" onClick={act(() => setLocked(true))} className={cn(CHIP, "lg:mr-auto")}>
                 <Lock aria-hidden className="h-4 w-4" />
                 Khoá
               </button>
               {onOpenEpisodes && (
-                <button type="button" onClick={act(onOpenEpisodes)} className={CHIP}>
+                <button type="button" onClick={(e) => act(() => onOpenEpisodes(anchorOf(e.currentTarget)))()} className={cn(CHIP, !isFullscreen && "max-lg:hidden")}>
                   <ListVideo aria-hidden className="h-4 w-4" />
                   Tập
                 </button>
@@ -349,11 +385,22 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                   Tập tiếp
                 </button>
               )}
+              {!isFullscreen && (
+                <button
+                  type="button"
+                  aria-label={isTheater ? "Thoát chế độ rạp" : "Chế độ rạp phim"}
+                  aria-pressed={isTheater}
+                  onClick={act(onToggleTheater)}
+                  className={cn(ROUND, "h-9 w-9 shrink-0 max-lg:hidden", isTheater && "bg-white/20")}
+                >
+                  <RectangleHorizontal aria-hidden className="h-5 w-5" />
+                </button>
+              )}
               <button
                 type="button"
                 aria-label={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
                 onClick={act(onToggleFullscreen)}
-                className={cn(ROUND, "ml-auto h-9 w-9 shrink-0")}
+                className={cn(ROUND, "h-9 w-9 shrink-0", "max-lg:ml-auto")}
               >
                 {isFullscreen ? <Minimize aria-hidden className="h-5 w-5" /> : <Maximize aria-hidden className="h-5 w-5" />}
               </button>

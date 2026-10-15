@@ -11,8 +11,8 @@ const blocked: [urlFilter: string, resourceTypes: string[]][] = [
   ["||adsterra.com", ["script", "xmlhttprequest", "sub_frame"]],
   ["||propellerads.com", ["script", "xmlhttprequest", "sub_frame"]],
   // the player's service worker re-fetches these, and a worker fetch is not typed "script"
-  ["||storage.googleapiscdn.com/static/jwplayer/vast.js", ["script", "xmlhttprequest", "other"]],
-  ["||storage.googleapiscdn.com/admin/api/ads/active", ["script", "xmlhttprequest", "other"]]
+  ["||googleapiscdn.com/static/jwplayer/vast.js", ["script", "xmlhttprequest", "other"]],
+  ["||googleapiscdn.com/admin/api/ads/active", ["script", "xmlhttprequest", "other"]]
 ]
 
 export const adRules = blocked.map(
