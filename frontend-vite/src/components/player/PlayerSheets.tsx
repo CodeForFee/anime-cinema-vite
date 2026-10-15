@@ -17,10 +17,16 @@ const SHEET_OUT_MS = 220;
 function Sheet({
   title,
   onClose,
+  anchorX = 0,
+  width,
   children,
 }: {
   title: string;
   onClose: () => void;
+  /** Desktop: x (px, inside the player) of the button that opened it; the popup is centred over it */
+  anchorX?: number;
+  /** Desktop popup width */
+  width: string;
   children: (close: () => void) => React.ReactNode;
 }) {
   const [closing, setClosing] = useState(false);
@@ -50,15 +56,18 @@ function Sheet({
         type="button"
         aria-label="Đóng"
         onClick={close}
-        className={cn("absolute inset-0 bg-black/45", closing ? "cn-fade-out" : "cn-fade")}
+        className={cn("absolute inset-0 bg-black/45 lg:bg-transparent", closing ? "cn-fade-out" : "cn-fade")}
       />
       <div
         className={cn(
           // a floating card with the same gap and radius on every side, in both orientations
           "glass-sheet absolute inset-x-2 bottom-2 flex max-h-[calc(100%-1rem)] flex-col overflow-hidden rounded-3xl text-white",
           "landscape:inset-y-2 landscape:left-auto landscape:right-[max(0.5rem,var(--inset-right))] landscape:w-[min(380px,46%)]",
+          // desktop: a drop-up popover above the control bar, like Netflix, not a side panel
+          "lg:!inset-y-auto lg:!bottom-[5.5rem] lg:!left-[clamp(0.5rem,calc(var(--ax)_-_var(--w)/2),calc(100%_-_var(--w)_-_0.5rem))] lg:!right-auto lg:!w-[var(--w)] lg:!max-h-[min(70%,420px)] lg:rounded-2xl",
           closing ? "cn-sheet-out" : "cn-sheet"
         )}
+        style={{ "--w": width, "--ax": `${anchorX}px` } as React.CSSProperties}
       >
         <div className="flex shrink-0 items-center justify-between px-4 pb-1 pt-3 landscape:pr-[max(1rem,var(--inset-right))]">
           <h3 className="text-sm font-bold">{title}</h3>
@@ -74,9 +83,19 @@ function Sheet({
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-export function SpeedSheet({ rate, onSelect, onClose }: { rate: number; onSelect: (rate: number) => void; onClose: () => void }) {
+export function SpeedSheet({
+  rate,
+  onSelect,
+  onClose,
+  anchorX,
+}: {
+  rate: number;
+  onSelect: (rate: number) => void;
+  onClose: () => void;
+  anchorX?: number;
+}) {
   return (
-    <Sheet title="Tốc độ phát" onClose={onClose}>
+    <Sheet title="Tốc độ phát" onClose={onClose} anchorX={anchorX} width="min(260px,60%)">
       {(close) => (
       <div className="grid grid-cols-4 gap-2 overflow-y-auto px-4 pb-[max(1rem,var(--inset-bottom))] pt-1 landscape:grid-cols-2">
         {RATES.map((value) => (
@@ -111,11 +130,13 @@ export function EpisodeSheet({
   currentId,
   onSelect,
   onClose,
+  anchorX,
 }: {
   episodes: Episode[];
   currentId?: string;
   onSelect: (episode: Episode) => void;
   onClose: () => void;
+  anchorX?: number;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rows = Math.ceil(episodes.length / COLUMNS);
@@ -134,7 +155,7 @@ export function EpisodeSheet({
   }, []);
 
   return (
-    <Sheet title={`Danh sách tập · ${episodes.length}`} onClose={onClose}>
+    <Sheet title={`Danh sách tập · ${episodes.length}`} onClose={onClose} anchorX={anchorX} width="min(380px,60%)">
       {(close) => (
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,var(--inset-bottom))]">
         <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>

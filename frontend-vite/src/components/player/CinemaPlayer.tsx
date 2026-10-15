@@ -40,8 +40,6 @@ interface CinemaPlayerProps {
 type NativeShell = { postMessage: (message: string) => void };
 const nativeShell = () => (window as unknown as { AvsNative?: NativeShell }).AvsNative;
 
-// Phones and tablets get the app's own touch controls; a mouse keeps the player's controls
-const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches;
 
 const SAVE_EVERY_MS = 5000;
 // "Bỏ qua giới thiệu": most TV openings are ~90 s and start within the first 2.5 min
@@ -69,15 +67,17 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const isTheaterMode = usePlayerStore((s) => s.isTheaterMode);
+  const toggleTheaterMode = usePlayerStore((s) => s.toggleTheaterMode);
   const autoPlayNext = usePlayerStore((s) => s.autoPlayNext);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [brightness, setBrightness] = useState(1);
   const [sheet, setSheet] = useState<"speed" | "episodes" | null>(null);
+  const [anchorX, setAnchorX] = useState(0);
 
   const source = embedUrl ? undefined : sources?.[0];
-  const [touch] = useState(isTouchDevice);
+  const touch = true; // the app's own controls on every device, mouse included
   const bridge = usePlayerBridge(iframeRef, embedUrl, touch);
   const state = bridge.ready ? bridge.state : null;
 
@@ -231,8 +231,15 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden rounded-xl bg-black shadow-2xl transition-all duration-300",
-        isTheaterMode && "max-w-none"
+        "relative w-full overflow-hidden rounded-xl bg-black shadow-2xl transition-[width] duration-300 ease-out",
+        // desktop: always centred, so cinema mode only grows the width (animated) and never moves sideways;
+        // the plain width fits the screen height, cinema mode is wider but still capped
+        "lg:left-1/2 lg:-translate-x-1/2",
+        isTheaterMode
+          ? "lg:w-[min(1360px,calc(100vw_-_4rem),calc((100vh_-_8rem)*16/9))]"
+          : "lg:w-[min(100%,calc((100vh_-_11rem)*16/9))]",
+        // a transformed parent would hold the fixed full-screen frame inside itself
+        isFullscreen && "lg:!transform-none"
       )}
     >
       {/* 16:9 Cinema Aspect Ratio Frame */}
@@ -240,7 +247,6 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
         ref={frameRef}
         className={cn(
           "relative mx-auto w-full aspect-video overflow-hidden bg-black",
-          "lg:max-w-[min(100%,calc((100vh_-_11rem)*16/9))]",
           // anchored by inset, not 100vw/100dvh: those lag behind a rotation on Android WebView
           isFullscreen && "!fixed !inset-0 z-[100] !m-0 !aspect-auto !h-auto !w-auto !max-w-none"
         )}
@@ -299,8 +305,20 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
             onToggleFullscreen={toggleFullscreen}
             brightness={brightness}
             onBrightness={setBrightness}
-            onOpenSpeed={() => setSheet("speed")}
-            onOpenEpisodes={isFullscreen && episodes && episodes.length > 1 && onSelectEpisode ? () => setSheet("episodes") : undefined}
+            onOpenSpeed={(x) => {
+              setAnchorX(x);
+              setSheet("speed");
+            }}
+            isTheater={isTheaterMode}
+            onToggleTheater={toggleTheaterMode}
+            onOpenEpisodes={
+              episodes && episodes.length > 1 && onSelectEpisode
+                ? (x) => {
+                    setAnchorX(x);
+                    setSheet("episodes");
+                  }
+                : undefined
+            }
           />
         )}
 
@@ -329,10 +347,10 @@ export const CinemaPlayer: React.FC<CinemaPlayerProps> = ({
         )}
 
         {sheet === "speed" && state && (
-          <SpeedSheet rate={state.rate} onSelect={(rate) => bridge.send("rate", rate)} onClose={() => setSheet(null)} />
+          <SpeedSheet anchorX={anchorX} rate={state.rate} onSelect={(rate) => bridge.send("rate", rate)} onClose={() => setSheet(null)} />
         )}
         {sheet === "episodes" && episodes && onSelectEpisode && (
-          <EpisodeSheet episodes={episodes} currentId={currentEpisodeId} onSelect={onSelectEpisode} onClose={() => setSheet(null)} />
+          <EpisodeSheet anchorX={anchorX} episodes={episodes} currentId={currentEpisodeId} onSelect={onSelectEpisode} onClose={() => setSheet(null)} />
         )}
 
         {/* biome-ignore lint/a11y/useMediaCaption: the streams are hardsubbed, there is no caption track */}

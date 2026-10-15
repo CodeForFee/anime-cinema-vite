@@ -35,7 +35,7 @@ import java.util.Locale;
 public class MainActivity extends BridgeActivity {
 
     /** Origin of the source's player page, the only frame player-bridge.js is injected into. */
-    private static final String PLAYER_ORIGIN = "https://storage.googleapiscdn.com";
+    private static final String PLAYER_ORIGIN = "https://*.googleapiscdn.com";
 
     /**
      * Ad requests answered with an empty body instead of reaching the network. Same list as

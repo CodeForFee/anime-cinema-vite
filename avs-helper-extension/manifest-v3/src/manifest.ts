@@ -42,7 +42,7 @@ export async function getManifest() {
       },
       {
         // Ad shield + remote control inside the source player page; inert unless the web embedded it
-        matches: ["https://storage.googleapiscdn.com/player/*"],
+        matches: ["https://*.googleapiscdn.com/player/*"],
         all_frames: true,
         run_at: "document_start",
         world: "MAIN",

@@ -443,6 +443,17 @@ html {
   .cn-sheet { animation-name: cn-sheet-left; }
   .cn-sheet-out { animation-name: cn-sheet-right; }
 }
+/* desktop: the speed / episode menu pops up out of the control bar instead of sliding in */
+@keyframes cn-dropup-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+}
+@keyframes cn-dropup-out {
+  to { opacity: 0; transform: translateY(10px) scale(0.96); }
+}
+@media (min-width: 1024px) {
+  .cn-sheet { animation: cn-dropup-in 160ms cubic-bezier(0.32, 0.72, 0, 1) both; transform-origin: bottom center; }
+  .cn-sheet-out { animation: cn-dropup-out 120ms ease-in both; transform-origin: bottom center; }
+}
 .cn-fade { animation: cn-fade 260ms ease-out both; }
 .cn-fade-out { animation: cn-fade-away 220ms ease-in both; }
 .cn-pop { animation: cn-pop 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
