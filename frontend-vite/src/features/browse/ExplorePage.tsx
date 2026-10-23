@@ -3,7 +3,7 @@ import React, { Suspense, useEffect, useMemo, useRef } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { PosterTile } from "@/features/browse/components/PosterTile";
 import { AmbientBackdrop } from "@/shared/ui/AmbientBackdrop";
-import { InfoModal } from "@/features/title/components/InfoModal";
+import { InfoModal } from "@/features/title";
 import { buttonVariants } from "@/shared/ui/button";
 import { PosterGridSkeleton } from "@/shared/ui/skeletons";
 import { useBrowseInfiniteQuery, useHomeQuery, useMenuQuery } from "@/core/queries";

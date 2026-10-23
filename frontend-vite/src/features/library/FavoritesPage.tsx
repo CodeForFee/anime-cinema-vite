@@ -1,7 +1,7 @@
 import { EmptyShelf } from "@/features/library/components/EmptyShelf";
 import { AmbientBackdrop } from "@/shared/ui/AmbientBackdrop";
-import { InfoModal } from "@/features/title/components/InfoModal";
-import { PosterTile } from "@/features/browse/components/PosterTile";
+import { InfoModal } from "@/features/title";
+import { PosterTile } from "@/features/browse";
 import { useHistoryStore } from "@/core/stores/history";
 
 export default function FavoritesPage() {

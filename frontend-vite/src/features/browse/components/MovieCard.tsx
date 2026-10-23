@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Chip, Button, Tooltip } from "@heroui/react";
-import { LazyImage } from "@/features/title/components/LazyImage";
+import { LazyImage } from "@/features/title";
 import { AnimeItem } from "@/core/types/anime";
 import { useHistoryStore } from "@/core/stores/history";
-import { useUIStore } from "@/features/title/store";
+import { useUIStore } from "@/features/title";
 import { cn } from "@/shared/lib/utils";
 import { Heart, Info, Play, Star } from "lucide-react";
 

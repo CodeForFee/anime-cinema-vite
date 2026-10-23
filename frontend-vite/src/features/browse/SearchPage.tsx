@@ -4,7 +4,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Input, Chip } from "@heroui/react";
 import { PosterGridSkeleton } from "@/shared/ui/skeletons";
 import { MovieCard } from "@/features/browse/components/MovieCard";
-import { InfoModal } from "@/features/title/components/InfoModal";
+import { InfoModal } from "@/features/title";
 import { useSearchQuery } from "@/core/queries";
 import { useDebounce } from "@/shared/lib/useDebounce";
 import { CircleAlert, Search } from "lucide-react";

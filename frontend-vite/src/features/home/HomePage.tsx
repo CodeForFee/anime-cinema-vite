@@ -1,24 +1,26 @@
+import { CalendarClock, Clapperboard, type LucideIcon, Sparkles, Swords, Tv, Zap } from "lucide-react"
+import { lazy, Suspense } from "react"
 
-import React from "react";
-import { CalendarClock, Clapperboard, Flame, Sparkles, Swords, Tv, Zap, type LucideIcon } from "lucide-react";
-import { HeroBanner } from "@/features/home/components/HeroBanner";
-import { Top10Shelf } from "@/features/home/components/Top10Shelf";
-import { type ExploreSearch, MovieShelf } from "@/features/browse/components/MovieShelf";
-import { LazyShelf } from "@/features/browse/components/LazyShelf";
-import { InfoModal } from "@/features/title/components/InfoModal";
-import { useHomeQuery } from "@/core/queries";
-import { HomeSkeleton } from "@/shared/ui/skeletons";
-import { AnimeItem, HomeDataResponse } from "@/core/types/anime";
+import { useHomeQuery } from "@/core/queries"
+import type { AnimeItem, HomeDataResponse } from "@/core/types/anime"
+import { type ExploreSearch, LazyShelf, MovieShelf } from "@/features/browse"
+import { InfoModal } from "@/features/title"
+import { useFormFactor } from "@/shared/lib/form-factor"
+import { HomeSkeleton } from "@/shared/ui/skeletons"
+
+// the hero and the ranked list differ by form factor: each form loads only its own chunk
+const MobileTop = lazy(() => import("@/features/home/mobile/HomeTop"))
+const DesktopTop = lazy(() => import("@/features/home/desktop/HomeTop"))
 
 interface ShelfConfig {
-  key: string;
-  title: string;
-  icon: LucideIcon;
-  seeMore: ExploreSearch;
+  key: string
+  title: string
+  icon: LucideIcon
+  seeMore: ExploreSearch
   /** Which part of the home data this shelf shows */
-  items?: (res: HomeDataResponse) => AnimeItem[] | undefined;
+  items?: (res: HomeDataResponse) => AnimeItem[] | undefined
   /** Or: a source list this shelf fetches by itself, once it is scrolled near the screen */
-  path?: string;
+  path?: string
 }
 
 // The shelves under the hero, in display order. Add, remove or reorder a shelf here.
@@ -28,64 +30,38 @@ const SHELVES: ShelfConfig[] = [
   { key: "series", title: "Phim Bộ Đang Hot", icon: Tv, seeMore: { type: "phim-bo" }, path: "/anime-bo/" },
   { key: "movies", title: "Phim Lẻ Chiếu Rạp", icon: Clapperboard, seeMore: { type: "phim-le" }, path: "/anime-le/" },
   { key: "chinese", title: "Hoạt Hình 3D Trung Quốc", icon: Swords, seeMore: { type: "hoat-hinh-trung-quoc" }, path: "/hoat-hinh-trung-quoc/" },
-  { key: "featured", title: "Phim Đề Cử Đặc Sắc", icon: Sparkles, seeMore: {}, items: (r) => r.featured },
-];
+  { key: "featured", title: "Phim Đề Cử Đặc Sắc", icon: Sparkles, seeMore: {}, items: (r) => r.featured }
+]
 
 export default function HomePage() {
-  const { data: res, isLoading } = useHomeQuery();
+  const { data: res, isLoading } = useHomeQuery()
+  const formFactor = useFormFactor()
 
-  if (isLoading) {
-    return <HomeSkeleton />;
-  }
+  if (isLoading) return <HomeSkeleton />
 
-  const featuredItems = res?.featured || [];
-  const topSliderItems = res?.topSlider || [];
-  const latestItems = res?.latest || [];
-
-  // Top 10 ranked list (prefers topSlider -> featured -> latest)
-  const top10Items =
-    topSliderItems.length > 0
-      ? topSliderItems
-      : featuredItems.length > 0
-      ? featuredItems
-      : latestItems;
+  // the ranked list: this season, else the featured titles, else the latest
+  const ranked = [res?.topSlider, res?.featured, res?.latest].find((list) => list && list.length > 0) ?? []
+  const Top = formFactor === "mobile" ? MobileTop : DesktopTop
 
   return (
     <div className="space-y-6 w-full max-w-full overflow-hidden pb-16">
-      {/* 1. Cinematic Hero Banner (Always at the TOP of the homepage), same list as the recommended shelf */}
-      <HeroBanner items={top10Items} />
+      <Suspense fallback={<div className="h-[520px]" />}>
+        <Top ranked={ranked} />
+      </Suspense>
 
-      {/* 2. Netflix-Style Ranked Cards Shelf (Full recommended list directly under Hero) */}
-      {top10Items.length > 0 && (
-        <Top10Shelf title="Phim Nổi Bật Đề Cử" icon={Flame} items={top10Items} seeMore={{}} />
-      )}
-
-      {/* 3. Main Shelves / Carousels (MovieShelf renders nothing when its list is empty) */}
+      {/* MovieShelf renders nothing when its list is empty */}
       <div className="space-y-2 relative z-20">
         {res &&
           SHELVES.map((shelf) =>
             shelf.path ? (
-              <LazyShelf
-                key={shelf.key}
-                title={shelf.title}
-                icon={shelf.icon}
-                path={shelf.path}
-                seeMore={shelf.seeMore}
-              />
+              <LazyShelf key={shelf.key} title={shelf.title} icon={shelf.icon} path={shelf.path} seeMore={shelf.seeMore} />
             ) : (
-              <MovieShelf
-                key={shelf.key}
-                title={shelf.title}
-                icon={shelf.icon}
-                items={shelf.items?.(res) || []}
-                seeMore={shelf.seeMore}
-              />
+              <MovieShelf key={shelf.key} title={shelf.title} icon={shelf.icon} items={shelf.items?.(res) || []} seeMore={shelf.seeMore} />
             )
           )}
       </div>
 
-      {/* Global Anime Detail Modal */}
       <InfoModal />
     </div>
-  );
+  )
 }

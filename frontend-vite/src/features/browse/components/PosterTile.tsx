@@ -1,8 +1,8 @@
 import { Heart, Star } from "lucide-react";
 import { useHistoryStore } from "@/core/stores/history";
-import { useUIStore } from "@/features/title/store";
+import { useUIStore } from "@/features/title";
 import type { AnimeItem } from "@/core/types/anime";
-import { LazyImage } from "@/features/title/components/LazyImage";
+import { LazyImage } from "@/features/title";
 
 /**
  * Poster for grids (explore, favorites): the art fills the tile, title and facts sit on a frosted strip

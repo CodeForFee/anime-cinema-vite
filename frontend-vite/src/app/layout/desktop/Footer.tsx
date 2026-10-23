@@ -4,7 +4,7 @@ import { ShieldCheck } from "lucide-react";
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="hidden lg:block w-full border-t border-white/5 bg-[#06070A] py-10 px-6 md:px-12 mt-20 text-gray-400 text-xs">
+    <footer className="w-full border-t border-white/5 bg-[#06070A] py-10 px-6 md:px-12 mt-20 text-gray-400 text-xs">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Brand */}
         <div className="flex items-center gap-3">

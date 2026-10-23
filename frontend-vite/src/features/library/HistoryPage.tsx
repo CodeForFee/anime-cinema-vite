@@ -1,9 +1,9 @@
 import { Play, X } from "lucide-react";
-import { PosterImg } from "@/features/title/components/LazyImage";
+import { PosterImg } from "@/features/title";
 import { useEffect, useState } from "react";
 import { EmptyShelf } from "@/features/library/components/EmptyShelf";
 import { AmbientBackdrop } from "@/shared/ui/AmbientBackdrop";
-import { InfoModal } from "@/features/title/components/InfoModal";
+import { InfoModal } from "@/features/title";
 import { progressKey, useProgressStore } from "@/core/player/progress";
 import { Link } from "@tanstack/react-router";
 import { formatTimeAgo } from "@/core/format";

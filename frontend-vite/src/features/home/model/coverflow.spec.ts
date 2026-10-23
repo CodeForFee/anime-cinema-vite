@@ -1,4 +1,4 @@
-import { coverflow, episodeNumber, loopOffset, partLabel } from "@/features/home/mobile/StackCarousel"
+import { coverflow, episodeNumber, loopOffset, partLabel } from "@/features/home/model/coverflow"
 import type { AnimeItem } from "@/core/types/anime"
 
 const item = (title: string, extra: Record<string, unknown> = {}) => ({ slug: "x", title, ...extra }) as AnimeItem

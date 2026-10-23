@@ -3,10 +3,12 @@ import { Outlet } from "@tanstack/react-router"
 import { WifiOff } from "lucide-react"
 import { useSyncExternalStore } from "react"
 
+import { DesktopHeader } from "@/app/layout/desktop/DesktopHeader"
 import { Footer } from "@/app/layout/desktop/Footer"
 import { ExtensionGate } from "@/app/layout/ExtensionGate"
-import { HeaderNav } from "@/app/layout/HeaderNav"
+import { MobileHeader } from "@/app/layout/mobile/MobileHeader"
 import { SidebarDock } from "@/app/layout/mobile/SidebarDock"
+import { useFormFactor } from "@/shared/lib/form-factor"
 
 // While the device is offline: one quiet line above the tab bar. Nothing to press: requests wait and the
 // lists refetch by themselves when the connection is back (platform/network.ts).
@@ -24,18 +26,19 @@ function OfflineNotice() {
   )
 }
 
-/** The frame around every page: header, the page (Outlet), footer on desktop, tab bar on mobile */
+/** The frame around every page: on mobile a compact header and the tab bar, on desktop the menu header and a footer */
 export function AppShell() {
+  const mobile = useFormFactor() === "mobile"
   return (
     <ExtensionGate>
-      <HeaderNav />
-      <div className="flex flex-col min-h-[calc(100vh-64px)] pb-24 lg:pb-0 w-full overflow-x-hidden">
+      {mobile ? <MobileHeader /> : <DesktopHeader />}
+      <div className={`flex flex-col min-h-[calc(100vh-64px)] w-full overflow-x-hidden ${mobile ? "pb-24" : ""}`}>
         <main className="flex-1 w-full max-w-full">
           <Outlet />
         </main>
-        <Footer />
+        {!mobile && <Footer />}
       </div>
-      <SidebarDock />
+      {mobile && <SidebarDock />}
       <OfflineNotice />
     </ExtensionGate>
   )
