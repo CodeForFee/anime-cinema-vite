@@ -102,8 +102,8 @@ export function NextUpCard({
         {counting && (
           <span
             aria-hidden
-            className="absolute inset-y-0 left-0 bg-black/15 transition-[width] duration-1000 ease-linear"
-            style={{ width: `${((NEXT_SECONDS - left) / NEXT_SECONDS) * 100}%` }}
+            className="absolute inset-0 origin-left bg-black/15 transition-transform duration-1000 ease-linear"
+            style={{ transform: `scaleX(${(NEXT_SECONDS - left) / NEXT_SECONDS})` }}
           />
         )}
         <Play aria-hidden className="relative h-4 w-4 fill-current" />

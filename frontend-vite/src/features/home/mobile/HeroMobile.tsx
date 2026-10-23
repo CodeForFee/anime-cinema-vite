@@ -31,7 +31,7 @@ export function HeroMobile({ items }: { items: AnimeItem[] }) {
             aria-current={distance === 0 || undefined}
             onClick={() => hero.setIndex(i)}
             className={cn(
-              "absolute bottom-3 left-1/2 w-11 origin-bottom overflow-hidden rounded-lg border-2 bg-[#1c1c1f] transition-[transform,opacity,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+              "absolute bottom-3 left-1/2 w-11 origin-bottom overflow-hidden rounded-lg border-2 bg-[#1c1c1f] transition-[transform,opacity,border-color] duration-500 ease-[var(--ease-ios)]",
               distance === 0 ? "z-10 border-white shadow-[0_12px_28px_rgba(0,0,0,0.65)]" : distance === 1 ? "border-white/25" : "border-transparent"
             )}
             style={{

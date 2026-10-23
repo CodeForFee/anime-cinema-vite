@@ -7,6 +7,7 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.Display;
 import android.view.WindowManager;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -58,6 +59,7 @@ public class MainActivity extends BridgeActivity {
         // use for a browser scrollbar
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
+        preferFastRefresh(true);
 
         getBridge().setWebViewClient(
             new BridgeWebViewClient(getBridge()) {
@@ -169,7 +171,33 @@ public class MainActivity extends BridgeActivity {
     }
 
     /** Landscape with the system bars hidden while the web player is in its full-screen mode. */
+    /**
+     * Many phones (MIUI, One UI) keep an app's WebView at 60 Hz unless it asks: take the fastest refresh rate the
+     * screen has at its current resolution (90 / 120 Hz) for the UI. Full-screen video hands the choice back to
+     * the system (0), which can match the video's frame rate and save battery.
+     */
+    private void preferFastRefresh(boolean on) {
+        int modeId = 0;
+        if (on) {
+            Display display = getWindowManager().getDefaultDisplay();
+            Display.Mode current = display.getMode();
+            float fastest = 0;
+            for (Display.Mode mode : display.getSupportedModes()) {
+                boolean sameSize = mode.getPhysicalWidth() == current.getPhysicalWidth()
+                    && mode.getPhysicalHeight() == current.getPhysicalHeight();
+                if (sameSize && mode.getRefreshRate() > fastest) {
+                    fastest = mode.getRefreshRate();
+                    modeId = mode.getModeId();
+                }
+            }
+        }
+        WindowManager.LayoutParams attributes = getWindow().getAttributes();
+        attributes.preferredDisplayModeId = modeId;
+        getWindow().setAttributes(attributes);
+    }
+
     private void setFullscreen(boolean on) {
+        preferFastRefresh(!on);
         setRequestedOrientation(
             on ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         );

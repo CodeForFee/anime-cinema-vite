@@ -5,7 +5,7 @@ import type { AnimeItem } from "@/core/types/anime";
 import { episodeNumber, loopOffset, partLabel, place, STEP, VISIBLE } from "@/features/home/model/coverflow";
 import { LazyImage, useUIStore } from "@/features/title";
 
-const SETTLE = "transform 460ms cubic-bezier(0.32, 0.72, 0, 1), opacity 460ms";
+const SETTLE = "transform 460ms var(--ease-ios), opacity 460ms";
 
 /**
  * Phones: the ranked list as a stack of cards. The current one is large in the middle, its neighbours
@@ -164,14 +164,18 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
       </div>
 
       {/* position */}
-      {/* the dots relayout on their own: nothing else on the page is measured again while they grow */}
-      <div className="mt-3 flex justify-center gap-1.5 [contain:layout_paint]" aria-hidden>
-        {items.map((anime, i) => (
+      {/* the dots never change size; one pill slides over the current one (transform only, no relayout) */}
+      <div className="mt-3 flex justify-center" aria-hidden>
+        <div className="relative flex gap-1.5">
+          {items.map((anime, i) => (
+            <span key={anime.slug || i} className="h-1.5 w-1.5 rounded-full bg-white/30" />
+          ))}
           <span
-            key={anime.slug || i}
-            className={`h-1.5 rounded-full transition-[width,background-color] duration-300 ${i === index ? "w-5 bg-white" : "w-1.5 bg-white/30"}`}
+            className="absolute left-0 top-0 h-1.5 w-5 rounded-full bg-white transition-transform duration-300 ease-[var(--ease-ios)]"
+            // dot pitch 12 px (6 + 6 gap); the 20 px pill is centred on its dot
+            style={{ transform: `translateX(${index * 12 - 7}px)` }}
           />
-        ))}
+        </div>
       </div>
     </div>
   );

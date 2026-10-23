@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  /* motion tokens: the one curve every slide and settle uses (framer gets the same numbers in shared/ui/sheet.tsx) */
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
   --background: #08090D;
   --foreground: #ECEDEE;
   /* Safe areas: the Android app gets them from Capacitor (--safe-area-inset-*, set on <html>), whose
@@ -110,7 +112,7 @@ body {
    filter and opacity animate, so it stays on the compositor. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: 420ms var(--ease-ios) both;
   mix-blend-mode: normal;
 }
 html:active-view-transition-type(push)::view-transition-old(root) {
@@ -379,12 +381,6 @@ html {
     backdrop-filter: url(#liquid-glass) blur(18px) saturate(180%);
   }
 }
-@media (pointer: coarse) {
-  .glass-button {
-    -webkit-backdrop-filter: blur(10px) saturate(160%);
-    backdrop-filter: blur(10px) saturate(160%);
-  }
-}
 /* Sheets over the playing video: denser tint, lighter blur, own layer, so sliding stays at 60 fps */
 .glass-sheet {
   background: linear-gradient(160deg, rgba(40, 40, 52, 0.78), rgba(14, 14, 20, 0.86));
@@ -432,7 +428,7 @@ html {
 @keyframes cn-pop {
   from { opacity: 0; transform: scale(0.94); }
 }
-.cn-sheet { animation: cn-sheet-up 320ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.cn-sheet { animation: cn-sheet-up 320ms var(--ease-ios) both; }
 .cn-sheet-out { animation: cn-sheet-down 220ms cubic-bezier(0.4, 0, 1, 1) both; }
 @media (orientation: landscape) {
   .cn-sheet { animation-name: cn-sheet-left; }
@@ -446,12 +442,12 @@ html {
   to { opacity: 0; transform: translateY(10px) scale(0.96); }
 }
 @media (min-width: 1024px) {
-  .cn-sheet { animation: cn-dropup-in 160ms cubic-bezier(0.32, 0.72, 0, 1) both; transform-origin: bottom center; }
+  .cn-sheet { animation: cn-dropup-in 160ms var(--ease-ios) both; transform-origin: bottom center; }
   .cn-sheet-out { animation: cn-dropup-out 120ms ease-in both; transform-origin: bottom center; }
 }
 .cn-fade { animation: cn-fade 260ms ease-out both; }
 .cn-fade-out { animation: cn-fade-away 220ms ease-in both; }
-.cn-pop { animation: cn-pop 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.cn-pop { animation: cn-pop 200ms var(--ease-ios) both; }
 @media (prefers-reduced-motion: reduce) {
   .cn-sheet, .cn-sheet-out, .cn-fade, .cn-fade-out, .cn-pop { animation-duration: 1ms; }
 }
@@ -555,6 +551,17 @@ html[data-search] body {
     mix-blend-mode: normal;
     opacity: 0.6;
   }
+  /* the HUD and the control chips sit over a playing video: blurring it again every frame drops frames */
+  .glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(140deg, rgba(58, 58, 66, 0.9), rgba(28, 28, 34, 0.92));
+  }
+  .glass-button {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
+  }
   /* the player sheets slide over a playing video: no blur to recompute per frame, a denser tint instead */
   .glass-sheet {
     -webkit-backdrop-filter: none;
@@ -578,7 +585,7 @@ html[data-search] body {
   font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
-  animation: cn-pop 200ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: cn-pop 200ms var(--ease-ios) both;
 }
 
 /* A horizontal row fades out at both ends instead of being cut off (shelves, the ranked row on desktop) */

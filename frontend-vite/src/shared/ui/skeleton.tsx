@@ -59,7 +59,7 @@ function Skeleton({
             key={index}
             className={cn(
               "bg-muted relative overflow-hidden",
-              "transition-all duration-300",
+              "transition-opacity duration-300",
               "[.lw-3d_&]:shadow-[inset_0_1.5px_3px_0_rgba(0,0,0,0.15),0_1px_1px_0_rgba(255,255,255,0.05)]",
               "dark:[.lw-3d_&]:shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3)]",
               "[.lw-3d_&]:border [.lw-3d_&]:border-black/5 dark:[.lw-3d_&]:border-white/5",
@@ -78,7 +78,7 @@ function Skeleton({
     <div
       className={cn(
         "bg-primary/20 relative overflow-hidden",
-        "transition-all duration-300",
+        "transition-opacity duration-300",
         "[.lw-3d_&]:shadow-[inset_0_1.5px_3px_0_rgba(0,0,0,0.15),0_1px_1px_0_rgba(255,255,255,0.05)]",
         "dark:[.lw-3d_&]:shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3)]",
         "[.lw-3d_&]:border [.lw-3d_&]:border-black/5 dark:[.lw-3d_&]:border-white/5",
