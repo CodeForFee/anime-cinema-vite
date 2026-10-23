@@ -4,12 +4,13 @@ import workerHls from "hls.js/dist/hls.worker?url"
 import { retryAsync } from "ts-retry"
 
 import type { StreamSource } from "@/core/types/anime"
+import { weakNetworkConfig } from "@/features/player/engines/hls/config"
 import { decryptSource } from "@/features/player/engines/hls/decode"
 import { findInRangeSet } from "@/features/player/engines/hls/find-in-range-set"
 import { HlsPatched } from "@/features/player/engines/hls/hls-patched"
 import { getSegments } from "@/features/player/engines/hls/resolve-master-manifest"
 import { resolveMasterManifestWorker } from "@/features/player/engines/hls/resolve-master-manifest.thread"
-import { isConnectedToNetwork } from "@/platform/network"
+import { downlinkEstimate, isConnectedToNetwork } from "@/platform/network"
 
 // Defaults of their settings store (src/stores/settings.ts): resolve the redirects of the next
 // PRE_RESOLVE segments ahead of playback, and start the next batch CHECK_END_PRE_LIST before the end.
@@ -55,6 +56,7 @@ export function mountSource(video: HTMLVideoElement, source: StreamSource, onFat
 
   const hls = new HlsPatched(
     {
+      ...weakNetworkConfig(downlinkEstimate()),
       workerPath: workerHls,
       progressive: true,
       fetchSetup(context, initParams) {
@@ -115,6 +117,7 @@ export function mountSource(video: HTMLVideoElement, source: StreamSource, onFat
   let needSwapCodec = false
   let timeoutUnneedSwapCodec: ReturnType<typeof setTimeout> | null = null
   let networkRetried = false
+  const offline = new AbortController()
 
   hls.on(Hls.Events.ERROR, (_event, data) => {
     if (!data.fatal) return console.warn("Player error: ", data)
@@ -122,7 +125,12 @@ export function mountSource(video: HTMLVideoElement, source: StreamSource, onFat
     console.warn("Player fatal: ", data)
     switch (data.type) {
       case Hls.ErrorTypes.NETWORK_ERROR:
-        // one automatic retry, then hand over to the reload button of the player shell
+        // the connection dropped: pick up where it stopped once it is back, instead of failing
+        if (!navigator.onLine) {
+          window.addEventListener("online", () => hls.startLoad(), { once: true, signal: offline.signal })
+          break
+        }
+        // the load policies already retried with backoff: one more start, then the reload button of the player shell
         if (networkRetried) return onFatal("Lỗi mạng: không tải được video")
         networkRetried = true
         hls.startLoad()
@@ -153,6 +161,7 @@ export function mountSource(video: HTMLVideoElement, source: StreamSource, onFat
 
   return () => {
     if (timeoutUnneedSwapCodec) clearTimeout(timeoutUnneedSwapCodec)
+    offline.abort()
     hls.destroy()
   }
 }

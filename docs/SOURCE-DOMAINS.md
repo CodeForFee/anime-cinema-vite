@@ -2,7 +2,7 @@
 
 The source site changes its domain from time to time. This is the list of hosts known as of **2026-10-23**,
 so a switch is a lookup, not a search. The machine-readable copy, which the app and `pnpm domains` both read, is
-[`frontend-vite/src/hosts.json`](../frontend-vite/src/hosts.json): edit that file, then this page.
+[`frontend-vite/src/core/source/hosts.json`](../frontend-vite/src/core/source/hosts.json): edit that file, then this page.
 
 ## Current
 

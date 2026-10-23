@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { type RefObject, useEffect, useRef, useState } from "react"
 
+import { holdArt } from "@/core/hd-art"
 import { resumePoint, useProgressStore } from "@/core/player/progress"
 import { findMalId, getSkipTimes } from "@/core/player/skip-times"
 import type { Episode } from "@/core/types/anime"
@@ -10,6 +11,8 @@ import { onBack } from "@/platform/back"
 const SAVE_EVERY_MS = 5000
 // without ending times, the next-episode card comes this many seconds before the end
 const NEXT_UP_BEFORE_END = 20
+// cover lookups wait while less than this is buffered ahead of a playing video
+const ART_WAITS_UNDER_S = 10
 
 /** Set by the Android app (MainActivity.java): rotates to landscape and hides the system bars */
 type NativeShell = { postMessage: (message: string) => void }
@@ -102,6 +105,14 @@ export function usePlayerSession(
     lastSave.current = now
     useProgressStore.getState().save(progressKey, state.currentTime, state.duration)
   }, [state, progressKey, offeredAt])
+
+  // the video comes first: no cover lookups while it waits for data or has little buffered (bridge 'ahead')
+  const starved =
+    state !== null &&
+    !state.paused &&
+    (state.waiting || (state.ahead !== undefined && state.ahead < ART_WAITS_UNDER_S && state.currentTime + state.ahead < state.duration - 1))
+  useEffect(() => holdArt(starved), [starved])
+  useEffect(() => () => holdArt(false), [])
 
   // ---- full screen ----
   const [isFullscreen, setIsFullscreen] = useState(false)

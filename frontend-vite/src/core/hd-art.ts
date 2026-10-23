@@ -97,6 +97,17 @@ const BATCH = 16
 const GAP_MS = 2100
 
 type Search = { name: string; resolve: (media: Media[] | undefined) => void }
+
+let held: Promise<void> | undefined
+let release: (() => void) | undefined
+/** While a video fills its buffer, lookups wait: covers must not take its bandwidth */
+export function holdArt(on: boolean) {
+  if (on && !held) held = new Promise((resolve) => (release = resolve))
+  else if (!on && held) {
+    held = undefined
+    release?.()
+  }
+}
 const queue: Search[] = []
 let draining = false
 
@@ -106,6 +117,7 @@ async function drain() {
   while (queue.length > 0) {
     // let the rest of a screenful of cards join this batch
     await new Promise((r) => setTimeout(r, 150))
+    while (held) await held
     const batch = queue.splice(0, BATCH)
     const vars = batch.map((_, i) => `$s${i}:String`).join(",")
     const body = batch

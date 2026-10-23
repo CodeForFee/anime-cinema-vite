@@ -9,6 +9,7 @@ import {
   type ControlsProps,
   ControlsLayer,
   FullscreenButton,
+  QualityChip,
   SeekBar,
   seekBy,
   TitleBar
@@ -109,6 +110,9 @@ export default function TouchControls(props: ControlsProps) {
                 <Gauge aria-hidden className="h-4 w-4" />
                 {state.rate}x
               </button>
+              {props.quality && (
+                <QualityChip quality={props.quality} onOpen={(button) => act(() => props.quality?.onOpen(anchorOf(button, surfaceRef.current)))()} />
+              )}
               <button type="button" onClick={act(() => setLocked(true))} className={CHIP}>
                 <Lock aria-hidden className="h-4 w-4" />
                 Khoá

@@ -8,6 +8,7 @@ import {
   type ControlsProps,
   ControlsLayer,
   FullscreenButton,
+  QualityChip,
   ROUND,
   SEEK_STEP,
   SeekBar,
@@ -83,11 +84,15 @@ export default function DesktopControls(props: ControlsProps) {
               type="button"
               aria-label={`Tốc độ phát, đang ${state.rate}x`}
               onClick={(e) => act(() => props.onOpenSpeed(anchorOf(e.currentTarget, surfaceRef.current)))()}
-              className={cn(CHIP, "mr-auto")}
+              className={CHIP}
             >
               <Gauge aria-hidden className="h-4 w-4" />
               {state.rate}x
             </button>
+            {props.quality && (
+              <QualityChip quality={props.quality} onOpen={(button) => act(() => props.quality?.onOpen(anchorOf(button, surfaceRef.current)))()} />
+            )}
+            <span className="flex-1" />
             {props.onOpenEpisodes && (
               <button
                 type="button"

@@ -27,3 +27,15 @@ export async function isConnectedToNetwork(): Promise<boolean> {
     return false
   }
 }
+
+type Connection = { saveData?: boolean; downlink?: number }
+const connection = () => (navigator as Navigator & { connection?: Connection }).connection
+
+/** The device or browser asks to save data (Android "Data Saver", Chrome Lite mode) */
+export const prefersSavingData = () => Boolean(connection()?.saveData)
+
+/** The browser's bandwidth estimate in bits/s, when it has one */
+export const downlinkEstimate = () => {
+  const mbps = connection()?.downlink
+  return mbps && mbps > 0 ? mbps * 1_000_000 : undefined
+}

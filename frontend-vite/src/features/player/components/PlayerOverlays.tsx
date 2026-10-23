@@ -17,6 +17,24 @@ function useCountdown(seconds: number, running: boolean, onDone: () => void) {
 
 const RESUME_SECONDS = 8;
 
+/** "Tự động + gợi ý": after two long stalls the automatic choice is still above 480p; one tap drops to it */
+export function WeakNetworkHint({ onAccept, onDismiss }: { onAccept: () => void; onDismiss: () => void }) {
+  return (
+    <div
+      role="status"
+      className="cn-pop glass absolute left-1/2 top-[max(3.5rem,calc(var(--inset-top)+3rem))] z-30 flex -translate-x-1/2 items-center gap-1 rounded-full py-1 pl-4 pr-1 text-sm text-white"
+    >
+      <span className="whitespace-nowrap">Mạng yếu</span>
+      <button type="button" onClick={onAccept} className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 font-semibold text-black transition active:scale-95">
+        Chuyển 480p
+      </button>
+      <button type="button" aria-label="Bỏ qua" onClick={onDismiss} className="flex h-8 w-8 items-center justify-center rounded-full transition active:scale-90">
+        <X aria-hidden className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 /** The app's own "continue watching": the CDN player's prompt sits under our controls and cannot be tapped */
 export function ResumePrompt({ at, onResume, onRestart }: { at: number; onResume: () => void; onRestart: () => void }) {
   const left = useCountdown(RESUME_SECONDS, true, onResume);

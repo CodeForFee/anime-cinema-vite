@@ -1,6 +1,6 @@
 // The pieces both player control sets are built from (mobile/TouchControls, desktop/DesktopControls): the same
 // look on every device, only the way they are driven differs.
-import { ChevronDown, Maximize, Minimize, Pause, Play, RotateCcw, RotateCw } from "lucide-react"
+import { ChevronDown, Maximize, Minimize, Pause, Play, RotateCcw, RotateCw, Settings2 } from "lucide-react"
 import type React from "react"
 import { useEffect, useState } from "react"
 
@@ -9,6 +9,8 @@ import type { PlayerCommand, PlayerState } from "@/features/player/engines/ifram
 import { cn } from "@/shared/lib/utils"
 
 export const SEEK_STEP = 10
+// a wait shorter than this (most seeks) never flashes a spinner
+const SPINNER_AFTER_MS = 300
 export const ROUND = "flex items-center justify-center rounded-full text-white transition active:scale-90"
 export const CHIP =
   "glass-button flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold text-white transition active:scale-95"
@@ -29,6 +31,29 @@ export interface ControlsProps {
   isTheater: boolean
   onToggleTheater: () => void
   onOpenEpisodes?: (anchorX: number) => void
+  /** Missing when the player has no levels to pick from */
+  quality?: { label: string; onOpen: (anchorX: number) => void }
+}
+
+/** `flag`, but turning true only once it has stayed true for `ms` */
+function useLate(flag: boolean, ms: number) {
+  const [late, setLate] = useState(false)
+  useEffect(() => {
+    if (!flag) return setLate(false)
+    const timer = setTimeout(() => setLate(true), ms)
+    return () => clearTimeout(timer)
+  }, [flag, ms])
+  return flag && late
+}
+
+/** The quality chip: "Tự động · 720p" */
+export function QualityChip({ quality, onOpen }: { quality: NonNullable<ControlsProps["quality"]>; onOpen: (button: HTMLElement) => void }) {
+  return (
+    <button type="button" aria-label={`Chất lượng, đang ${quality.label}`} onClick={(e) => onOpen(e.currentTarget)} className={CHIP}>
+      <Settings2 aria-hidden className="h-4 w-4" />
+      {quality.label}
+    </button>
+  )
 }
 
 /** Seek by `delta` seconds, kept inside the episode */
@@ -72,6 +97,7 @@ export function TitleBar({ title, episodeName, isFullscreen, onExit }: { title: 
 
 /** Centre: back 10 s, play / pause (a spinner while it buffers), forward 10 s */
 export function CenterControls({ state, onSeek, onToggle }: { state: PlayerState; onSeek: (delta: number) => void; onToggle: () => void }) {
+  const buffering = useLate(state.waiting, SPINNER_AFTER_MS)
   return (
     <div className="flex items-center justify-center gap-10">
       <button type="button" aria-label="Lùi 10 giây" onClick={() => onSeek(-SEEK_STEP)} className={cn(ROUND, "relative h-12 w-12")}>
@@ -80,7 +106,7 @@ export function CenterControls({ state, onSeek, onToggle }: { state: PlayerState
       </button>
 
       <button type="button" aria-label={state.paused ? "Phát" : "Tạm dừng"} onClick={onToggle} className={cn(ROUND, "glass-button h-16 w-16")}>
-        {state.waiting ? (
+        {buffering ? (
           <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-white/25 border-t-white" />
         ) : state.paused ? (
           <Play aria-hidden className="h-8 w-8 translate-x-0.5 fill-current" />

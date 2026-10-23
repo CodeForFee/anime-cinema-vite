@@ -3,9 +3,10 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react"
 
 import { formatEpisodeName } from "@/core/format"
 import type { StreamSource } from "@/core/types/anime"
-import { NextUpCard, ResumePrompt, SkipIntroButton } from "@/features/player/components/PlayerOverlays"
-import { EpisodeSheet, SpeedSheet } from "@/features/player/components/PlayerSheets"
+import { NextUpCard, ResumePrompt, SkipIntroButton, WeakNetworkHint } from "@/features/player/components/PlayerOverlays"
+import { EpisodeSheet, QualitySheet, SpeedSheet } from "@/features/player/components/PlayerSheets"
 import { type SessionOptions, usePlayerSession } from "@/features/player/hooks/use-player-session"
+import { useQuality } from "@/features/player/hooks/use-quality"
 import { usePlayerStore } from "@/features/player/store"
 import { useFormFactor } from "@/shared/lib/form-factor"
 import { cn } from "@/shared/lib/utils"
@@ -41,11 +42,12 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [brightness, setBrightness] = useState(1)
-  const [sheet, setSheet] = useState<"speed" | "episodes" | null>(null)
+  const [sheet, setSheet] = useState<"speed" | "episodes" | "quality" | null>(null)
   const [anchorX, setAnchorX] = useState(0)
 
   const session = usePlayerSession(props, { iframe: iframeRef, frame: frameRef })
   const { state, bridge, isFullscreen } = session
+  const quality = useQuality({ ...bridge, state }, props.progressKey)
   const source = embedUrl ? undefined : sources?.[0]
 
   // (re)mount the stream whenever the source changes; hls.js and the decryptor load only for this path
@@ -74,7 +76,7 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
 
   const showError = hasError || failed
   const Controls = formFactor === "mobile" ? TouchControls : DesktopControls
-  const openSheet = (kind: "speed" | "episodes") => (x: number) => {
+  const openSheet = (kind: NonNullable<typeof sheet>) => (x: number) => {
     setAnchorX(x)
     setSheet(kind)
   }
@@ -153,9 +155,12 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
               isTheater={isTheaterMode}
               onToggleTheater={toggleTheaterMode}
               onOpenEpisodes={episodes && episodes.length > 1 && onSelectEpisode ? openSheet("episodes") : undefined}
+              quality={quality.levels ? { label: quality.label, onOpen: openSheet("quality") } : undefined}
             />
           </Suspense>
         )}
+
+        {quality.suggest && !session.askResume && <WeakNetworkHint onAccept={quality.acceptSuggestion} onDismiss={quality.dismissSuggestion} />}
 
         {session.showSkipIntro && <SkipIntroButton onSkip={session.skipIntro} />}
 
@@ -176,6 +181,9 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
 
         {sheet === "speed" && state && (
           <SpeedSheet anchorX={anchorX} rate={state.rate} onSelect={(rate) => bridge.send("rate", rate)} onClose={() => setSheet(null)} />
+        )}
+        {sheet === "quality" && quality.levels && (
+          <QualitySheet anchorX={anchorX} levels={quality.levels} pref={quality.pref} onSelect={quality.choose} onClose={() => setSheet(null)} />
         )}
         {sheet === "episodes" && episodes && onSelectEpisode && (
           <EpisodeSheet anchorX={anchorX} episodes={episodes} currentId={currentEpisodeId} onSelect={onSelectEpisode} onClose={() => setSheet(null)} />

@@ -7,9 +7,10 @@
  *  1. Ad shield. Same rules as animevietsub-adshield-extension (injected.js) and the cleanup
  *     backend-hono used to inject into the player page (avs-adshield-css / avs-adshield-js).
  *     Ad requests themselves are blocked at the network layer (MainActivity / extension rules).
- *  2. Remote control. Lets src/hooks/usePlayerBridge.ts drive the <video> by postMessage (play, pause,
- *     seek, rate, volume), so the app
- *     can draw its own touch controls. The player's controls are hidden only after the app says hello.
+ *  2. Remote control. Lets src/features/player/engines/iframe-bridge.ts drive the <video> by postMessage
+ *     (play, pause, seek, rate, volume, quality), so the app draws its own controls; it reports the
+ *     position, the buffer ahead and JW Player's quality levels back. The player's controls are hidden
+ *     only after the app says hello.
  */
 (function () {
   "use strict";
@@ -108,27 +109,45 @@
   }
   addStyle("avs-adshield-css", AD_CSS);
 
-  function purgeAds() {
+  var AD_TAGS = "div, a, img, iframe, span, button, p, marquee";
+  function isAd(el) {
+    // never the player, and never a wrapper holding it or a script: textContent would read their code too
+    if (el.tagName === "VIDEO" || el.closest(".jwplayer") || el.querySelector(".jwplayer, video, script")) return false;
+    var text = (el.textContent || "").trim().toLowerCase();
+    var href = (el.getAttribute("href") || "").toLowerCase();
+    var src = (el.getAttribute("src") || "").toLowerCase();
+    var id = (el.id || "").toLowerCase();
+    var cls = (el.className || "").toString().toLowerCase();
+    return text.includes("đóng và xem") || text.includes("bom88") || text.includes("truy cập bit.ly") ||
+      href.includes("bit.ly") || href.includes("bom88") || src.includes("bom88") ||
+      id.includes("banner-overlay") || cls.includes("pause-ad") || cls.includes("jw-banner");
+  }
+  // Only what was just added is looked at, and textContent needs no layout: the old 500 ms sweep read innerText of
+  // every element, a forced layout that (in the Android WebView) ran on the same thread as the app's animations
+  function purge(root) {
+    if (!root || root.nodeType !== 1) return;
     try {
-      document.querySelectorAll("div, a, img, iframe, span, button, p, marquee").forEach(function (el) {
-        if (el.closest(".jwplayer") || el.tagName === "VIDEO") return;
-        var text = (el.innerText || el.textContent || "").trim().toLowerCase();
-        var href = (el.getAttribute("href") || "").toLowerCase();
-        var src = (el.getAttribute("src") || "").toLowerCase();
-        var id = (el.id || "").toLowerCase();
-        var cls = (el.className || "").toString().toLowerCase();
-        if (text.includes("đóng và xem") || text.includes("bom88") || text.includes("truy cập bit.ly") ||
-          href.includes("bit.ly") || href.includes("bom88") || src.includes("bom88") ||
-          id.includes("banner-overlay") || cls.includes("pause-ad") || cls.includes("jw-banner")) {
-          el.remove();
-        }
+      var list = root.matches(AD_TAGS) ? [root] : [];
+      list.concat(Array.prototype.slice.call(root.querySelectorAll(AD_TAGS))).forEach(function (el) {
+        if (el.isConnected && isAd(el)) el.remove();
       });
     } catch (e) { /* the page is still loading */ }
   }
-  setInterval(function () {
-    addStyle("avs-adshield-css", AD_CSS); // the page may replace <head>
-    purgeAds();
-  }, 500);
+  var added = [];
+  var flushing = false;
+  new MutationObserver(function (records) {
+    records.forEach(function (record) { record.addedNodes.forEach(function (node) { added.push(node); }); });
+    if (flushing) return;
+    flushing = true;
+    setTimeout(function () {
+      flushing = false;
+      addStyle("avs-adshield-css", AD_CSS); // the page may replace <head>
+      var nodes = added;
+      added = [];
+      nodes.forEach(purge);
+    }, 50);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  document.addEventListener("DOMContentLoaded", function () { purge(document.body); });
 
   /* ---------- 2. Remote control ---------- */
 
@@ -136,6 +155,16 @@
   var APP = "avs-player-app";
   var controlled = false;
   var video = null;
+  var jw = null;
+
+  /** Seconds already buffered ahead of the playhead */
+  function ahead() {
+    var ranges = video.buffered;
+    for (var i = 0; i < ranges.length; i++) {
+      if (ranges.start(i) <= video.currentTime + 0.5 && ranges.end(i) > video.currentTime) return ranges.end(i) - video.currentTime;
+    }
+    return 0;
+  }
 
   function send(type, data) {
     try { window.parent.postMessage(Object.assign({ source: BRIDGE, type: type }, data), "*"); } catch (e) { /* parent gone */ }
@@ -150,7 +179,8 @@
       waiting: !video.paused && video.readyState < 3,
       rate: video.playbackRate,
       volume: video.muted ? 0 : video.volume,
-      ended: video.ended
+      ended: video.ended,
+      ahead: ahead()
     });
   }
 
@@ -168,12 +198,37 @@
     send("resume", { at: parts.reduce(function (sum, part) { return sum * 60 + part; }, 0) });
   }
 
+  // The player's own quality levels, through JW Player's public API (the menu it shows itself, hidden here):
+  // the app lists them, picks one, and hears which one actually plays as the automatic choice moves
+  function levels() {
+    var list = jw.getQualityLevels() || [];
+    send("levels", {
+      levels: list.map(function (level, index) { return { index: index, label: String(level.label || ""), height: level.height || 0 }; }),
+      current: jw.getCurrentQuality()
+    });
+  }
+  function hookQuality() {
+    if (jw || typeof window.jwplayer !== "function") return;
+    var api;
+    try { api = window.jwplayer(); } catch (e) { return; }
+    if (!api || typeof api.on !== "function" || typeof api.getQualityLevels !== "function") return;
+    jw = api;
+    api.on("levels", levels);
+    api.on("levelsChanged", levels);
+    api.on("visualQuality", function (event) {
+      var level = (event && event.level) || {};
+      send("visual", { label: String(level.label || ""), height: level.height || 0, auto: event && event.mode === "auto" });
+    });
+    if ((api.getQualityLevels() || []).length) levels();
+  }
+
   function attach() {
     forwardResumeOffer();
     var found = document.querySelector("video.jw-video") || document.querySelector("video");
+    if (found) hookQuality(); // only a set-up player has a <video>; before that jwplayer() may be a stub
     if (!found || found === video) return;
     video = found;
-    ["play", "playing", "pause", "waiting", "seeked", "ratechange", "durationchange", "ended", "timeupdate", "volumechange"]
+    ["play", "playing", "pause", "waiting", "seeked", "ratechange", "durationchange", "ended", "timeupdate", "volumechange", "progress"]
       .forEach(function (name) { video.addEventListener(name, report); });
     report();
   }
@@ -206,14 +261,19 @@
       if (button) button.click();
       return;
     }
+    var value = Number(message.value);
+    if (message.type === "quality") {
+      if (jw && Number.isInteger(value) && value >= 0 && value < (jw.getQualityLevels() || []).length) jw.setCurrentQuality(value);
+      return;
+    }
     if (!video) return;
 
-    var value = Number(message.value);
     if (message.type === "play") { var playing = video.play(); if (playing && playing.catch) playing.catch(function () {}); }
     else if (message.type === "pause") video.pause();
     else if (message.type === "seek" && isFinite(value)) video.currentTime = Math.max(0, Math.min(value, video.duration || value));
     else if (message.type === "rate" && value > 0 && value <= 4) video.playbackRate = value;
-    else if (message.type === "volume" && value >= 0 && value <= 1) { video.volume = value; video.muted = value === 0; }  });
+    else if (message.type === "volume" && value >= 0 && value <= 1) { video.volume = value; video.muted = value === 0; }
+  });
 
   // Tell the app the bridge is here; repeated because the app may attach its listener after us
   send("present");

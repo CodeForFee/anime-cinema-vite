@@ -3,6 +3,7 @@ import { Check, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { formatEpisodeName } from "@/core/format";
+import { heightOf, isAutoLevel, type QualityLevel, type QualityPref, sizedLevels } from "@/core/player/pick-quality";
 import { cn } from "@/shared/lib/utils";
 import { onBack } from "@/platform/back";
 import type { Episode } from "@/core/types/anime";
@@ -118,6 +119,52 @@ export function SpeedSheet({
           </button>
         ))}
       </div>
+      )}
+    </Sheet>
+  );
+}
+
+/** The player's levels, tallest first, with "Tự động" on top when the player has an automatic choice */
+export function QualitySheet({
+  levels,
+  pref,
+  onSelect,
+  onClose,
+  anchorX,
+}: {
+  levels: QualityLevel[];
+  pref: QualityPref;
+  onSelect: (pref: QualityPref) => void;
+  onClose: () => void;
+  anchorX?: number;
+}) {
+  const options: { value: QualityPref; label: string }[] = [
+    ...(levels.some(isAutoLevel) ? [{ value: "auto" as const, label: "Tự động" }] : []),
+    ...sizedLevels(levels).map((level) => ({ value: heightOf(level), label: `${heightOf(level)}p` })),
+  ];
+  return (
+    <Sheet title="Chất lượng" onClose={onClose} anchorX={anchorX} width="min(240px,60%)">
+      {(close) => (
+        <div className="flex flex-col gap-2 overflow-y-auto px-4 pb-[max(1rem,var(--inset-bottom))] pt-1">
+          {options.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={value === pref}
+              onClick={() => {
+                onSelect(value);
+                close();
+              }}
+              className={cn(
+                "flex h-10 shrink-0 items-center justify-center gap-1 rounded-xl text-sm font-semibold transition active:scale-95",
+                value === pref ? "bg-white text-black" : "glass-button text-white"
+              )}
+            >
+              {value === pref && <Check aria-hidden className="h-4 w-4" />}
+              {label}
+            </button>
+          ))}
+        </div>
       )}
     </Sheet>
   );
