@@ -234,6 +234,68 @@ html:active-view-transition-type(fade)::view-transition-new(root) {
   }
 }
 
+/* ---------- Lite mode (html[data-lite], set in main.tsx on weak phones) ----------
+   A 60 Hz frame is 16.7 ms and a budget GPU spends most of it on fill: no backdrop blur anywhere, no brightness
+   filter or full-screen shadow in page transitions, which also run shorter, and no 64 px blurred art behind pages
+   (one raster of it stalls the page that opens). Everything still moves; it moves only with transform and opacity. */
+html[data-lite] *,
+html[data-lite] *::before,
+html[data-lite] *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-lite] .glass,
+html[data-lite] .glass-sheet,
+html[data-lite] .glass-panel,
+html[data-lite] .glass-dock,
+html[data-lite] .glass-field {
+  background: rgba(30, 30, 38, 0.95) !important;
+}
+html[data-lite] .ambient-backdrop {
+  display: none;
+}
+html[data-lite]::view-transition-old(root),
+html[data-lite]::view-transition-new(root) {
+  animation-duration: 320ms;
+  box-shadow: none !important;
+}
+@keyframes ios-recede-lite {
+  to {
+    transform: translateX(-30%);
+    opacity: 0.6;
+  }
+}
+@keyframes ios-return-lite {
+  from {
+    transform: translateX(-30%);
+    opacity: 0.6;
+  }
+}
+@keyframes ios-sink-lite {
+  to {
+    transform: scale(0.94);
+    opacity: 0.6;
+  }
+}
+@keyframes ios-surface-lite {
+  from {
+    transform: scale(0.94);
+    opacity: 0.6;
+  }
+}
+html[data-lite]:active-view-transition-type(push)::view-transition-old(root) {
+  animation-name: ios-recede-lite;
+}
+html[data-lite]:active-view-transition-type(pop)::view-transition-new(root) {
+  animation-name: ios-return-lite;
+}
+html[data-lite]:active-view-transition-type(up)::view-transition-old(root) {
+  animation-name: ios-sink-lite;
+}
+html[data-lite]:active-view-transition-type(down)::view-transition-new(root) {
+  animation-name: ios-surface-lite;
+}
+
 /* Touch feedback comes from :active states, not the WebView's blue flash */
 html {
   -webkit-tap-highlight-color: transparent;

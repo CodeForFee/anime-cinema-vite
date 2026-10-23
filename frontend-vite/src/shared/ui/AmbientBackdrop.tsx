@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 export function AmbientBackdrop({ src }: { src?: string }) {
   if (!src) return null;
   return createPortal(
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div aria-hidden className="ambient-backdrop pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <img
         src={src}
         alt=""

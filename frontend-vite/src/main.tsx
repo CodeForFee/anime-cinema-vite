@@ -23,6 +23,10 @@ import { isNativeApp } from "@/platform/transport"
 
 // Only Chromium renders an SVG filter as backdrop-filter; elsewhere .glass stays a plain blur
 if ("userAgentData" in navigator) document.documentElement.dataset.liquid = ""
+// Weak phones, most of the 60 Hz ones among them: the effects a small GPU drops frames on are turned off
+// (html[data-lite] in globals.css). Chromium reports RAM rounded down and capped at 8 GB.
+const device = navigator as Navigator & { deviceMemory?: number }
+if ((device.deviceMemory ?? 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4) document.documentElement.dataset.lite = ""
 
 // After a deploy an open tab still asks for the old hashed chunks, which are gone: reload once into the new build
 window.addEventListener("vite:preloadError", (event) => {
