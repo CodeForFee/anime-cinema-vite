@@ -173,7 +173,8 @@
   var APP = "avs-player-app";
   var controlled = false;
   var video = null;
-  var jw = null;
+  // not `jw`: that name is the ad shield's (section 1), and `var` would make the two one variable
+  var jwApi = null;
 
   /** Seconds already buffered ahead of the playhead */
   function ahead() {
@@ -219,18 +220,18 @@
   // The player's own quality levels, through JW Player's public API (the menu it shows itself, hidden here):
   // the app lists them, picks one, and hears which one actually plays as the automatic choice moves
   function levels() {
-    var list = jw.getQualityLevels() || [];
+    var list = jwApi.getQualityLevels() || [];
     send("levels", {
       levels: list.map(function (level, index) { return { index: index, label: String(level.label || ""), height: level.height || 0 }; }),
-      current: jw.getCurrentQuality()
+      current: jwApi.getCurrentQuality()
     });
   }
   function hookQuality() {
-    if (jw || typeof window.jwplayer !== "function") return;
+    if (jwApi || typeof window.jwplayer !== "function") return;
     var api;
     try { api = window.jwplayer(); } catch (e) { return; }
     if (!api || typeof api.on !== "function" || typeof api.getQualityLevels !== "function") return;
-    jw = api;
+    jwApi = api;
     api.on("levels", levels);
     api.on("levelsChanged", levels);
     api.on("visualQuality", function (event) {
@@ -242,7 +243,7 @@
 
   function attach() {
     forwardResumeOffer();
-    var found = document.querySelector("video.jw-video") || document.querySelector("video");
+    var found = document.querySelector("video.jwApi-video") || document.querySelector("video");
     if (found) hookQuality(); // only a set-up player has a <video>; before that jwplayer() may be a stub
     if (!found || found === video) return;
     video = found;
@@ -281,7 +282,7 @@
     }
     var value = Number(message.value);
     if (message.type === "quality") {
-      if (jw && Number.isInteger(value) && value >= 0 && value < (jw.getQualityLevels() || []).length) jw.setCurrentQuality(value);
+      if (jwApi && Number.isInteger(value) && value >= 0 && value < (jwApi.getQualityLevels() || []).length) jwApi.setCurrentQuality(value);
       return;
     }
     if (!video) return;
