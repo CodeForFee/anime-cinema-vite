@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactDOM from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { cn } from "@/shared/lib/utils";
 import { useMenuPosition } from "@/shared/ui/dropdown-position";
 
@@ -176,7 +176,7 @@ const DropdownMenuContent = React.forwardRef<HTMLDivElement, DropdownMenuContent
     return ReactDOM.createPortal(
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             ref={(node) => {
               if (typeof ref === "function") ref(node);
               else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
@@ -216,7 +216,7 @@ const DropdownMenuContent = React.forwardRef<HTMLDivElement, DropdownMenuContent
             {...props}
           >
             {children}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>,
       document.body

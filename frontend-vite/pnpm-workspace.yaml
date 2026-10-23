@@ -1,5 +1,4 @@
 allowBuilds:
-  '@heroui/shared-utils': true
   esbuild: true
   # prebuilt binaries come from @img/sharp-*; its script only builds from source
   sharp: false

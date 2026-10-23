@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 
 export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
   defaultValue?: string;
@@ -155,7 +155,7 @@ const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
         {...props}
       >
         {mounted && (
-          <motion.div
+          <m.div
             layout
             className="tabs-bg-indicator absolute top-0.5 bottom-0.5 rounded-full bg-neutral-900 dark:bg-white [.lw-3d_&]:bg-gradient-to-b [.lw-3d_&]:from-zinc-800 [.lw-3d_&]:to-zinc-950 dark:[.lw-3d_&]:from-white dark:[.lw-3d_&]:to-zinc-200 [.lw-3d_&]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_3px_6px_-1px_rgba(0,0,0,0.3)] dark:[.lw-3d_&]:shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.8),0_3px_6px_-1px_rgba(0,0,0,0.4)]"
             style={{

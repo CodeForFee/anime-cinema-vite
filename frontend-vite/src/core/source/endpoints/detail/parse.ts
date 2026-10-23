@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import type { Cheerio, CheerioAPI, Element } from "cheerio"
+import type { Cheerio, CheerioAPI } from "cheerio"
+import type { Element } from "@/core/source/html/types"
 
 import { getInfoAnchor } from "@/core/source/html/getInfoAnchor"
 import { getInfoTPost } from "@/core/source/html/getInfoTPost"

@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Bookmark, Compass, History, Home, Search } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { haptic } from "@/platform/haptics";
@@ -44,7 +44,7 @@ export const SidebarDock: React.FC = () => {
               )}
             >
               {isActive && (
-                <motion.span
+                <m.span
                   layoutId="dock-lens"
                   aria-hidden
                   className="liquid-glass-lens absolute inset-0 rounded-full"

@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, m } from "framer-motion"
 import type React from "react"
 import { useEffect } from "react"
 import { createPortal } from "react-dom"
@@ -36,7 +36,7 @@ export function Dialog({ open, onClose, className, contentRef, children }: Overl
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -44,7 +44,7 @@ export function Dialog({ open, onClose, className, contentRef, children }: Overl
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             onClick={onClose}
           />
-          <motion.div
+          <m.div
             ref={contentRef}
             role="dialog"
             aria-modal="true"
@@ -55,7 +55,7 @@ export function Dialog({ open, onClose, className, contentRef, children }: Overl
             className={cn("relative z-[9999] w-full max-w-lg overflow-y-auto rounded-2xl border bg-background shadow-lg", className)}
           >
             {children}
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>,

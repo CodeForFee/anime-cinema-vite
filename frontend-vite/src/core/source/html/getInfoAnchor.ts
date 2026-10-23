@@ -1,4 +1,5 @@
-import type { Cheerio, Element } from "cheerio"
+import type { Cheerio } from "cheerio"
+import type { Element } from "@/core/source/html/types"
 
 import { getPathName } from "@/core/source/html/getPathName"
 

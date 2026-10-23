@@ -1,7 +1,6 @@
 
 import React, { useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import { Button, Tooltip } from "@heroui/react";
 import type { LucideIcon } from "lucide-react";
 import { PosterTile } from "@/features/browse/components/PosterTile";
 import { AnimeItem } from "@/core/types/anime";
@@ -55,18 +54,15 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
       {/* Horizontal Cards ScrollShadow Container */}
       <div className="relative px-4 md:px-12">
         {/* Left Arrow Button */}
-        <Tooltip content="Cuộn trái" placement="right">
-          <Button
-            isIconOnly
-            size="md"
-            radius="full"
-            variant="flat"
-            onPress={() => handleScroll("left")}
-            className="glass-button absolute left-2 top-1/2 -translate-y-1/2 z-30 text-white opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-300"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-        </Tooltip>
+        <button
+          type="button"
+          aria-label="Cuộn trái"
+          title="Cuộn trái"
+          onClick={() => handleScroll("left")}
+          className="glass-button absolute left-2 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white opacity-0 transition-opacity duration-300 group-hover/shelf:opacity-100"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
 
         {/* a plain scroller: HeroUI ScrollShadow masks the whole row, repainted on every page scroll */}
         <div
@@ -81,18 +77,15 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
         </div>
 
         {/* Right Arrow Button */}
-        <Tooltip content="Cuộn phải" placement="left">
-          <Button
-            isIconOnly
-            size="md"
-            radius="full"
-            variant="flat"
-            onPress={() => handleScroll("right")}
-            className="glass-button absolute right-2 top-1/2 -translate-y-1/2 z-30 text-white opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-300"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </Tooltip>
+        <button
+          type="button"
+          aria-label="Cuộn phải"
+          title="Cuộn phải"
+          onClick={() => handleScroll("right")}
+          className="glass-button absolute right-2 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white opacity-0 transition-opacity duration-300 group-hover/shelf:opacity-100"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
     </section>
   );

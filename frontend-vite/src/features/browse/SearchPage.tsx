@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Input, Chip } from "@heroui/react";
 import { PosterGridSkeleton } from "@/shared/ui/skeletons";
 import { MovieCard } from "@/features/browse/components/MovieCard";
 import { InfoModal } from "@/features/title";
 import { useSearchQuery } from "@/core/queries";
 import { useDebounce } from "@/shared/lib/useDebounce";
-import { CircleAlert, Search } from "lucide-react";
+import { CircleAlert, Search, X } from "lucide-react";
 
 function SearchContent() {
   const navigate = useNavigate();
@@ -41,21 +40,22 @@ function SearchContent() {
         <h1 className="text-3xl font-extrabold text-white mb-6">Tìm Kiếm Anime Yêu Thích</h1>
 
         {/* Big Search Input */}
-        <Input
-          size="lg"
-          variant="bordered"
-          radius="full"
-          isClearable
-          onClear={handleClear}
-          placeholder="Nhập tên anime (Ví dụ: One Piece, Jujutsu Kaisen, Conan...)"
-          value={searchTerm}
-          onValueChange={setSearchTerm}
-          startContent={<Search className="w-4 h-4 text-primaryRed mr-2" />}
-          classNames={{
-            inputWrapper: "glass-field h-14 focus-within:!border-primaryRed",
-            input: "text-base text-white placeholder:text-gray-400",
-          }}
-        />
+        <div className="glass-field flex h-14 items-center gap-3 rounded-full px-5 focus-within:!border-primaryRed">
+          <Search aria-hidden className="w-4 h-4 shrink-0 text-primaryRed" />
+          <input
+            type="search"
+            aria-label="Tên anime"
+            placeholder="Nhập tên anime (Ví dụ: One Piece, Jujutsu Kaisen, Conan...)"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-base text-white placeholder:text-gray-400 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+          />
+          {searchTerm && (
+            <button type="button" aria-label="Xoá" onClick={handleClear} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-300 hover:bg-white/10 hover:text-white">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Suggested Keywords */}
@@ -63,16 +63,14 @@ function SearchContent() {
         <span className="text-gray-400">Gợi ý tìm kiếm:</span>
         {["One Piece", "Chú Thuật Hồi Chiến", "Thám Tử Conan", "Solo Leveling", "Bleach", "Naruto"].map(
           (kw) => (
-            <Chip
+            <button
+              type="button"
               key={kw}
-              size="sm"
-              variant="flat"
-              as="button"
               onClick={() => setSearchTerm(kw)}
-              className="glass-chip text-gray-200 hover:text-white cursor-pointer transition-colors"
+              className="glass-chip h-7 rounded-full px-3 text-gray-200 hover:text-white cursor-pointer transition-colors"
             >
               {kw}
-            </Chip>
+            </button>
           )
         )}
       </div>

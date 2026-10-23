@@ -1,4 +1,4 @@
-import { load } from "cheerio"
+import { load } from "cheerio/slim"
 import { describe, expect, test } from "vitest"
 
 import { getInfoTPost } from "@/core/source/html/getInfoTPost"

@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { Chip, Button, Tooltip } from "@heroui/react";
 import { LazyImage } from "@/features/title";
 import { AnimeItem } from "@/core/types/anime";
 import { useHistoryStore } from "@/core/stores/history";
@@ -44,7 +43,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
       onClick={handleCardClick}
       className={cn(
         // flex-shrink-0: in a horizontal shelf the card must keep its width and scroll, not squeeze to fit the row
-        "card-lift group relative flex-shrink-0 bg-[#10121A]/90 hover:shadow-[0_10px_30px_rgba(229,9,20,0.25)] transition-all duration-300 rounded-xl overflow-hidden select-none cursor-pointer",
+        "card-lift group relative flex-shrink-0 bg-[#10121A]/90 hover:shadow-[0_10px_30px_rgba(229,9,20,0.25)] transition-shadow duration-300 rounded-xl overflow-hidden select-none cursor-pointer",
         // Grids pass w-full and size the card by their columns; everywhere else it gets the shelf width
         !className?.includes("w-full") && "w-44 md:w-52",
         className
@@ -64,15 +63,13 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
         {/* Top Badges */}
         <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between z-20 pointer-events-auto">
           {/* Episode / Quality / Upcoming / Rank Chip */}
-          <Chip
-            size="sm"
-            variant="shadow"
-            className={`backdrop-blur-md text-white font-bold text-[10px] h-6 px-2 rounded-[4px] border ${
+          <span
+            className={`inline-flex items-center text-white font-bold text-[10px] h-6 px-2 rounded-[4px] border shadow-md ${
               anime.isUpcoming
                 ? "bg-primaryRed text-white border-red-400"
                 : anime.rank
                 ? "bg-amber-500 text-black border-amber-300"
-                : "bg-black/75 border-white/10"
+                : "bg-black/80 border-white/10"
             }`}
           >
             {anime.isUpcoming
@@ -80,16 +77,16 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
               : anime.rank
               ? `TOP #${anime.rank}`
               : anime.latestEpisode || anime.episode || anime.quality || "HD Vietsub"}
-          </Chip>
+          </span>
 
           {/* Favorite Toggle Button */}
-          <Tooltip content={isFavorite ? "Bỏ yêu thích" : "Yêu thích"} placement="left" delay={200}>
-            <Button
-              isIconOnly
-              size="sm"
-              radius="full"
-              variant="flat"
-              onPress={(e) => {
+          <button
+              type="button"
+              title={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+              aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+              aria-pressed={isFavorite}
+              onClick={(e) => {
+                e.stopPropagation();
                 toggleFavorite({
                   slug: anime.slug,
                   title: anime.title,
@@ -99,15 +96,14 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
                   rating: anime.rating,
                 });
               }}
-              className={`w-7 h-7 min-w-7 backdrop-blur-md ${
+              className={`flex w-7 h-7 items-center justify-center rounded-full transition-colors ${
                 isFavorite
                   ? "bg-primaryRed text-white shadow-[0_0_10px_#E50914]"
-                  : "bg-black/60 text-white/80 hover:text-white hover:bg-black/90 border border-white/10"
+                  : "bg-black/80 text-white/80 hover:text-white hover:bg-black/90 border border-white/10"
               }`}
             >
               <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current text-white" : "text-gray-300"}`} />
-            </Button>
-          </Tooltip>
+            </button>
         </div>
 
         {/* Hover Overlay with Quick Action Buttons. Mouse only: it can't be seen on a touch screen, so there
@@ -123,15 +119,17 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
             <Play className="fill-current w-5 h-5 ml-0.5" />
           </Link>
 
-          <Button
-            size="sm"
-            variant="light"
-            onPress={() => openInfoModal(anime)}
-            className="text-gray-300 hover:text-white text-xs h-7 px-2"
-            startContent={<Info className="w-3.5 h-3.5" />}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openInfoModal(anime);
+            }}
+            className="flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
           >
+            <Info className="w-3.5 h-3.5" />
             Chi tiết
-          </Button>
+          </button>
         </div>
       </div>
 

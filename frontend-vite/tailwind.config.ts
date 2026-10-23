@@ -1,11 +1,9 @@
 import type { Config } from "tailwindcss";
-import { heroui } from "@heroui/react";
 
 const config: Config = {
   content: [
     "./index.html",
     "./src/**/*.{ts,tsx}",
-    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -18,8 +16,9 @@ const config: Config = {
         accentCyan: "#00F5D4",
         accentViolet: "#7928CA",
         accentGold: "#FFB800",
-        // Tokens the Lightswind components (src/components/lightswind) expect.
-        // Only the ones HeroUI does not already define, so its theme is untouched.
+        // Tokens the UI primitives (src/shared/ui) expect
+        foreground: "#ECEDEE",
+        primary: { DEFAULT: "#E50914", foreground: "#ffffff" },
         popover: { DEFAULT: "#181818", foreground: "#ffffff" },
         card: { DEFAULT: "#181818", foreground: "#ffffff" },
         accent: { DEFAULT: "#2a2a2a", foreground: "#ffffff" },
@@ -56,34 +55,8 @@ const config: Config = {
     },
   },
   darkMode: "class",
-  plugins: [
-    heroui({
-      defaultTheme: "dark",
-      themes: {
-        dark: {
-          colors: {
-            background: "#08090D",
-            foreground: "#ECEDEE",
-            primary: {
-              50: "#3B090C",
-              100: "#670E14",
-              200: "#98151D",
-              300: "#CA1C27",
-              400: "#E50914",
-              500: "#E50914",
-              600: "#F04851",
-              700: "#F57D84",
-              800: "#F9B2B6",
-              900: "#FDE8E9",
-              DEFAULT: "#E50914",
-              foreground: "#ffffff",
-            },
-            focus: "#E50914",
-          },
-        },
-      },
-    }),
-  ],
+  // hover styles only where a pointer can hover: a tap on a touch screen never leaves a card "hovered"
+  future: { hoverOnlyWhenSupported: true },
 };
 
 export default config;

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router"
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import { Heart, Info, Play, Star } from "lucide-react"
 import type React from "react"
 import { useRef } from "react"
@@ -34,7 +34,7 @@ export function HeroCard({ hero, image, thumbs }: { hero: HeroSlides; image: str
       {/* bottom margin leaves room for the slide picker hanging over the card edge */}
       <div className="relative mb-14 md:mb-12">
         {/* on desktop the card's aspect ratio makes the 58%-wide image area exactly 16:9, so banners show uncropped */}
-        <motion.div
+        <m.div
           className="relative h-[460px] lg:h-auto lg:aspect-[3.065/1] lg:min-h-[440px] overflow-hidden rounded-3xl bg-[#1c1c1f]"
           drag={slides.length > 1 ? "x" : false}
           dragDirectionLock
@@ -56,7 +56,7 @@ export function HeroCard({ hero, image, thumbs }: { hero: HeroSlides; image: str
           }}
         >
           {/* backdrop on the right: only its left edge fades into the card */}
-          <motion.img
+          <m.img
             key={image}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -143,7 +143,7 @@ export function HeroCard({ hero, image, thumbs }: { hero: HeroSlides; image: str
               </div>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
         {slides.length > 1 && thumbs}
       </div>

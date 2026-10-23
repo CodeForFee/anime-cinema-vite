@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useDragControls } from "framer-motion"
+import { AnimatePresence, m, useDragControls } from "framer-motion"
 import { createPortal } from "react-dom"
 
 import { haptic } from "@/platform/haptics"
@@ -21,7 +21,7 @@ export function Sheet({ open, onClose, className, contentRef, children }: Overla
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[9999] flex items-end justify-center">
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -29,7 +29,7 @@ export function Sheet({ open, onClose, className, contentRef, children }: Overla
             className="absolute inset-0 bg-black/60"
             onClick={onClose}
           />
-          <motion.div
+          <m.div
             ref={contentRef}
             role="dialog"
             aria-modal="true"
@@ -62,7 +62,7 @@ export function Sheet({ open, onClose, className, contentRef, children }: Overla
               <span className="h-1.5 w-10 rounded-full bg-white/45 shadow-[0_1px_4px_rgba(0,0,0,0.6)]" />
             </div>
             {children}
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>,

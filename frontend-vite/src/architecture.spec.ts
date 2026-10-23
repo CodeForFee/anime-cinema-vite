@@ -27,7 +27,7 @@ const ALLOWED: Record<string, string[]> = {
   features: ["core", "platform", "shared", "features"]
 }
 // packages the core may use: plain logic that runs on any platform (web, React Native)
-const CORE_PACKAGES = new Set(["react", "@tanstack/react-query", "zustand", "zustand/middleware", "cheerio", "htmlparser2", "p-limit"])
+const CORE_PACKAGES = new Set(["react", "@tanstack/react-query", "zustand", "zustand/middleware", "cheerio", "cheerio/slim", "domhandler", "p-limit"])
 
 test("every layer imports only the layers under it", () => {
   const wrong: string[] = []
