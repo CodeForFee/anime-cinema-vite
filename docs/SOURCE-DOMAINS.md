@@ -1,7 +1,8 @@
 # Source domains
 
-The source site changes its domain from time to time. This is the list of hosts known as of **2026-10-16**,
-so a switch is a lookup, not a search.
+The source site changes its domain from time to time. This is the list of hosts known as of **2026-10-23**,
+so a switch is a lookup, not a search. The machine-readable copy, which the app and `pnpm domains` both read, is
+[`frontend-vite/src/hosts.json`](../frontend-vite/src/hosts.json): edit that file, then this page.
 
 ## Current
 
@@ -14,12 +15,17 @@ so a switch is a lookup, not a search.
 Find the current host in one command (`frontend-vite`): `pnpm domains`. It follows the official short link and
 probes every host below.
 
-## Hosts that redirect to the current site (verified 2026-10-16)
+## Hosts that redirect to the current site (verified 2026-10-23)
 
-`animevietsub.link`, `.xyz`, `.fan`, `.info`, `.site`, `.tv`, `.vip`, `.app`, `.in`, `.cc`
+`animevietsub.link`, `.fan`, `.vip`, `.bio`, `.me`, `.moe`, `.now`, `.cam`, `.xyz`, `.info`, `.in`, `.us`
+(`.bio`, `.me`, `.moe`, `.now`, `.cam` and `.us` are new on 2026-10-23)
 
-Chains seen: `xyz → link → sale`, `info → fan → sale`, `in → vip → sale`. They can be used as fallbacks while a
-new domain is being rolled out, but the app should point at the final host (`sale`), not at a redirecting one.
+Chains seen: `xyz → link → sale`, `info → fan → sale`, `in → vip → sale`, `us → vip → sale`. They can be used as
+fallbacks while a new domain is being rolled out, but the app should point at the final host (`sale`), not at a
+redirecting one.
+
+Redirected on 2026-10-16 but answer only now and then from a Vietnamese connection (kept, tried last):
+`.site`, `.tv`, `.app`, `.cc`.
 
 ## Dead
 
@@ -27,9 +33,17 @@ new domain is being rolled out, but the app should point at the final host (`sal
 
 ## Not the same site (do not use)
 
-These matched searches but are other sites or parked pages: `animevietsub.global` (AnimeHay), `.dev`, `.wtf`,
-`.red`, `.click`, `.one`, `.lol`, `.ru`, `.show`, `animevietsub1.net`, `animevietsubhd.cc`. Look-alike domains are
-common, so check a new one against the official channels below before trusting it.
+These matched searches or a guess but are other sites, parked pages or worse (checked 2026-10-23):
+
+- copy sites: `.wtf` (titled "AnimeVietsub"), `.global`, `.gg`, `.ac`, `.fm`, `.stream`, `.co`, `.ws` (all go to
+  `animevsub.de`, AnimeHay), `animevietsub1.net`, `animevietsubhd.cc`, `animevietsubs.com`, `animevietsubs.cc`
+- elsewhere: `.to` (`shi-atsu.nl`), `.mobi` (a gambling site), `.life` (spam)
+- parked, test pages or no site: `.biz`, `.red`, `.asia`, `.run`, `.blog`, `.click`, `.ru`, `.pw`, `.dev`, `.one`,
+  `.lol`, `.show`
+
+Look-alike domains are common and some answer 200 with an "AnimeVietsub" title, so a name alone proves nothing.
+The app refuses every host in `lookalikes` of `hosts.json`; check a new domain against the official channels below
+before adding it.
 
 ## Official announcement channels
 

@@ -1,5 +1,5 @@
 import { setReferrers } from "client-ext-animevsub-helper"
-import { C_URL, HOST_CURL, SOURCE_HOSTS, setSourceHost } from "src/constants"
+import { C_URL, HOST_CURL, isSourceHost, SOURCE_HOSTS, setSourceHost } from "src/constants"
 
 import { Http, isNativeApp } from "./bridge"
 
@@ -13,7 +13,7 @@ async function probe(host: string): Promise<string | null> {
     const res = await Promise.race([Http.get({ url: `https://${host}/#animevsub-vsub` }), timeout])
     if (res.status !== 200) return null
     const final = new URL(res.url).hostname
-    return /^animevietsub\.[a-z.]+$/i.test(final) ? final : null
+    return isSourceHost(final) ? final : null
   } catch {
     return null
   }

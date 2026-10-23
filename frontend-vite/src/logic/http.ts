@@ -4,60 +4,30 @@ import { Http } from "src/logic/bridge"
 
 const noExt = () =>
   Promise.reject(
-    Object.assign(
-      new Error(
-        "Trang web cần extension AVS Helper để hoạt động bình thường"
-      ),
-      { extesionNotExists: true }
-    )
+    Object.assign(new Error("Trang web cần extension AVS Helper để hoạt động bình thường"), {
+      extesionNotExists: true
+    })
   )
 
-async function httpGet(
-  url: string | GetOption,
-  headers?: Record<string, string>
-) {
-  console.log("get: ", url)
+// Status and URL only, in development: whole HTML pages in the console cost memory and time on a phone
+const trace = (method: string, url: string, status: number) => {
+  if (import.meta.env.DEV) console.debug(`[source] ${method} ${status} ${url}`)
+}
 
-  const response = await Http.get(
-    typeof url === "object"
-      ? url
-      : {
-          url: url.includes("://") ? url : C_URL + url + "#animevsub-vsub",
-          headers
-        }
-  ).then((response) => {
-    if (response.status === 403 || response.status === 520) {
-      console.log("response fail")
-    }
-
-    return response
-  })
-
-  console.log("get-result: ", response)
+async function httpGet(url: string | GetOption, headers?: Record<string, string>) {
+  const options =
+    typeof url === "object" ? url : { url: url.includes("://") ? url : C_URL + url + "#animevsub-vsub", headers }
+  const response = await Http.get(options)
+  trace("GET", options.url, response.status)
 
   if (response.status !== 200 && response.status !== 201) throw response
 
   return response as Omit<typeof response, "data"> & { data: string }
 }
 
-async function httpPost(
-  url: string,
-  data: Record<string, number | string | boolean>,
-  headers?: Record<string, string>
-) {
-  console.log("post: ", {
-    url: C_URL + url,
-    data,
-    headers
-  })
-
-  const response = await Http.post({
-    url: C_URL + url + "#animevsub-vsub",
-    headers,
-    data
-  })
-
-  console.log("post-result: ", response)
+async function httpPost(url: string, data: Record<string, number | string | boolean>, headers?: Record<string, string>) {
+  const response = await Http.post({ url: C_URL + url + "#animevsub-vsub", headers, data })
+  trace("POST", url, response.status)
 
   if (response.status !== 200 && response.status !== 201) throw response
 

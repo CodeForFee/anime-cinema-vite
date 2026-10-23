@@ -1,25 +1,20 @@
+import hosts from "./hosts.json"
+
 export const REGEXP_OLD_HOST_CURL = /animevietsub\.(?:\w+)/i
 
-// Source hosts, current first. The rest are known alternates that redirect to the current site: if the
-// current one stops answering, src/logic/source-host.ts moves to the first that works and remembers it.
-// Keep the first entry equal to the Referer in avs-helper-extension/map-referer.json and to the hostname in
-// capacitor.config.ts. The list, its sources and the switch steps: docs/SOURCE-DOMAINS.md (or `pnpm domains`).
-export const SOURCE_HOSTS = [
-  "animevietsub.sale",
-  "animevietsub.link",
-  "animevietsub.fan",
-  "animevietsub.xyz",
-  "animevietsub.vip",
-  "animevietsub.site",
-  "animevietsub.tv",
-  "animevietsub.app",
-  "animevietsub.in",
-  "animevietsub.info",
-  "animevietsub.cc"
-]
+// Source hosts, current first, then the known alternates that redirect to it (hosts.json, which
+// scripts/check-domains.mjs reads too). If the current one stops answering, src/logic/source-host.ts moves to
+// one that works and remembers it. Keep `current` equal to the Referer in avs-helper-extension/map-referer.json
+// and to the hostname in capacitor.config.ts. How the list is kept: docs/SOURCE-DOMAINS.md (or `pnpm domains`).
+export const SOURCE_HOSTS: readonly string[] = [hosts.current, ...hosts.redirecting, ...hosts.unreachable]
+export const OFFICIAL_LINK = hosts.officialLink
+const LOOKALIKES = new Set(hosts.lookalikes)
 
 const SAVED_HOST_KEY = "capynime-source-host"
-const isSourceHost = (host: string | null): host is string => Boolean(host && /^animevietsub\.[a-z.]+$/i.test(host))
+
+/** An animevietsub.* host that is not one of the look-alike sites named the same way (hosts.json) */
+export const isSourceHost = (host: string | null | undefined): host is string =>
+  Boolean(host && /^animevietsub\.[a-z.]+$/i.test(host) && !LOOKALIKES.has(host.toLowerCase()))
 
 function savedHost() {
   try {

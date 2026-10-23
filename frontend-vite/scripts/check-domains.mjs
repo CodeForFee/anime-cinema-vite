@@ -1,33 +1,32 @@
-// pnpm domains: finds the source's current host. The official short link (bit.ly/animevietsubtv) is the
-// source's own announcement channel, so it comes first; then every known host is probed and shown with
-// where it redirects. Update HOSTS below when a new domain shows up (also see docs/SOURCE-DOMAINS.md).
-const SHORT_LINK = "https://bit.ly/animevietsubtv"
+// pnpm domains: finds the source's current host. The official short link is the source's own announcement
+// channel, so it comes first; then every known host is probed hop by hop, so each redirect chain shows.
+// The list lives in src/hosts.json (the app reads the same file); update it when a new domain shows up and see
+// docs/SOURCE-DOMAINS.md for how to tell the real site from look-alikes.
+import hosts from "../src/hosts.json" with { type: "json" }
 
-// Known hosts: current, then older/alternate ones that redirect to it
-const HOSTS = [
-  "animevietsub.sale",
-  "animevietsub.link",
-  "animevietsub.xyz",
-  "animevietsub.fan",
-  "animevietsub.info",
-  "animevietsub.site",
-  "animevietsub.tv",
-  "animevietsub.vip",
-  "animevietsub.app",
-  "animevietsub.in",
-  "animevietsub.nl",
-  "animevietsub.cc"
-]
+const UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36"
+const KNOWN = [hosts.current, ...hosts.redirecting, ...hosts.unreachable, ...hosts.dead]
 
-async function probe(url) {
-  try {
-    const res = await fetch(url, { method: "HEAD", redirect: "follow", signal: AbortSignal.timeout(12000) })
-    return `${res.status} -> ${new URL(res.url).host}`
-  } catch (error) {
-    return `no answer (${error.cause?.code ?? error.name})`
+/** "301 -> a 301 -> b 200": every hop of a redirect chain, then the final status */
+async function chain(url) {
+  const hops = []
+  for (let hop = 0; hop < 8; hop++) {
+    try {
+      const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(12_000), headers: { "user-agent": UA } })
+      const location = res.headers.get("location")
+      if (res.status < 300 || res.status >= 400 || !location) return [...hops, String(res.status)].join(" ")
+      url = new URL(location, url).href
+      hops.push(`${res.status} -> ${new URL(url).host}`)
+    } catch (error) {
+      return [...hops, `no answer (${error.cause?.code ?? error.name})`].join(" ")
+    }
   }
+  return [...hops, "too many redirects"].join(" ")
 }
 
-console.log(`official short link: ${await probe(SHORT_LINK)}\n`)
-for (const host of HOSTS) console.log(host.padEnd(22), await probe(`https://${host}/`))
-console.log("\nWhen the current host changes, follow 'Switching the source host' in docs/SOURCE-DOMAINS.md")
+console.log(`list checked ${hosts.checked}; current host in the list: ${hosts.current}\n`)
+console.log(`official link  ${await chain(hosts.officialLink)}\n`)
+const results = await Promise.all(KNOWN.map(async (host) => [host, await chain(`https://${host}/`)]))
+for (const [host, result] of results) console.log(host.padEnd(22), result)
+console.log("\nA 403 at the end is the site refusing a script, not a dead host. When the current host changes,")
+console.log("follow 'Switching the source host' in docs/SOURCE-DOMAINS.md.")

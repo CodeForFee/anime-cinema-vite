@@ -2,7 +2,7 @@
 // scraping layer ported from anime-vsub/desktop-web (src/apis/runs/*), which
 // sends every request through the AVS Helper extension.
 import type { TPost } from "src/apis/parser/__helpers__/getInfoTPost"
-import { PlayerLink } from "src/apis/runs/ajax/player-link"
+import { decodePlayerLink, type PlayerAnswer } from "src/apis/runs/ajax/player-link"
 import { Browse } from "src/apis/runs/browse"
 import { Index } from "src/apis/runs/index"
 import { Menu } from "src/apis/runs/menu"
@@ -32,6 +32,18 @@ const slugOf = (path: string) => path.replace(/^.*\/phim\//, "").replace(/\/.*$/
 const image = (url?: string) => (url ? `${forceHttp2(url).split("#")[0]}#animevsub-vsub_extra` : "")
 
 const finite = (n?: number) => (typeof n === "number" && Number.isFinite(n) ? n : undefined)
+
+/**
+ * The source's answer decides what the player frame or <video> loads, so only https pages and streams (and the
+ * data: playlists the decryptor builds) get through. Anything else, javascript: above all, would run in the app's
+ * own origin, which in the Android app can reach the native bridge.
+ */
+export function safePlayerUrl(url: string): string {
+  if (url.startsWith("data:application/vnd.apple.mpegurl")) return url
+  const parsed = new URL(url.startsWith("//") ? `https:${url}` : url)
+  if (parsed.protocol !== "https:") throw new Error(`Refused a ${parsed.protocol} player link`)
+  return parsed.href
+}
 
 function toItem(post: TPost): AnimeItem {
   const poster = image(post.image)
@@ -216,18 +228,17 @@ export const animeApi = {
   getStreamUrl: async (hash: string, id: string, play: string): Promise<{ success: boolean; data: StreamData }> => {
     // Asked from the viewer's own browser (through the extension), so the answer is issued to the viewer's IP
     const { data } = await post("/ajax/player", { id, play, link: hash, backuplinks: "1" })
-    const answer = JSON.parse(data) as { link?: unknown; playTech?: string }
+    const answer = JSON.parse(data) as PlayerAnswer
 
     // "iframe" is the CDN's own player page: embed it the way the source site does. The tag makes
     // the extension send the source Referer with the frame request (create-rule.ts, SUB_FRAME).
-    if (answer.playTech === "iframe" && typeof answer.link === "string")
-      return {
-        success: true,
-        data: { playerUrl: answer.link, embedUrl: `${answer.link.split("#")[0]}#animevsub-vsub_extra` }
-      }
+    if (answer.playTech === "iframe" && typeof answer.link === "string") {
+      const page = safePlayerUrl(answer.link.split("#")[0])
+      return { success: true, data: { playerUrl: page, embedUrl: `${page}#animevsub-vsub_extra` } }
+    }
 
-    const { link } = await PlayerLink({ id, play, hash })
-    const sources = typeof link === "string" ? [] : link.map(({ file, label, type }) => ({ file, label, type }))
+    // the same answer, not a second request: plain or encrypted streams for <video>
+    const sources = (await decodePlayerLink(answer)).map(({ file, label, type }) => ({ file: safePlayerUrl(file), label, type }))
 
     return {
       success: true,

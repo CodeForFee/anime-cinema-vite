@@ -49,6 +49,23 @@ export function coverflow(offset: number) {
   return `translate3d(calc(-50% + ${x}%), 0, ${z}px) rotateY(${-side * near * TURN}deg)`;
 }
 
+/** How dark a card sits behind the middle one: the middle stays clear, one step out is already well in the dark */
+export const shadeOpacity = (offset: number) => Math.min(Math.min(Math.abs(offset), VISIBLE) * 0.42, 0.78);
+
+/**
+ * Where a card at `offset` sits and how dark it is. Render uses it too, so a card that mounts without the
+ * index changing (the list refreshed under the carousel) is already in place and lit on its first frame.
+ */
+export function place(offset: number) {
+  const distance = Math.min(Math.abs(offset), VISIBLE + 1);
+  return {
+    transform: coverflow(offset),
+    zIndex: 10 - Math.round(distance),
+    opacity: distance > VISIBLE + 0.4 ? 0 : 1,
+    shade: shadeOpacity(offset),
+  };
+}
+
 /**
  * Phones: the ranked list as a stack of cards. The current one is large in the middle, its neighbours
  * shrink and darken behind it; swipe sideways to move, tap the middle card to open it.
@@ -67,17 +84,15 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
   /** Places every mounted card for a drag of `drag` cards (0 = at rest) */
   const layout = (drag: number, animate: boolean) => {
     for (const [i, card] of cards.current) {
-      const offset = around(i) + drag;
-      const distance = Math.min(Math.abs(offset), VISIBLE + 1);
+      const spot = place(around(i) + drag);
       card.style.transition = animate ? SETTLE : "none";
-      card.style.transform = coverflow(offset);
-      card.style.zIndex = String(10 - Math.round(distance));
-      card.style.opacity = distance > VISIBLE + 0.4 ? "0" : "1";
+      card.style.transform = spot.transform;
+      card.style.zIndex = String(spot.zIndex);
+      card.style.opacity = String(spot.opacity);
       const shade = shades.current.get(i);
       if (shade) {
         shade.style.transition = animate ? "opacity 420ms" : "none";
-        // the middle card stays clear; one step out is already well in the dark
-        shade.style.opacity = String(Math.min(Math.min(distance, VISIBLE) * 0.42, 0.78));
+        shade.style.opacity = String(spot.shade);
       }
     }
   };
@@ -116,6 +131,7 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
           // the list loops: the last titles sit to the left of the first
           if (Math.abs(around(i)) > VISIBLE + 1) return null;
           const episode = episodeNumber(anime);
+          const spot = place(around(i));
           return (
             <button
               type="button"
@@ -130,8 +146,7 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
               className={`absolute left-1/2 top-0 aspect-[2/3] w-[min(62vw,280px)] overflow-hidden rounded-xl bg-[#1c1c1f] text-left [backface-visibility:hidden] will-change-transform ${
                 i === index ? "stack-card-front" : "shadow-[0_10px_20px_rgba(0,0,0,0.55)] ring-1 ring-white/10"
               }`}
-              // first paint before the layout effect runs: already roughly in place
-              style={{ transform: coverflow(around(i)) }}
+              style={{ transform: spot.transform, zIndex: spot.zIndex, opacity: spot.opacity }}
             >
               <LazyImage art={anime} src={anime.poster || anime.image} alt="" className="h-full w-full object-cover" />
               {/* cards behind the middle one sink into the dark */}
@@ -142,6 +157,7 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
                 }}
                 aria-hidden
                 className="pointer-events-none absolute inset-0 bg-black"
+                style={{ opacity: spot.shade }}
               />
               {/* the middle card wears a liquid-glass rim and sheen (globals.css) */}
               <span
