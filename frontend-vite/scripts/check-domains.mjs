@@ -1,8 +1,8 @@
 // pnpm domains: finds the source's current host. The official short link is the source's own announcement
 // channel, so it comes first; then every known host is probed hop by hop, so each redirect chain shows.
-// The list lives in src/hosts.json (the app reads the same file); update it when a new domain shows up and see
+// The list lives in src/core/source/hosts.json (the app reads the same file); update it when a new domain shows up and see
 // docs/SOURCE-DOMAINS.md for how to tell the real site from look-alikes.
-import hosts from "../src/hosts.json" with { type: "json" }
+import hosts from "../src/core/source/hosts.json" with { type: "json" }
 
 const UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36"
 const KNOWN = [hosts.current, ...hosts.redirecting, ...hosts.unreachable, ...hosts.dead]

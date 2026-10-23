@@ -14,9 +14,8 @@ export default defineConfig(({ mode }) => ({
     // React Compiler memoizes components, so the 4 Hz player state does not re-render the whole page
     babel({
       presets: [reactCompilerPreset()],
-      // UI only: src/apis and src/logic are plain async code whose use* helpers (useCache) are not hooks;
-      // compiled, they would call React hooks outside a component ("Invalid hook call")
-      exclude: [/node_modules/, /rolldown[\/]runtime/, /[\/]src[\/](apis|logic)[\/]/]
+      // UI only: the source layer, the platform adapters and the hls.js engine are plain code, nothing to memoize
+      exclude: [/node_modules/, /rolldown[\/]runtime/, /[\/]src[\/](core[\/]source|platform|features[\/]player[\/]engines[\/]hls)[\/]/]
     }),
     VitePWA({
       registerType: "autoUpdate",
@@ -51,8 +50,7 @@ export default defineConfig(({ mode }) => ({
     mode === "analyze" ? visualizer({ filename: "dist/stats.html", gzipSize: true }) : null
   ],
   resolve: {
-    // "src/..." is how the modules ported from anime-vsub/desktop-web import each other
-    alias: { "@": src, src }
+    alias: { "@": src }
   },
   // The extension only injects its bridge on the hosts in avs-helper-extension/allowlist.yaml
   server: { host: "localhost", port: 4100 },

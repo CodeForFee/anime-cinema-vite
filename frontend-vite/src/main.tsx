@@ -1,3 +1,5 @@
+// First: plugs this platform into the core before any store or query module is evaluated
+import "@/platform/install"
 // One typeface for the whole app, drawn for Vietnamese. Each weight downloads only the subsets a page uses
 import "@fontsource/be-vietnam-pro/400.css"
 import "@fontsource/be-vietnam-pro/500.css"
@@ -5,17 +7,18 @@ import "@fontsource/be-vietnam-pro/600.css"
 import "@fontsource/be-vietnam-pro/700.css"
 import "@fontsource/be-vietnam-pro/800.css"
 import "@fontsource/be-vietnam-pro/900.css"
-import "./globals.css"
+import "@/app/globals.css"
 
 import React from "react"
 import { createRoot } from "react-dom/client"
 import { BrowserRouter } from "react-router-dom"
 
-import App from "./App"
-import { installBackButton } from "./logic/back"
-import { isNativeApp } from "./logic/bridge"
-import { watchNetwork } from "./logic/network"
-import { resolveSourceHost } from "./logic/source-host"
+import App from "@/app/App"
+import { goBack } from "@/app/router"
+import { resolveSourceHost } from "@/core/source/source-host"
+import { installBackButton } from "@/platform/back"
+import { watchNetwork } from "@/platform/network"
+import { isNativeApp } from "@/platform/transport"
 
 // Only Chromium renders an SVG filter as backdrop-filter; elsewhere .glass stays a plain blur
 if ("userAgentData" in navigator) document.documentElement.dataset.liquid = ""
@@ -36,7 +39,7 @@ if (!isNativeApp) {
 }
 else void navigator.serviceWorker?.getRegistrations().then((all) => all.forEach((worker) => worker.unregister()))
 
-installBackButton()
+installBackButton(goBack)
 watchNetwork()
 // If the source moved to another domain, find it (docs/SOURCE-DOMAINS.md); in the background, the page does not wait
 void resolveSourceHost()
