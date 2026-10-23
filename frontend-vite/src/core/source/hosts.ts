@@ -29,6 +29,13 @@ function savedHost() {
 export let HOST_CURL = savedHost() ?? SOURCE_HOSTS[0]
 export let C_URL = "https://" + HOST_CURL
 
+const listeners = new Set<() => void>()
+export const subscribeSourceHost = (listener: () => void) => {
+  listeners.add(listener)
+  return () => { listeners.delete(listener) }
+}
+export const sourceHostSnapshot = () => HOST_CURL
+
 export function setSourceHost(host: string) {
   if (!isSourceHost(host)) return
   HOST_CURL = host
@@ -36,7 +43,8 @@ export function setSourceHost(host: string) {
   try {
     localStorage.setItem(SAVED_HOST_KEY, host)
   } catch {
-    // not remembered; the next start probes again
+    // not remembered; use the trusted inventory next start
   }
+  listeners.forEach((listener) => listener())
 }
 

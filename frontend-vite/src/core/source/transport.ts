@@ -1,41 +1,48 @@
-import { core, type SourceRequest } from "@/core/configure"
-import { C_URL } from "@/core/source/hosts"
+import { core, type SourceRequest, type SourceResponse } from "@/core/configure"
+import { C_URL, HOST_CURL } from "@/core/source/hosts"
+import { request } from "@/core/source/request"
+import { adoptSourceHost, isSourceHome, resolveSourceHost, sourceOrigin } from "@/core/source/source-host"
 
-const noTransport = () =>
-  Object.assign(new Error("Trang web cần extension AVS Helper để hoạt động bình thường"), { extesionNotExists: true })
-
-// Status and URL only, in development: whole HTML pages in the console cost memory and time on a phone
-const trace = (method: string, url: string, status: number) => {
-  if (import.meta.env.DEV) console.debug(`[source] ${method} ${status} ${url}`)
+const retryable = (error: unknown) => {
+  const status = (error as { status?: number } | null)?.status
+  return status === undefined || status === 0 || status >= 500
 }
 
-type Page = { status: number; url: string; data: string; headers: Record<string, string> }
-
-/** GET a page of the source: a path is taken relative to the current host and sent with the source Referer */
-export async function get(url: string | SourceRequest, headers?: Record<string, string>): Promise<Page> {
-  const { transport } = core()
-  if (!transport.version) throw noTransport()
-
-  const request = typeof url === "object" ? url : { url: url.includes("://") ? url : `${C_URL}${url}#animevsub-vsub`, headers }
-  const response = await transport.get(request)
-  trace("GET", request.url, response.status)
-
-  if (response.status !== 200 && response.status !== 201) throw response
-  return response
+async function send(method: "get" | "post", input: SourceRequest): Promise<SourceResponse> {
+  if (!core().transport.version) throw Object.assign(new Error("Trang web cần extension AVS Helper để hoạt động bình thường"), { extesionNotExists: true })
+  const initialHost = HOST_CURL
+  const isSource = Boolean(sourceOrigin(input.url))
+  const run = async (attempt: SourceRequest) => {
+    const response = await request(method, attempt)
+    if (response.status !== 200 && response.status !== 201) throw response
+    if (isSource) {
+      const final = sourceOrigin(response.url)
+      if (!final) throw new Error("Untrusted source redirect")
+      if (final !== HOST_CURL) {
+        // AJAX/detail responses lack home markers; verify the final host's home before adopting.
+        const home = isSourceHome(response) ? response : await request("get", { url: `https://${final}/#animevsub-vsub` }, 6_000)
+        if (!isSourceHome(home) || sourceOrigin(home.url) !== final) throw new Error("Invalid source redirect")
+        await adoptSourceHost(final)
+      }
+    }
+    return response
+  }
+  try { return await run(input) }
+  catch (error) {
+    if (!isSource || !retryable(error) || typeof navigator !== "undefined" && navigator.onLine === false) throw error
+    const next = HOST_CURL !== initialHost ? HOST_CURL : await resolveSourceHost(undefined, initialHost)
+    if (!next) throw error
+    const url = new URL(input.url)
+    url.host = next
+    return run({ ...input, url: url.href })
+  }
 }
 
-/** POST a form to an endpoint of the source (path relative to the current host) */
-export async function post(
-  url: string,
-  data: Record<string, number | string | boolean>,
-  headers?: Record<string, string>
-): Promise<Page> {
-  const { transport } = core()
-  if (!transport.version) throw noTransport()
+/** Absolute third-party requests remain untouched; source paths follow the live origin. */
+export function get(url: string | SourceRequest, headers?: Record<string, string>) {
+  return send("get", typeof url === "object" ? url : { url: url.includes("://") ? url : `${C_URL}${url}#animevsub-vsub`, headers })
+}
 
-  const response = await transport.post({ url: `${C_URL}${url}#animevsub-vsub`, headers, data })
-  trace("POST", url, response.status)
-
-  if (response.status !== 200 && response.status !== 201) throw response
-  return response
+export function post(url: string, data: Record<string, number | string | boolean>, headers?: Record<string, string>) {
+  return send("post", { url: `${C_URL}${url}#animevsub-vsub`, data, headers })
 }

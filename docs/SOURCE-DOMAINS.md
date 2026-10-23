@@ -53,22 +53,35 @@ before adding it.
 
 ## Automatic fallback (built in)
 
-The hosts above are compiled into the app (`SOURCE_HOSTS` in `frontend-vite/src/constants.ts`). On start,
-`src/logic/source-host.ts` checks the current host in the background. If it does not answer, it tries the other
-hosts in order, follows redirects to the final host, remembers the one that works (local storage), tells the
-extension the new Referer (`setReferrers`) and reloads the page once. So when the source moves to a host already on
-the list, the web app and the Android app recover by themselves, no rebuild needed.
+The list is compiled into the app (`frontend-vite/src/core/source/hosts.json`). Every request to the source goes
+through `src/core/source/transport.ts`, which handles a move without the viewer noticing:
 
-Limits: a domain that is not on the list still needs the manual switch below (add it to `SOURCE_HOSTS` and
-`HOSTS` in `scripts/check-domains.mjs`). In the Android app the embedded player's Referer comes from the WebView
-hostname in `capacitor.config.ts`, which is fixed at build time, so a move needs a new APK for the player to
-keep working even though the app's own requests follow the new host.
+- **Timeouts.** A request to the source gives up after 12 s instead of hanging on a dead host.
+- **Failover.** A network error, a timeout or a 5xx answer (while the device is online) starts one discovery round,
+  shared by every request waiting at that moment: the official short link and every known host are probed in
+  parallel (6 s each) and the first valid answer wins. The failed request is then sent again, same path and body,
+  to the new host; the screen only sees a slower request. A 404 or an offline device never starts a round.
+- **Redirects.** When a request lands on another `animevietsub.*` host (the source moved and the old domain
+  redirects), that host is adopted for every later request once its home page checks out.
+- **Trust.** A host is adopted only when a trusted entry point (the official link or a known host) leads to it, it
+  is not in `lookalikes`, and its home page carries the markers the home parser needs (`MovieListTopCn` /
+  `MovieListSldCn` and `TPostMv`). A domain that only has the name is never used. A new domain reached through the
+  official link works without a rebuild.
+- **No reload.** The host changes while the app runs: the extension gets the new Referer first, then the host is
+  switched, active queries refetch and cached image URLs are rewritten to the new host when drawn.
+- **Daily check.** Once a day, when the app is idle, the official link is followed, so a new domain is learned
+  before the old one dies.
+
+Limits: in the Android app the embedded player's Referer comes from the WebView hostname in `capacitor.config.ts`,
+which is fixed at build time. Whether the CDN still plays with an older source domain as the Referer could not be
+tested from an automated browser (the CDN refuses those); check it on a phone. If it does not, a move still needs
+a new APK for the player, while the app's own requests follow the new host either way.
 
 ## Switching the source host
 
 Replace the old host with the new one in:
 
-1. `frontend-vite/src/constants.ts` (`HOST_CURL`)
+1. `frontend-vite/src/core/source/hosts.json` (`current`; move the old one into `redirecting`)
 2. `frontend-vite/capacitor.config.ts` (`server.hostname`)
 3. `avs-helper-extension/map-referer.json`
 
@@ -76,4 +89,4 @@ Then rebuild the extension (`pnpm build` in `avs-helper-extension`, reload it in
 carrying an older `animevietsub.*` host are rewritten to `HOST_CURL` automatically (`REGEXP_OLD_HOST_CURL`).
 
 If the player host changes (the `*.googleapiscdn.com` part), see the "Player host" row in the README's
-Configuration table. Finally, update this file and `HOSTS` in `frontend-vite/scripts/check-domains.mjs`.
+Configuration table. Finally, update this file (`pnpm domains` reads `hosts.json`).

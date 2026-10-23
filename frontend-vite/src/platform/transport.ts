@@ -9,13 +9,15 @@ import { C_URL } from "@/core/source/hosts"
 
 export const isNativeApp = Capacitor.isNativePlatform()
 
-async function nativeRequest(method: "GET" | "POST", { url, headers, data }: SourceRequest): Promise<SourceResponse> {
+async function nativeRequest(method: "GET" | "POST", { url, headers, data, timeout }: SourceRequest): Promise<SourceResponse> {
   const [href, tag] = url.split("#")
   const body = data ? new URLSearchParams(Object.entries(data).map(([key, value]) => [key, String(value)])).toString() : undefined
 
   const res = await CapacitorHttp.request({
     url: href,
     method,
+    connectTimeout: timeout,
+    readTimeout: timeout,
     headers: {
       "User-Agent": navigator.userAgent,
       ...(tag?.startsWith("animevsub-vsub") ? { Referer: `${C_URL}/` } : {}),

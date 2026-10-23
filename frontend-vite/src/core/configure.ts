@@ -5,6 +5,8 @@ import type { ParserName, Parsers } from "@/core/source/endpoints/parsers"
 
 export interface SourceRequest {
   url: string
+  timeout?: number
+  signal?: AbortSignal
   headers?: Record<string, string>
   data?: Record<string, string | number | boolean>
 }

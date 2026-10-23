@@ -4,6 +4,14 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { type Titled, useHdArt } from "@/features/title/hooks/useHdArt";
 
+import { sourceHostSnapshot, subscribeSourceHost } from "@/core/source/hosts";
+import { forceHttp2 } from "@/core/source/urls";
+
+function useSourceImage(src?: string) {
+  React.useSyncExternalStore(subscribeSourceHost, sourceHostSnapshot);
+  return src ? forceHttp2(src) : src;
+}
+
 // ponytail: grows with every poster of the session; a few KB of URLs, cap it if sessions get that long
 const shown = new Set<string>();
 
@@ -17,7 +25,7 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 /** A plain <img> poster that switches to the title's sharp cover once it is known */
 export const PosterImg: React.FC<React.ImgHTMLAttributes<HTMLImageElement> & { art?: Titled }> = ({ art, src, ...props }) => {
   const hd = useHdArt(art)?.cover;
-  return <img src={hd || src} {...props} />;
+  return <img src={useSourceImage(hd || src)} {...props} />;
 };
 
 /**
@@ -25,6 +33,8 @@ export const PosterImg: React.FC<React.ImgHTMLAttributes<HTMLImageElement> & { a
  * The parent must be positioned (relative/absolute) and sized, since the skeleton fills it.
  */
 export const LazyImage: React.FC<LazyImageProps> = ({ src: sourceSrc, art, fallbackSrc: givenFallback, className, loading = "lazy", ...props }) => {
+  sourceSrc = useSourceImage(sourceSrc);
+  givenFallback = useSourceImage(givenFallback);
   const src = useHdArt(art)?.cover || sourceSrc;
   // a cover that fails to load falls back to the source's own poster
   const fallbackSrc = src !== sourceSrc ? sourceSrc : givenFallback;

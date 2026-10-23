@@ -14,7 +14,9 @@ import { createRoot } from "react-dom/client"
 
 import App from "@/app/App"
 import { goBack } from "@/app/router"
-import { resolveSourceHost } from "@/core/source/source-host"
+import { checkOfficialSource, syncSourceReferer } from "@/core/source/source-host"
+import { subscribeSourceHost } from "@/core/source/hosts"
+import { queryClient } from "@/app/query-client"
 import { installBackButton } from "@/platform/back"
 import { watchNetwork } from "@/platform/network"
 import { isNativeApp } from "@/platform/transport"
@@ -41,7 +43,10 @@ else void navigator.serviceWorker?.getRegistrations().then((all) => all.forEach(
 installBackButton(goBack)
 watchNetwork()
 // If the source moved to another domain, find it (docs/SOURCE-DOMAINS.md); in the background, the page does not wait
-void resolveSourceHost()
+void Promise.resolve(syncSourceReferer()).catch(() => undefined)
+subscribeSourceHost(() => { void queryClient.invalidateQueries({ refetchType: "active" }) })
+if ("requestIdleCallback" in window) window.requestIdleCallback(() => { void checkOfficialSource() }, { timeout: 30_000 })
+else setTimeout(() => { void checkOfficialSource() }, 10_000)
 // The Android splash is held until the launch intro has painted (index.html asks first; this is the backstop
 // in case that inline call ran before the bridge was ready)
 if (isNativeApp) void import("@capacitor/splash-screen").then(({ SplashScreen }) => SplashScreen.hide({ fadeOutDuration: 200 })).catch(() => {})
