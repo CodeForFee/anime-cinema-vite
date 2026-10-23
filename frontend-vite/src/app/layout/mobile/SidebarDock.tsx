@@ -1,8 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Bookmark, Compass, History, Home, Search } from "lucide-react";
-import { Link } from "@/app/router";
-import { usePathname } from "@/app/router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { haptic } from "@/platform/haptics";
 import { cn } from "@/shared/lib/utils";
 
@@ -12,14 +11,14 @@ const MOBILE_NAV_LINKS = [
   { label: "Tìm kiếm", href: "/search", icon: Search },
   { label: "Danh sách", href: "/favorites", icon: Bookmark },
   { label: "Lịch sử", href: "/history", icon: History },
-];
+] as const;
 
 /**
  * Phone / narrow screens only: a floating glass pill of icons (styles: .liquid-glass in globals.css).
  * The lit "lens" slides from the old tab to the new one. Desktop navigates from the header.
  */
 export const SidebarDock: React.FC = () => {
-  const pathname = usePathname();
+  const pathname = useLocation({ select: (location) => location.pathname });
 
   return (
     <nav
@@ -35,7 +34,7 @@ export const SidebarDock: React.FC = () => {
           return (
             <Link
               key={href}
-              href={href}
+              to={href}
               aria-label={label}
               aria-current={isActive ? "page" : undefined}
               onClick={() => !isActive && haptic()}

@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "@/app/router";
+import { Link } from "@tanstack/react-router";
 import { ShieldCheck } from "lucide-react";
 
 export const Footer: React.FC = () => {
@@ -17,10 +17,10 @@ export const Footer: React.FC = () => {
 
         {/* Links */}
         <div className="flex flex-wrap items-center justify-center gap-6 text-gray-300">
-          <Link href="/" className="hover:text-white transition-colors">Trang chủ</Link>
-          <Link href="/explore" className="hover:text-white transition-colors">Khám phá</Link>
-          <Link href="/history" className="hover:text-white transition-colors">Lịch sử xem</Link>
-          <Link href="/favorites" className="hover:text-white transition-colors">Yêu thích</Link>
+          <Link to="/" className="hover:text-white transition-colors">Trang chủ</Link>
+          <Link to="/explore" className="hover:text-white transition-colors">Khám phá</Link>
+          <Link to="/history" className="hover:text-white transition-colors">Lịch sử xem</Link>
+          <Link to="/favorites" className="hover:text-white transition-colors">Yêu thích</Link>
           <span className="text-gray-400">|</span>
           <span className="text-gray-400">All rights reserved © 2026 Movion</span>
         </div>

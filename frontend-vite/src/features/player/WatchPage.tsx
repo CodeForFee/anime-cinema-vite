@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useMemo, Suspense } from "react";
-import { useSearchParams, useRouter } from "@/app/router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS, useAnimeDetailQuery, useStreamQuery } from "@/core/queries";
 import { animeApi } from "@/core/anime-api";
@@ -16,7 +16,8 @@ import { AnimeDetailTabs } from "@/features/title/components/AnimeDetailTabs";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { usePlayerStore } from "@/features/player/store";
-import { Link } from "@/app/router";
+import { pickEpisode } from "@/core/player/pick-episode";
+import { rememberPlayerOrigin } from "@/platform/preconnect";
 import { ArrowLeft, CircleAlert, Heart, SkipForward, Sparkles } from "lucide-react";
 import { PosterImg } from "@/features/title/components/LazyImage";
 import { formatEpisodeName } from "@/core/format";
@@ -35,11 +36,8 @@ function WatchSkeleton() {
 }
 
 function WatchContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const slug = searchParams.get("slug") || "";
-  const epParam = searchParams.get("ep") || "";
+  const { slug, ep: epParam = "" } = useSearch({ from: "/watch" });
+  const navigate = useNavigate();
 
   const [mounted, setMounted] = useState(false);
   const addToHistory = useHistoryStore((s) => s.addToHistory);
@@ -62,40 +60,13 @@ function WatchContent() {
   } = useAnimeDetailQuery(slug);
   const anime = detailRes?.data;
 
-  // Helper to match episode by name, id, index or numeric value
-  const matchEpisode = (ep: Episode, target: string) => {
-    if (!target) return false;
-    const t = target.trim().toLowerCase();
-    const name = (ep.name || "").trim().toLowerCase();
-    const id = (ep.id || "").trim();
-    const title = (ep.title || "").trim().toLowerCase();
-    const index = String(ep.index || "");
-
-    if (name === t || id === t || index === t || title === t) return true;
-    const numT = t.replace(/^tập\s*/i, "").replace(/^0+/, "");
-    const numName = name.replace(/^tập\s*/i, "").replace(/^0+/, "");
-    if (numT && numName && numT === numName) return true;
-    return false;
-  };
-
-  // 2. Determine Active Episode
+  // 2. Determine Active Episode: the linked one, else where the viewer left off, else the first
   const episodes = anime?.episodes || [];
-  const currentEpisode: Episode | null = useMemo(() => {
+  const currentEpisode: Episode | null = useMemo(
     // the list on screen still belongs to the previous part: no episode, so no stream is asked for
-    if (switchingPart || episodes.length === 0) return null;
-    if (epParam) {
-      const match = episodes.find((e) => matchEpisode(e, epParam));
-      if (match) return match;
-    }
-    if (mounted) {
-      const historyItem = getAnimeHistory(slug);
-      if (historyItem?.episodeSlug) {
-        const match = episodes.find((e) => matchEpisode(e, historyItem.episodeSlug));
-        if (match) return match;
-      }
-    }
-    return episodes[0];
-  }, [episodes, epParam, slug, mounted, getAnimeHistory, switchingPart]);
+    () => (switchingPart ? null : (pickEpisode(episodes, epParam, getAnimeHistory(slug)?.episodeSlug) ?? null)),
+    [episodes, epParam, slug, getAnimeHistory, switchingPart]
+  );
 
   const episodeHash = currentEpisode?.hash || "";
   const episodeId = currentEpisode?.id || "";
@@ -108,6 +79,11 @@ function WatchContent() {
     refetch: refetchStream,
   } = useStreamQuery(episodeHash, episodeId, episodePlay);
   const streamData = streamRes?.data;
+
+  // the next episode can open its connection to the player host before /ajax/player answers (app/router.tsx)
+  useEffect(() => {
+    if (streamData?.embedUrl) rememberPlayerOrigin(streamData.embedUrl);
+  }, [streamData?.embedUrl]);
 
   // 4. Save to Watch History when stream data is available
   useEffect(() => {
@@ -125,7 +101,7 @@ function WatchContent() {
   }, [mounted, anime?.slug, anime?.title, anime?.poster, currentEpisode?.name, streamData?.playerUrl, addToHistory]);
 
   const handleSelectEpisode = (ep: Episode) => {
-    router.push(`/watch?slug=${slug}&ep=${encodeURIComponent(ep.name)}`, { scroll: false });
+    void navigate({ to: "/watch", search: { slug, ep: ep.name }, resetScroll: false });
   };
 
   const currentEpIndex = episodes.findIndex((e) => e.id === currentEpisode?.id);
@@ -161,7 +137,7 @@ function WatchContent() {
           Vui lòng kiểm tra kết nối hoặc quay lại trang chủ.
         </p>
         <Link
-          href="/"
+          to="/"
           className={buttonVariants({
             variant: "unstyled",
             size: "unstyled",
@@ -192,7 +168,7 @@ function WatchContent() {
       {/* Top Back & Quick Action Bar */}
       <div className="flex items-center justify-between gap-4">
         <Link
-          href="/"
+          to="/"
           className="glass-pill inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium text-gray-200 transition-colors hover:text-white"
         >
           <ArrowLeft className="w-3.5 h-3.5" />

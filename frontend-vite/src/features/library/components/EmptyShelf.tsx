@@ -1,4 +1,4 @@
-import { Link } from "@/app/router";
+import { Link } from "@tanstack/react-router";
 
 /** Empty list: a row of glass poster outlines where the titles will go, one line, one way out */
 export function EmptyShelf({ line, hint }: { line: string; hint: string }) {
@@ -17,7 +17,7 @@ export function EmptyShelf({ line, hint }: { line: string; hint: string }) {
         <p className="font-display text-lg font-semibold text-white">{line}</p>
         <p className="mt-1 text-sm text-gray-400">
           {hint}{" "}
-          <Link href="/explore" className="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">
+          <Link to="/explore" className="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">
             Khám phá phim
           </Link>
         </p>

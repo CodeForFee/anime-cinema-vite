@@ -1,5 +1,5 @@
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { animeApi } from "@/core/anime-api";
 import type { AnimeItem, HomeDataResponse } from "@/core/types/anime";
 
@@ -10,6 +10,29 @@ export const QUERY_KEYS = {
     ["anime", "stream", hash, id, play] as const,
   SEARCH: (query: string) => ["anime", "search", query] as const,
 };
+
+// Shared by the hooks below and the router loaders (app/router.tsx), so both hit the same cache entry
+export const detailQuery = (slug: string) =>
+  queryOptions({
+    queryKey: QUERY_KEYS.DETAIL(slug),
+    queryFn: () => animeApi.getAnimeDetails(slug),
+    staleTime: 10 * 60 * 1000,
+  });
+
+export const streamQuery = (hash: string, id: string, play: string) =>
+  queryOptions({
+    queryKey: QUERY_KEYS.STREAM(hash, id, play),
+    queryFn: () => animeApi.getStreamUrl(hash, id, play),
+    staleTime: 15 * 60 * 1000,
+    retry: 2,
+  });
+
+export const searchQuery = (query: string) =>
+  queryOptions({
+    queryKey: QUERY_KEYS.SEARCH(query),
+    queryFn: () => animeApi.search(query),
+    staleTime: 2 * 60 * 1000,
+  });
 
 // 1. Home Data Query
 // The last home page is kept on the device and shown at once on the next launch while the fresh one loads
@@ -56,10 +79,8 @@ export function useEnrichedItem(item?: AnimeItem) {
 // 2. Anime Detail Query
 export function useAnimeDetailQuery(slug: string) {
   return useQuery({
-    queryKey: QUERY_KEYS.DETAIL(slug),
-    queryFn: () => animeApi.getAnimeDetails(slug),
+    ...detailQuery(slug),
     enabled: Boolean(slug),
-    staleTime: 10 * 60 * 1000,
     // Switching to another part of the same show keeps the page up (isPlaceholderData) instead of a
     // full-page skeleton; any other title starts clean
     placeholderData: (previous) =>
@@ -69,23 +90,12 @@ export function useAnimeDetailQuery(slug: string) {
 
 // 3. Stream Source Query
 export function useStreamQuery(hash: string, id: string, play: string) {
-  return useQuery({
-    queryKey: QUERY_KEYS.STREAM(hash, id, play),
-    queryFn: () => animeApi.getStreamUrl(hash, id, play),
-    enabled: Boolean(hash && id),
-    staleTime: 15 * 60 * 1000,
-    retry: 2,
-  });
+  return useQuery({ ...streamQuery(hash, id, play), enabled: Boolean(hash && id) });
 }
 
 // 5. Search Query
 export function useSearchQuery(query: string) {
-  return useQuery({
-    queryKey: QUERY_KEYS.SEARCH(query),
-    queryFn: () => animeApi.search(query),
-    enabled: Boolean(query && query.trim().length > 0),
-    staleTime: 2 * 60 * 1000,
-  });
+  return useQuery({ ...searchQuery(query), enabled: Boolean(query && query.trim().length > 0) });
 }
 
 // 5b. Navigation menu from the source site (changes rarely, so keep it for an hour)

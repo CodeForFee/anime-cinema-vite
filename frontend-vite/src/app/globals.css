@@ -105,7 +105,7 @@ body {
   }
 }
 
-/* Page change on touch devices, as on iOS (lib/router.tsx sets html[data-nav]): push slides the new page in
+/* Page change on mobile, as on iOS (app/router.tsx picks the view transition type): push slides the new page in
    over the old one, which recedes and dims; pop runs it backwards; tab switches cross-fade. Only transform,
    filter and opacity animate, so it stays on the compositor. */
 ::view-transition-old(root),
@@ -113,36 +113,36 @@ body {
   animation: 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
   mix-blend-mode: normal;
 }
-html[data-nav="push"]::view-transition-old(root) {
+html:active-view-transition-type(push)::view-transition-old(root) {
   animation-name: ios-recede;
 }
-html[data-nav="push"]::view-transition-new(root) {
+html:active-view-transition-type(push)::view-transition-new(root) {
   animation-name: ios-enter;
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
 }
-html[data-nav="pop"]::view-transition-old(root) {
+html:active-view-transition-type(pop)::view-transition-old(root) {
   animation-name: ios-leave;
   z-index: 1;
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
 }
-html[data-nav="pop"]::view-transition-new(root) {
+html:active-view-transition-type(pop)::view-transition-new(root) {
   animation-name: ios-return;
 }
 /* the player is presented like an iOS modal: up from the bottom over the page, which sinks back and dims;
    leaving it runs that backwards */
-html[data-nav="up"]::view-transition-old(root) {
+html:active-view-transition-type(up)::view-transition-old(root) {
   animation-name: ios-sink;
 }
-html[data-nav="up"]::view-transition-new(root) {
+html:active-view-transition-type(up)::view-transition-new(root) {
   animation-name: ios-rise;
   box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
 }
-html[data-nav="down"]::view-transition-old(root) {
+html:active-view-transition-type(down)::view-transition-old(root) {
   animation-name: ios-drop;
   z-index: 1;
   box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
 }
-html[data-nav="down"]::view-transition-new(root) {
+html:active-view-transition-type(down)::view-transition-new(root) {
   animation-name: ios-surface;
 }
 @keyframes ios-rise {
@@ -167,10 +167,10 @@ html[data-nav="down"]::view-transition-new(root) {
     filter: brightness(0.6);
   }
 }
-html[data-nav="tab"]::view-transition-old(root) {
+html:active-view-transition-type(tab)::view-transition-old(root) {
   animation: 180ms ease-out both ios-fade-out;
 }
-html[data-nav="tab"]::view-transition-new(root) {
+html:active-view-transition-type(tab)::view-transition-new(root) {
   animation: 180ms ease-out both ios-fade-in;
 }
 @keyframes ios-enter {
@@ -194,6 +194,13 @@ html[data-nav="tab"]::view-transition-new(root) {
     transform: translateX(-30%);
     filter: brightness(0.7);
   }
+}
+/* desktop: a short cross-fade */
+html:active-view-transition-type(fade)::view-transition-old(root) {
+  animation: 150ms ease-out both ios-fade-out;
+}
+html:active-view-transition-type(fade)::view-transition-new(root) {
+  animation: 150ms ease-out both ios-fade-in;
 }
 @keyframes ios-fade-out {
   to {

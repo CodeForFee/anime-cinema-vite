@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Link } from "@/app/router";
+import { Link } from "@tanstack/react-router";
 import { Chip, Button, Tooltip } from "@heroui/react";
 import { LazyImage } from "@/features/title/components/LazyImage";
 import { AnimeItem } from "@/core/types/anime";
@@ -114,7 +114,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
             it is removed and a tap anywhere on the card opens the details. */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-300 flex flex-col items-center justify-end p-4 text-center z-10 [@media(hover:none)]:hidden">
           <Link
-            href={`/watch?slug=${anime.slug}`}
+            to="/watch"
+            search={{ slug: anime.slug }}
             aria-label={`Xem ${anime.title}`}
             onClick={(e) => e.stopPropagation()}
             className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primaryRed text-white shadow-xl shadow-red-600/50 transition-transform hover:scale-110 active:scale-95"
@@ -137,7 +138,8 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
       {/* Card Info Footer */}
       <div className="p-3 bg-[#0B0D14] flex flex-col items-start gap-1">
         <Link
-          href={`/watch?slug=${anime.slug}`}
+          to="/watch"
+          search={{ slug: anime.slug }}
           onClick={(e) => e.stopPropagation()}
           className="w-full"
         >

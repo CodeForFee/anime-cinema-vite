@@ -1,8 +1,7 @@
-import { Link } from "@/app/router";
-import { Button } from "@heroui/react";
-import { Film } from "lucide-react";
+import { Link } from "@tanstack/react-router"
+import { Film } from "lucide-react"
 
-export default function NotFound() {
+export function NotFoundPage() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 space-y-6">
       <div className="w-20 h-20 rounded-3xl bg-primaryRed/10 border border-primaryRed/20 flex items-center justify-center text-primaryRed shadow-2xl">
@@ -16,11 +15,9 @@ export default function NotFound() {
         </p>
       </div>
 
-      <Link href="/">
-        <Button color="danger" radius="full" className="bg-primaryRed text-white font-bold px-6">
-          Về Trang Chủ
-        </Button>
+      <Link to="/" className="inline-flex h-10 items-center rounded-full bg-primaryRed px-6 font-bold text-white">
+        Về Trang Chủ
       </Link>
     </div>
-  );
+  )
 }

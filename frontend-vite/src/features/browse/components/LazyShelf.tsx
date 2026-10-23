@@ -3,20 +3,21 @@ import type { LucideIcon } from "lucide-react";
 import { useBrowseQuery } from "@/core/queries";
 import { MovieShelf } from "@/features/browse/components/MovieShelf";
 import { ShelfSkeleton } from "@/shared/ui/skeletons";
+import type { ExploreSearch } from "@/features/browse/components/MovieShelf";
 
 interface LazyShelfProps {
   title: string;
   icon?: LucideIcon;
   /** Source list to show (a path animeApi.browse accepts) */
   path: string;
-  seeMoreHref?: string;
+  seeMore?: ExploreSearch;
 }
 
 /**
  * A shelf that only asks the source for its list once it is about to scroll into view,
  * and holds its place with a skeleton until the list arrives.
  */
-export const LazyShelf: React.FC<LazyShelfProps> = ({ title, icon, path, seeMoreHref }) => {
+export const LazyShelf: React.FC<LazyShelfProps> = ({ title, icon, path, seeMore }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [near, setNear] = useState(false);
 
@@ -41,7 +42,7 @@ export const LazyShelf: React.FC<LazyShelfProps> = ({ title, icon, path, seeMore
   return (
     <div ref={ref}>
       {data ? (
-        <MovieShelf title={title} icon={icon} items={data.items} seeMoreHref={seeMoreHref} />
+        <MovieShelf title={title} icon={icon} items={data.items} seeMore={seeMore} />
       ) : (
         <div className="my-5 md:my-8" aria-busy="true" aria-label={`Đang tải ${title}`}>
           <ShelfSkeleton />

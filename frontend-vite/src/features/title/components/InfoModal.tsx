@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useRouter } from "@/app/router";
+import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, isPhoneWidth, SHEET_EXIT_MS } from "@/shared/ui/dialog";
-import { preloadRoute } from "@/app/routes";
 import { Button } from "@/shared/ui/button";
 import { PickerDropdown } from "@/shared/ui/PickerDropdown";
 import { LazyImage } from "@/features/title/components/LazyImage";
@@ -17,7 +16,7 @@ import { cn } from "@/shared/lib/utils";
 import { Check, Play, Plus, ThumbsUp, Volume2, VolumeX, X } from "lucide-react";
 
 export const InfoModal: React.FC = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const selectedAnime = useUIStore((state) => state.selectedAnime);
   const isOpen = useUIStore((state) => state.isInfoModalOpen);
   const onClose = useUIStore((state) => state.closeInfoModal);
@@ -170,14 +169,12 @@ export const InfoModal: React.FC = () => {
     haptic();
     onClose();
     // Episodes belong to whichever season is picked in the list
-    const url = epSlug
-      ? `/watch?slug=${encodeURIComponent(activeSlug)}&ep=${encodeURIComponent(epSlug)}`
-      : `/watch?slug=${encodeURIComponent(anime?.slug || selectedAnime?.slug || "")}`;
-    preloadRoute(url);
-    // On a phone the sheet first drops away completely, then the player rises (lib/router.tsx "up"):
+    const search = epSlug ? { slug: activeSlug, ep: epSlug } : { slug: anime?.slug || selectedAnime?.slug || "" };
+    const play = () => void navigate({ to: "/watch", search });
+    // On a phone the sheet first drops away completely, then the player rises (app/routes.ts "up"):
     // starting both at once froze a half-closed sheet into the page change
-    if (isPhoneWidth()) setTimeout(() => router.push(url), SHEET_EXIT_MS);
-    else router.push(url);
+    if (isPhoneWidth()) setTimeout(play, SHEET_EXIT_MS);
+    else play();
   };
 
   // Stays mounted while closed, so the dialog can play its closing animation

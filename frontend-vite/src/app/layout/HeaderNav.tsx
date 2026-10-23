@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "@/app/router";
+import { Link, useLocation, useNavigate, useSearch } from "@tanstack/react-router";
 import { onBack } from "@/platform/back";
-import { usePathname, useRouter, useSearchParams } from "@/app/router";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -27,7 +26,6 @@ import { ChevronDown, Search, X } from "lucide-react";
 import { PosterImg } from "@/features/title/components/LazyImage";
 
 // Link to the explore page for one of the source site's lists
-const exploreLink = (path: string) => `/explore?path=${encodeURIComponent(path)}`;
 
 // Overrides on top of Lightswind's navigationMenuTriggerStyle() to fit the dark Netflix bar
 const NAV_LINK =
@@ -77,7 +75,7 @@ const NavDropdown: React.FC<{ menu: MenuGroup; currentPath: string | null }> = (
               key={item.path}
               className={cn(MENU_ITEM, item.path === currentPath && "bg-primaryRed/15 text-white")}
             >
-              <Link href={exploreLink(item.path)} className={cn(MENU_ITEM_LINK, columns > 1 && "px-2.5 text-[13px]")}>
+              <Link to="/explore" search={{ path: item.path }} className={cn(MENU_ITEM_LINK, columns > 1 && "px-2.5 text-[13px]")}>
                 <span className="truncate">{item.label}</span>
               </Link>
             </DropdownMenuItem>
@@ -91,9 +89,10 @@ const NavDropdown: React.FC<{ menu: MenuGroup; currentPath: string | null }> = (
 export const HeaderNav: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const href = useLocation({ select: (location) => location.href });
+  const explorePath = useSearch({ strict: false, select: (search) => search.path });
+  const navigate = useNavigate();
 
   const searchBoxRef = useRef<HTMLFormElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -149,12 +148,12 @@ export const HeaderNav: React.FC = () => {
   useEffect(() => {
     setIsResultsOpen(false);
     setIsSearchOpen(false);
-  }, [pathname, searchParams]);
+  }, [href]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      void navigate({ to: "/search", search: { q: searchQuery.trim() } });
       closeSearch();
     }
   };
@@ -162,7 +161,7 @@ export const HeaderNav: React.FC = () => {
   // Dropdowns are the source site's own menu, so every genre and season it has shows up here
   const { data: menus = [], isLoading: isMenuLoading } = useMenuQuery();
   // Which dropdown entry (if any) matches the explore page currently shown
-  const currentPath = pathname === "/explore" ? searchParams.get("path") : null;
+  const currentPath = pathname === "/explore" ? (explorePath ?? null) : null;
 
   return (
     <header
@@ -172,7 +171,7 @@ export const HeaderNav: React.FC = () => {
       {/* Left Branding & Navigation */}
       <div className="flex items-center gap-4 md:gap-8">
         {/* Brand */}
-        <Link href="/" aria-label="Capynime - Trang chủ" className="flex items-center gap-2">
+        <Link to="/" aria-label="Capynime - Trang chủ" className="flex items-center gap-2">
           <img src="/app-icon.png" alt="" width={36} height={36} className="h-8 w-8 md:h-9 md:w-9 rounded-xl shadow-lg shadow-red-900/40" />
           <span className="font-display text-xl md:text-2xl font-extrabold tracking-tight text-white">
             Capy<span className="text-primaryRed">nime</span>
@@ -184,7 +183,7 @@ export const HeaderNav: React.FC = () => {
           <NavigationMenuList>
             <NavigationMenuItem>
               <Link
-                href="/"
+                to="/"
                 className={cn(navigationMenuTriggerStyle(), NAV_LINK, pathname === "/" && NAV_LINK_ACTIVE)}
               >
                 Trang chủ
@@ -206,7 +205,7 @@ export const HeaderNav: React.FC = () => {
 
             <NavigationMenuItem>
               <Link
-                href="/favorites"
+                to="/favorites"
                 className={cn(navigationMenuTriggerStyle(), NAV_LINK, pathname === "/favorites" && NAV_LINK_ACTIVE)}
               >
                 Danh sách của tôi
@@ -215,7 +214,7 @@ export const HeaderNav: React.FC = () => {
 
             <NavigationMenuItem>
               <Link
-                href="/history"
+                to="/history"
                 className={cn(navigationMenuTriggerStyle(), NAV_LINK, pathname === "/history" && NAV_LINK_ACTIVE)}
               >
                 Lịch sử
@@ -272,7 +271,8 @@ export const HeaderNav: React.FC = () => {
                       {searchResults.slice(0, 8).map((item) => (
                         <li key={item.slug}>
                           <Link
-                            href={`/watch?slug=${encodeURIComponent(item.slug)}`}
+                            to="/watch"
+                            search={{ slug: item.slug }}
                             onClick={closeSearch}
                             className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/10 max-md:gap-4 max-md:rounded-2xl max-md:p-2.5 active:bg-white/10"
                           >
@@ -296,7 +296,8 @@ export const HeaderNav: React.FC = () => {
                       ))}
                     </ul>
                     <Link
-                      href={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                      to="/search"
+                      search={{ q: searchQuery.trim() }}
                       onClick={closeSearch}
                       className="block border-t border-white/10 px-4 py-2.5 text-center text-sm font-semibold text-gray-200 transition-colors hover:bg-white/10 hover:text-white"
                     >

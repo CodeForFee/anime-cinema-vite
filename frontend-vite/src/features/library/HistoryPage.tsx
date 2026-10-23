@@ -5,7 +5,7 @@ import { EmptyShelf } from "@/features/library/components/EmptyShelf";
 import { AmbientBackdrop } from "@/shared/ui/AmbientBackdrop";
 import { InfoModal } from "@/features/title/components/InfoModal";
 import { progressKey, useProgressStore } from "@/core/player/progress";
-import { Link } from "@/app/router";
+import { Link } from "@tanstack/react-router";
 import { formatTimeAgo } from "@/core/format";
 import { useHistoryStore } from "@/core/stores/history";
 import type { HistoryItem } from "@/core/types/history";
@@ -79,10 +79,10 @@ export default function HistoryPage() {
             <ul className="space-y-3">
               {items.map((item) => {
                 const progressInfo = watched(item);
-                const href = `/watch?slug=${item.slug}&ep=${encodeURIComponent(item.episodeSlug)}`;
+                const watch = { slug: item.slug, ep: item.episodeSlug };
                 return (
                   <li key={item.slug} className="glass-card group relative flex items-center gap-4 rounded-3xl p-3 pr-4">
-                    <Link href={href} className="relative block h-[92px] w-16 shrink-0 overflow-hidden rounded-2xl bg-white/5">
+                    <Link to="/watch" search={watch} className="relative block h-[92px] w-16 shrink-0 overflow-hidden rounded-2xl bg-white/5">
                       {item.poster && (
                         <PosterImg art={item} src={item.poster} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                       )}
@@ -94,7 +94,7 @@ export default function HistoryPage() {
                       )}
                     </Link>
 
-                    <Link href={href} className="min-w-0 flex-1">
+                    <Link to="/watch" search={watch} className="min-w-0 flex-1">
                       <p className="line-clamp-2 font-semibold leading-snug text-white">{item.title}</p>
                       <p className="mt-1 text-sm text-gray-400">
                         {item.episodeName || item.episodeSlug}
@@ -104,7 +104,8 @@ export default function HistoryPage() {
                     </Link>
 
                     <Link
-                      href={href}
+                      to="/watch"
+                      search={watch}
                       aria-label={`Xem tiếp ${item.title}`}
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-black transition active:scale-90"
                     >

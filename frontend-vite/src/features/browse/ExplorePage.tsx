@@ -1,7 +1,6 @@
 
 import React, { Suspense, useEffect, useMemo, useRef } from "react";
-import { Link } from "@/app/router";
-import { useSearchParams } from "@/app/router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { PosterTile } from "@/features/browse/components/PosterTile";
 import { AmbientBackdrop } from "@/shared/ui/AmbientBackdrop";
 import { InfoModal } from "@/features/title/components/InfoModal";
@@ -24,7 +23,6 @@ const TYPE_PATHS: Record<string, { path: string; label: string }> = {
   "top-year": { path: "/bang-xep-hang/year.html", label: "Top Anime Theo Năm" },
 };
 
-const exploreLink = (path: string) => `/explore?path=${encodeURIComponent(path)}`;
 
 const PILL = "h-9 flex-shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors";
 const PILL_IDLE = "glass-pill text-gray-200 hover:text-white";
@@ -32,9 +30,9 @@ const PILL_ACTIVE = "border-white bg-white text-black";
 const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-5 xl:grid-cols-6";
 
 function ExploreContent() {
-  const searchParams = useSearchParams();
-  const type = searchParams.get("type") || "";
-  const path = searchParams.get("path") || TYPE_PATHS[type]?.path || "";
+  const search = useSearch({ from: "/explore" });
+  const type = search.type || "";
+  const path = search.path || TYPE_PATHS[type]?.path || "";
 
   const { data: menus = [] } = useMenuQuery();
   // No list picked -> the home page's featured titles
@@ -90,7 +88,7 @@ function ExploreContent() {
       {/* Quick filter: the main anime types */}
       <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-2 pt-1">
         <Link
-          href="/explore"
+          to="/explore"
           className={buttonVariants({ variant: "unstyled", size: "unstyled", className: cn(PILL, !path ? PILL_ACTIVE : PILL_IDLE) })}
         >
           Thịnh Hành
@@ -98,7 +96,8 @@ function ExploreContent() {
         {quickLinks.map((item) => (
           <Link
             key={item.path}
-            href={exploreLink(item.path)}
+            to="/explore"
+            search={{ path: item.path }}
             className={buttonVariants({
               variant: "unstyled",
               size: "unstyled",

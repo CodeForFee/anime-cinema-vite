@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useEnrichedItem } from "@/core/queries";
 import { useHdArt } from "@/features/title/hooks/useHdArt";
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "@/app/router";
+import { Link } from "@tanstack/react-router";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { AnimeItem } from "@/core/types/anime";
@@ -184,7 +184,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ items }) => {
             {/* Actions: play + favorite / info pill */}
             <div className="flex items-center gap-6 pt-3">
               <Link
-                href={`/watch?slug=${current.slug}`}
+                to="/watch"
+                search={{ slug: current.slug }}
                 aria-label={`Xem ${current.title}`}
                 className={buttonVariants({
                   variant: "unstyled",

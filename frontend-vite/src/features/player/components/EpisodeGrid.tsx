@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from "react";
-import { useRouter } from "@/app/router";
+import { useNavigate } from "@tanstack/react-router";
 import { Card } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
@@ -28,7 +28,7 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
   seasons = [],
   currentSlug = "",
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [filterText, setFilterText] = useState("");
   // null = follow the group that contains the episode being watched
   const [pickedGroup, setPickedGroup] = useState<string | null>(null);
@@ -121,7 +121,7 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
               label={activeSeason?.partLabel || "Chọn phần"}
               selectedKey={currentSlug}
               onSelect={(slug) => {
-                if (slug !== currentSlug) router.push(`/watch?slug=${encodeURIComponent(slug)}`);
+                if (slug !== currentSlug) void navigate({ to: "/watch", search: { slug }, resetScroll: false });
               }}
               options={seasons.map((s) => ({ key: s.slug, label: s.partLabel || s.title, hint: s.title }))}
             />

@@ -1,134 +1,170 @@
-// The UI was written against next/link and next/navigation; these keep its call sites unchanged on react-router.
-import { forwardRef, useMemo } from "react"
-import { flushSync } from "react-dom"
+import type { QueryClient } from "@tanstack/react-query"
 import {
-  Link as RouterLink,
-  type NavigateFunction,
-  useLocation,
-  useNavigate,
-  useSearchParams as useRouterSearchParams
-} from "react-router-dom"
+  createRootRouteWithContext,
+  createRoute,
+  createRouter,
+  type ErrorComponentProps,
+  lazyRouteComponent,
+  useRouter
+} from "@tanstack/react-router"
+import { CircleAlert, RotateCw } from "lucide-react"
 
-import { navKind, preloadRoute } from "@/app/routes"
+import { AppShell } from "@/app/AppShell"
+import { NotFoundPage } from "@/app/NotFoundPage"
+import { queryClient } from "@/app/query-client"
+import { navKind } from "@/app/routes"
+import { pickEpisode } from "@/core/player/pick-episode"
+import { detailQuery, searchQuery, streamQuery } from "@/core/queries"
+import { useHistoryStore } from "@/core/stores/history"
+import { preconnectPlayer } from "@/platform/preconnect"
+import { isMobile } from "@/shared/lib/form-factor"
+import { HomeSkeleton, PosterGridSkeleton } from "@/shared/ui/skeletons"
 
-type ViewTransition = { finished: Promise<void>; skipTransition: () => void }
-type ViewTransitionDocument = Document & { startViewTransition?: (update: () => void | Promise<void>) => ViewTransition }
+// ---- search params: plain ?key=value, so old links and history entries keep working ------------------------
 
-const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+const text = (value: unknown) =>
+  typeof value === "string" && value !== "" ? value : typeof value === "number" ? String(value) : undefined
+
+const parseSearch = (search: string) => Object.fromEntries(new URLSearchParams(search))
+const stringifySearch = (search: Record<string, unknown>) => {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(search)) if (value !== undefined && value !== "") params.set(key, String(value))
+  const query = params.toString()
+  return query ? `?${query}` : ""
+}
+
+// ---- data first: a page's data starts loading on the tap, alongside its chunk --------------------------------
 
 /**
- * Resolves once the route left its Suspense fallback (App.tsx), so the new snapshot is the page, not a blank
- * frame. Polls with timers: animation frames are paused while a view transition waits for its update.
+ * The title, then the stream of the episode that will play. Not awaited: the page slides in at once with its
+ * skeleton. Never on a preload: touching a card while scrolling a list must not start requests to the source.
  */
-async function settled(limit = 600) {
-  for (let t = 0; t < limit && document.querySelector("[data-route-fallback]"); t += 16) await wait(16)
-  await wait(16)
+async function prefetchWatch(client: QueryClient, slug: string, ep?: string) {
+  preconnectPlayer()
+  const detail = await client.fetchQuery(detailQuery(slug)).catch(() => undefined)
+  const episode = pickEpisode(detail?.data.episodes ?? [], ep, useHistoryStore.getState().getAnimeHistory(slug)?.episodeSlug)
+  if (episode?.hash && episode.id) void client.prefetchQuery(streamQuery(episode.hash, episode.id, episode.play || "api"))
 }
 
-let running: ViewTransition | undefined
-
-/** Runs a page change as a view transition styled by html[data-nav] (globals.css); touch devices only */
-function transition(kind: "push" | "pop" | "tab" | "up" | "down", update: () => void | Promise<void>) {
-  const doc = document as ViewTransitionDocument
-  if (!doc.startViewTransition || !matchMedia("(pointer: coarse)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches)
-    return void update()
-
-  // a second tap mid-slide jumps the first one to its end instead of stacking two animations
-  running?.skipTransition()
-  const root = document.documentElement
-  root.dataset.nav = kind
-  const current = doc.startViewTransition(update)
-  running = current
-  current.finished.finally(() => {
-    if (running !== current) return
-    running = undefined
-    delete root.dataset.nav
-  })
-}
-
-/**
- * Navigates, and on touch devices animates the page change like iOS.
- * Only when the path itself changes: switching episode or filter on the same page should not slide.
- */
-async function go(navigate: NavigateFunction, url: string, replace = false) {
-  const from = location.pathname
-  const to = new URL(url, location.href).pathname
-  if (to === from) return navigate(url, { replace })
-
-  // the page chunk is in before the old page is captured (capped: a slow network still navigates)
-  await Promise.race([preloadRoute(url), wait(300)])
-  transition(navKind(from, to), async () => {
-    flushSync(() => navigate(url, { replace }))
-    await settled()
-  })
-}
-
-/**
- * history.back() with the iOS pop slide (the player, which came up from the bottom, goes back down);
- * the Android back button and gesture come through here too (logic/back.ts)
- */
-export function goBack() {
-  transition(
-    location.pathname === "/watch" ? "down" : "pop",
-    () =>
-      new Promise<void>((resolve) => {
-        addEventListener("popstate", () => void settled().then(resolve), { once: true })
-        // nothing to go back to: no popstate ever comes
-        setTimeout(resolve, 1000)
-        history.back()
-      })
-  )
-}
-
-type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
-  href: string
-  prefetch?: boolean
-  scroll?: boolean
-}
-
-export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
-  { href, prefetch: _prefetch, scroll: _scroll, onClick, onPointerEnter, onTouchStart, ...props },
-  ref
-) {
-  const navigate = useNavigate()
-  if (/^[a-z][a-z\d+.-]*:/i.test(href)) return <a ref={ref} href={href} onClick={onClick} {...props} />
-
+function RouteError({ error, reset }: ErrorComponentProps) {
+  const router = useRouter()
   return (
-    <RouterLink
-      ref={ref}
-      to={href}
-      {...props}
-      onPointerEnter={(event) => {
-        onPointerEnter?.(event)
-        preloadRoute(href)
-      }}
-      onTouchStart={(event) => {
-        onTouchStart?.(event)
-        preloadRoute(href)
-      }}
-      onClick={(event) => {
-        onClick?.(event)
-        // leave new-tab clicks and handled events to the browser / the caller
-        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || props.target)
-          return
-        event.preventDefault()
-        void go(navigate, href)
-      }}
-    />
+    <div className="mx-auto my-20 max-w-xl space-y-4 rounded-3xl border border-white/10 bg-[#10121A] p-8 text-center">
+      <CircleAlert className="mx-auto h-14 w-14 text-primaryRed" aria-hidden />
+      <h2 className="text-xl font-bold text-white">Trang này chưa tải được</h2>
+      <p className="text-sm text-gray-400">{error instanceof Error ? error.message : "Kiểm tra kết nối rồi thử lại."}</p>
+      <button
+        type="button"
+        onClick={() => {
+          reset()
+          void router.invalidate()
+        }}
+        className="inline-flex h-10 items-center gap-2 rounded-full bg-white px-6 font-semibold text-black"
+      >
+        <RotateCw className="h-4 w-4" aria-hidden />
+        Thử lại
+      </button>
+    </div>
   )
+}
+
+// ---- routes ----------------------------------------------------------------------------------------------------
+
+const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  component: AppShell,
+  notFoundComponent: NotFoundPage
 })
 
-export function useRouter() {
-  const navigate = useNavigate()
-  return useMemo(
-    () => ({
-      push: (url: string, _options?: { scroll?: boolean }) => void go(navigate, url),
-      replace: (url: string, _options?: { scroll?: boolean }) => void go(navigate, url, true),
-      back: goBack
-    }),
-    [navigate]
-  )
+const homeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: lazyRouteComponent(() => import("@/features/home/HomePage")),
+  pendingComponent: HomeSkeleton
+})
+
+const exploreRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/explore",
+  validateSearch: (search: Record<string, unknown>): { path?: string; type?: string } => ({
+    path: text(search.path),
+    type: text(search.type)
+  }),
+  component: lazyRouteComponent(() => import("@/features/browse/ExplorePage")),
+  pendingComponent: () => <PosterGridSkeleton />
+})
+
+const searchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/search",
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: text(search.q) }),
+  loaderDeps: ({ search }) => ({ q: search.q }),
+  loader: ({ context, deps, preload }) => {
+    if (!preload && deps.q) void context.queryClient.prefetchQuery(searchQuery(deps.q))
+  },
+  component: lazyRouteComponent(() => import("@/features/browse/SearchPage")),
+  pendingComponent: () => <PosterGridSkeleton />
+})
+
+const watchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/watch",
+  validateSearch: (search: Record<string, unknown>): { slug: string; ep?: string } => ({
+    slug: text(search.slug) ?? "",
+    ep: text(search.ep)
+  }),
+  loaderDeps: ({ search }) => ({ slug: search.slug, ep: search.ep }),
+  loader: ({ context, deps, preload }) => {
+    if (!preload && deps.slug) void prefetchWatch(context.queryClient, deps.slug, deps.ep)
+  },
+  component: lazyRouteComponent(() => import("@/features/player/WatchPage"))
+})
+
+const historyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/history",
+  component: lazyRouteComponent(() => import("@/features/library/HistoryPage"))
+})
+
+const favoritesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/favorites",
+  component: lazyRouteComponent(() => import("@/features/library/FavoritesPage"))
+})
+
+const routeTree = rootRoute.addChildren([homeRoute, exploreRoute, searchRoute, watchRoute, historyRoute, favoritesRoute])
+
+export const router = createRouter({
+  routeTree,
+  context: { queryClient },
+  parseSearch,
+  stringifySearch,
+  // a hovered or touched link loads its page chunk ahead of the tap (data waits for the tap, see the loaders)
+  defaultPreload: "intent",
+  // TanStack Query keeps the data; the router must not cache loader results on top of it
+  defaultPreloadStaleTime: 0,
+  // a page reached by back is where it was left; a new page starts at the top
+  scrollRestoration: true,
+  // a skeleton only when the chunk is slow, and then long enough not to flash
+  defaultPendingMs: 150,
+  defaultPendingMinMs: 250,
+  defaultErrorComponent: RouteError,
+  defaultViewTransition: {
+    // mobile: iOS-like slides by direction (app/routes.ts); desktop: a short cross-fade. Same page (another
+    // episode, another filter): none
+    types: ({ fromLocation, toLocation, pathChanged }) => {
+      if (!fromLocation || !pathChanged || matchMedia("(prefers-reduced-motion: reduce)").matches) return false
+      if (!isMobile()) return ["fade"]
+      const back = (toLocation.state.__TSR_index ?? 0) < (fromLocation.state.__TSR_index ?? 0)
+      return [navKind(fromLocation.pathname, toLocation.pathname, back)]
+    }
+  }
+})
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router
+  }
 }
 
-export const usePathname = () => useLocation().pathname
-export const useSearchParams = () => useRouterSearchParams()[0]
+/** history.back() with the slide back; the Android back button comes through here too (platform/back.ts) */
+export const goBack = () => router.history.back()

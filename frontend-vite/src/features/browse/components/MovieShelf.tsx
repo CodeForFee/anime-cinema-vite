@@ -1,24 +1,28 @@
 
 import React, { useRef } from "react";
-import { Link } from "@/app/router";
+import { Link } from "@tanstack/react-router";
 import { Button, Tooltip } from "@heroui/react";
 import type { LucideIcon } from "lucide-react";
 import { PosterTile } from "@/features/browse/components/PosterTile";
 import { AnimeItem } from "@/core/types/anime";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+/** Search of the explore page a "see all" link opens (app/router.tsx) */
+export type ExploreSearch = { path?: string; type?: string };
+
 interface MovieShelfProps {
   title: string;
   /** Kept for callers; the glass shelves show the title alone */
   icon?: LucideIcon;
   items: AnimeItem[];
-  seeMoreHref?: string;
+  /** The explore page this shelf continues on */
+  seeMore?: ExploreSearch;
 }
 
 export const MovieShelf: React.FC<MovieShelfProps> = ({
   title,
   items,
-  seeMoreHref,
+  seeMore,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -36,9 +40,10 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
       <div className="flex items-center justify-between mb-3 px-4 md:px-12">
         <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">{title}</h3>
 
-        {seeMoreHref && (
+        {seeMore && (
           <Link
-            href={seeMoreHref}
+            to="/explore"
+            search={seeMore}
             className="glass-pill flex h-8 items-center gap-1 rounded-full pl-3.5 pr-2.5 text-xs font-semibold text-gray-200 transition hover:text-white"
           >
             Xem tất cả

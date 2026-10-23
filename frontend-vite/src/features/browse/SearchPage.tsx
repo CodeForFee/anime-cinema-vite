@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "@/app/router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Input, Chip } from "@heroui/react";
 import { PosterGridSkeleton } from "@/shared/ui/skeletons";
 import { MovieCard } from "@/features/browse/components/MovieCard";
@@ -10,10 +10,8 @@ import { useDebounce } from "@/shared/lib/useDebounce";
 import { CircleAlert, Search } from "lucide-react";
 
 function SearchContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const queryParam = searchParams.get("q") || "";
+  const navigate = useNavigate();
+  const queryParam = useSearch({ from: "/search", select: (search) => search.q ?? "" });
   const [searchTerm, setSearchTerm] = useState(queryParam);
   const debouncedSearch = useDebounce(searchTerm, 350);
 
@@ -29,7 +27,7 @@ function SearchContent() {
 
   const handleClear = () => {
     setSearchTerm("");
-    router.push("/search");
+    void navigate({ to: "/search", search: {}, resetScroll: false });
   };
 
   return (

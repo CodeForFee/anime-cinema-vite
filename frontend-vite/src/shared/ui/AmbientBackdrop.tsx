@@ -1,5 +1,4 @@
 import { createPortal } from "react-dom";
-import { Link } from "@/app/router";
 
 /**
  * A title's art, blurred once and fixed behind the page: what the glass cards over it tint.
