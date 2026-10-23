@@ -133,20 +133,38 @@
       });
     } catch (e) { /* the page is still loading */ }
   }
-  var added = [];
+  // what was added (checked with its subtree), and what changed after it was added (checked alone): an ad
+  // inserted empty and filled, or given its link, later
+  var added = new Set();
+  var changed = new Set();
   var flushing = false;
   new MutationObserver(function (records) {
-    records.forEach(function (record) { record.addedNodes.forEach(function (node) { added.push(node); }); });
+    records.forEach(function (record) {
+      if (record.type === "childList") {
+        record.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) added.add(node);
+          else if (node.parentElement) changed.add(node.parentElement);
+        });
+      } else {
+        var target = record.type === "characterData" ? record.target.parentElement : record.target;
+        if (target) changed.add(target);
+      }
+    });
     if (flushing) return;
     flushing = true;
     setTimeout(function () {
       flushing = false;
       addStyle("avs-adshield-css", AD_CSS); // the page may replace <head>
-      var nodes = added;
-      added = [];
-      nodes.forEach(purge);
+      added.forEach(purge);
+      changed.forEach(function (el) {
+        try { if (el.isConnected && el.matches(AD_TAGS) && isAd(el)) el.remove(); } catch (e) { /* detached */ }
+      });
+      added.clear();
+      changed.clear();
     }, 50);
-  }).observe(document.documentElement, { childList: true, subtree: true });
+  }).observe(document.documentElement, {
+    childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["href", "src", "class", "id"]
+  });
   document.addEventListener("DOMContentLoaded", function () { purge(document.body); });
 
   /* ---------- 2. Remote control ---------- */

@@ -18,7 +18,7 @@ cd ../frontend-vite && pnpm i && pnpm dev      # http://localhost:4100
 
 Stack: Vite 8 (Rolldown) + React 19 with React Compiler (UI only: `src/apis` and `src/logic` are excluded in
 `vite.config.ts`, their `use*` helpers are not hooks), TanStack Query persisted to IndexedDB, Zustand,
-react-router with one lazy chunk per page (`src/lib/routes.ts`, preloaded on hover/touch), PWA shell via
+TanStack Router with one lazy chunk per page and per form factor (`src/app/routes.tsx`), PWA shell via
 vite-plugin-pwa (web only; the Android app unregisters it).
 
 ## Deploy (Vercel)
@@ -50,46 +50,41 @@ without them installed apps can no longer be updated). The script refuses to bui
 fault of the build. An install that fails is almost always a different signing key on the copy already installed.
 
 
-Inside the app `src/logic/bridge.ts` sends requests through the native HTTP stack instead of the extension, and
+Inside the app `src/platform/transport.ts` sends requests through the native HTTP stack instead of the extension, and
 `capacitor.config.ts` serves the bundled web under the source host so the embedded player gets the Referer it
 expects. Checked on a Xiaomi (Android 16): home, header under the status bar, landscape full screen, sheets.
 
 ## How it is wired
 
-| Layer | Where | Origin |
-|---|---|---|
-| UI (pages, components, stores) | `src/pages`, `src/components`, `src/stores` | copied from `frontend-nextjs` in the anime-cinema repo |
-| `animeApi` adapter the UI calls | `src/lib/api.ts` | new |
-| Requests + HTML parsers (in Web Workers) | `src/apis`, `src/logic/http.ts` | ported from desktop-web |
-| Player: link decrypt + patched hls.js loader | `src/apis/runs/ajax/player-link.ts`, `src/logic/hls-patched.ts`, `src/components/player/HlsPlayer.ts` | ported from desktop-web |
+The layers, routing, domain failover and player pipeline are described in the [root README](../README.md#architecture).
+In short:
+
+| Layer | Where |
+|---|---|
+| Platform-free logic: source requests and parsers, queries, stores, player policy | `src/core` |
+| Browser / Capacitor adapters: transport, parser worker, art cache, back button | `src/platform` |
+| UI primitives and helpers | `src/shared` |
+| One folder per feature, `mobile/` and `desktop/` apart | `src/features` |
+| Shell, layout, router | `src/app` |
+
+`pnpm test` includes `src/architecture.spec.ts`, which fails when a layer imports one it must not.
 
 Two channels to the extension:
 
-- `Http.get/post` (`src/logic/http.ts`): the extension's background worker does the fetch, so there is no CORS
-  and the viewer's own cookies/IP are used.
+- The transport (`src/platform/transport.ts`): the extension's background worker does the fetch, so there is no
+  CORS and the viewer's own cookies/IP are used.
 - A `#animevsub-vsub_extra` tag on a URL the page fetches itself (images, HLS segments): the extension sets the
   source `Referer` and adds CORS headers to the response.
 
-The source host is `src/constants.ts`; keep it equal to the Referer in `../avs-helper-extension/map-referer.json`.
+## Known state (2026-10-23)
 
-## Known state (2026-10-11)
+Playback embeds the CDN player page in an iframe; `public/player-bridge.js` is injected into it (by the extension
+as a content script, by the Android app from `MainActivity.java`). The app draws its own controls over it on
+every device. The quality menu appears once the bridge reports JW Player's levels, so an extension built before
+2026-10-23 shows no quality button until it is rebuilt.
 
-Home, detail, episode lists and playback work on localhost with the extension loaded, and in the Android app.
-
-Playback embeds the CDN player page in an iframe (`embedUrl` in `src/lib/api.ts`); the URL tag makes the
-extension send the source Referer with the frame request. The player then runs on the CDN origin and talks to
-it from the viewer IP.
-
-`public/player-bridge.js` is injected into that frame (by the extension as a content script, by the Android app
-from `MainActivity.java`). It carries the ad shield and a postMessage remote control. On every device the app
-draws its own controls over the player (`src/components/player/TouchControls.tsx`: double tap 10 s, swipe to
-seek, in full screen swipe right = volume / left = brightness; on desktop also keyboard shortcuts, drop-up
-speed / episode menus anchored to their button, and a cinema mode). Positions are kept per episode
-(`useProgressStore` in `src/components/player/player-logic.ts`) for "Xem tiếp". The CDN player's own resume box
-(`#avs-resume-overlay`) is hidden by the bridge and answered through the app's prompt.
-
-The upstream decryptor path (`src/logic/new-dha/pkg`, release build of 2026-06-14) is only used when the source
-answers with something other than its iframe player. For the iframe player it is rejected by the CDN
+The upstream decryptor path (`src/features/player/engines/hls/new-dha`) is only used when the source answers with
+something other than its iframe player. For the iframe player it is rejected by the CDN
 (`403 {"status":"fail","message":"Invalid session"}`), which is why the embed is used instead.
 
 ## License

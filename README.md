@@ -87,19 +87,19 @@ It ships in two forms that share one code base:
 ## Architecture
 
 The app only ever talks to the source site, and only from the viewer's device, through one of two transports that
-expose the same `Http.get` / `Http.post` API (`src/logic/bridge.ts`).
+expose the same request API (`src/platform/transport.ts`, handed to the core by `configureCore` at start-up).
 
 ```mermaid
 flowchart LR
   subgraph Viewer["Viewer's device"]
-    UI["React UI<br/>pages · components · stores"]
-    API["lib/api.ts<br/>animeApi adapter"]
-    W["Web Workers<br/>HTML parsers"]
-    BR["logic/bridge.ts<br/>one Http API"]
-    UI --> API --> BR
-    API --> W
-    BR -- "browser" --> EXT["AVS Helper extension<br/>background worker"]
-    BR -- "Android app" --> NAT["Capacitor native HTTP"]
+    UI["features/ + app/<br/>mobile and desktop UI"]
+    CORE["core/<br/>source, queries, stores, player logic"]
+    W["platform/parse.worker<br/>HTML parsers"]
+    TR["platform/transport<br/>one request API"]
+    UI --> CORE --> TR
+    CORE --> W
+    TR -- "browser" --> EXT["AVS Helper extension<br/>background worker"]
+    TR -- "Android app" --> NAT["Capacitor native HTTP"]
     UI -- "iframe + postMessage" --> PL["Source player page<br/>+ player-bridge.js"]
   end
   EXT --> SRC[("Source site")]
@@ -109,27 +109,43 @@ flowchart LR
 
 ### Web app (`frontend-vite/src`)
 
-| Path | Responsibility |
-|---|---|
-| `pages/` | One lazy route per page: `home`, `explore`, `search`, `watch`, `history`, `favorites`. Routes live in `lib/routes.ts` and are preloaded on hover or touch. |
-| `components/` | `home/` slider and shelves, `layout/` header, dock and extension gate, `movie/` cards and detail views, `player/` the player UI, `lightswind/` UI primitives. |
-| `lib/api.ts` | The `animeApi` adapter the UI calls: turns source pages into typed data and builds the player `embedUrl`. |
-| `apis/` | One module per source endpoint. `runs/` performs the request, `parser/` turns HTML into data, `workers/` runs the parsing in a Web Worker. |
-| `logic/` | Transport (`bridge.ts`, `http.ts`), HLS loading and decryption, native volume and brightness, Android back button, skip-intro lookup. |
-| `stores/`, `contexts/` | Zustand stores (UI, player, history) and React contexts. |
-| `hooks/` | `usePlayerBridge` (remote control of the player frame), data hooks, debounce, local storage. |
-| `constants.ts` | `HOST_CURL`, the single source host everything derives from. |
+Five layers; each imports only the ones above it in this table, and `src/architecture.spec.ts` fails the tests
+when one does not (it also keeps `mobile/` and `desktop/` apart and component files under 250 lines).
 
-State: TanStack Query caches catalog answers and persists them to IndexedDB (`idb-keyval`); Zustand holds UI and
-player state; history, favorites and episode positions live in local storage.
+| Layer | Responsibility |
+|---|---|
+| `core/` | Platform-free logic, ready to share with a native app: `source/` (hosts, domain failover, one folder per source page with `fetch.ts` + `parse.ts`), `anime-api.ts`, `queries.ts` (TanStack Query options), `stores/`, `player/` (resume, episode pick, skip times, quality policy), `hd-art.ts`. No DOM, no Capacitor. |
+| `platform/` | Adapters: transport (extension or native HTTP), the long-lived parser worker, IndexedDB art cache, Android back button, network, haptics. `install.ts` wires them into the core before anything else runs. |
+| `shared/` | UI primitives (`ui/`: button, badge, `dialog` for desktop, `sheet` for mobile, …) and helpers (`lib/`: `cn`, `useFormFactor`). |
+| `features/` | `home`, `browse`, `title`, `player`, `library`. Each has `mobile/` and `desktop/` (the UI of one form only), `components/` (shared JSX), `hooks/`, `model/` (pure functions with specs) and an `index.ts` other features import from. |
+| `app/` | Shell, layout (`layout/mobile`, `layout/desktop`), TanStack Router routes, query client. |
+
+**Mobile and desktop are separate.** `useFormFactor()` is the one place that decides (`pointer: coarse` or under
+1024 px is mobile). Each form lazy-loads only its own chunks: a phone never downloads the desktop header, hero,
+title modal or player controls, and the other way round.
+
+**Routing.** TanStack Router with typed search params (`/watch?slug&ep`, `/explore?path`, `/search?q`). A tap
+starts the page's data (detail, then the episode's stream) before the page mounts; hovering only fetches the code.
+Every history move animates with a View Transition whose type (`push`, `pop`, `tab`, `up`, `down`) comes from
+`navKind` and the history index, so the browser's Back button and Android's back gesture slide the right way.
+
+**Source domains.** The source moves domains often. `core/source/hosts.json` lists the current host, the hosts that
+redirect to it and the look-alike sites to refuse. Every request has a timeout. When the host dies, one parallel
+probe of the official link and every known host picks a new one, but only through trusted redirects to a page with
+the source's own markup. The failed requests are then retried there, with no reload and no error shown. See
+[`docs/SOURCE-DOMAINS.md`](docs/SOURCE-DOMAINS.md).
+
+State: TanStack Query caches catalog answers and persists them to IndexedDB; Zustand holds UI and player state
+(the quality choice is kept on the device); history, favorites and episode positions live in local storage.
 
 ### Player pipeline
 
-1. `watch.tsx` asks `lib/api.ts` for an episode; the source answers with a link to its player page.
-2. `CinemaPlayer.tsx` embeds that page in an `<iframe>` whose URL carries the `#animevsub-vsub_extra` tag, which makes the extension add the source Referer.
-3. `public/player-bridge.js` runs inside the frame. It neutralizes the player's ads, hides the player's own controls and exposes a `postMessage` remote control (play, pause, seek, rate, volume, resume) with a state feed.
-4. `usePlayerBridge` talks to the bridge. `TouchControls.tsx` draws the app's controls and sends commands through it.
-5. If the source ever answers with a plain stream instead of its iframe player, `HlsPlayer.ts` plays it with a patched hls.js.
+1. `/watch` asks the core for the episode; the source answers with a link to its player page.
+2. `CinemaPlayer.tsx` embeds that page in an `<iframe>` whose URL carries the `#animevsub-vsub` tag, which makes the extension add the source Referer.
+3. `public/player-bridge.js` runs inside the frame. It removes the player's ads (a MutationObserver over added nodes), hides the player's own controls and exposes a `postMessage` remote control: play, pause, seek, rate, volume, resume and quality. It reports the position, the seconds buffered ahead and JW Player's quality levels.
+4. `engines/iframe-bridge.ts` talks to the bridge; `mobile/TouchControls` or `desktop/DesktopControls` draw the controls.
+5. Quality follows "Tự động + gợi ý" (`core/player/pick-quality.ts`). The player's automatic choice is the default, and Data Saver caps it at 480p. Two stalls over a second within a minute bring up a one-tap "Mạng yếu · Chuyển 480p". The viewer's choice is applied to every episode. Cover lookups wait while the video is short of buffer.
+6. If the source ever answers with a plain stream instead of its iframe player, `engines/hls/HlsPlayer.ts` plays it with a patched hls.js. That path starts from the browser's bandwidth estimate, buffers a minute ahead, retries with backoff and resumes when the connection returns.
 
 The bridge script is injected by the extension (content script) on the web and by `MainActivity.java` in the Android app.
 
@@ -148,10 +164,10 @@ adds CORS headers so the page can fetch images and HLS segments itself.
 
 ### Android shell (`frontend-vite/android`)
 
-Capacitor wraps the same built web app. `bridge.ts` swaps the extension for Capacitor's native HTTP, and
+Capacitor wraps the same built web app. `src/platform/transport.ts` swaps the extension for Capacitor's native HTTP, and
 `capacitor.config.ts` serves the bundle under the source host so the embedded player receives the right Referer.
-`MainActivity.java` injects `player-bridge.js`, blocks ad URLs in the WebView and implements native full screen,
-volume and brightness.
+`MainActivity.java` injects `player-bridge.js`, blocks ad URLs in the WebView, asks for the screen's fastest refresh
+rate (90/120 Hz, handed back to the system in full-screen video) and implements native full screen, volume and brightness.
 
 ## Getting started
 
@@ -209,9 +225,9 @@ Viewers need the extension build that lists your production host in `allowlist.y
 
 | Setting | File | Purpose |
 |---|---|---|
-| Source host | `frontend-vite/src/constants.ts` (`HOST_CURL`) | The site all requests go to |
-| Source host (Android) | `frontend-vite/capacitor.config.ts` (`server.hostname`) | Must equal `HOST_CURL` |
-| Referer map | `avs-helper-extension/map-referer.json` | Must use the same host as `HOST_CURL` |
+| Source hosts | `frontend-vite/src/core/source/hosts.json` | Current host, hosts that redirect to it, look-alikes to refuse; the app switches on its own at runtime |
+| Source host (Android) | `frontend-vite/capacitor.config.ts` (`server.hostname`) | The origin the app is served under; changing it loses local storage |
+| Referer map | `avs-helper-extension/map-referer.json` | The Referer the extension sends with source requests |
 | Allowed web hosts | `avs-helper-extension/allowlist.yaml` | Hosts that may use the extension bridge |
 | Player host | `avs-helper-extension/manifest-v3/src/manifest.ts`, `lib/background/logic/ad-rules.ts`, `MainActivity.java` | The player CDN (`*.googleapiscdn.com`) the bridge and ad rules apply to |
 
