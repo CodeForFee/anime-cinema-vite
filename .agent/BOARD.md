@@ -37,7 +37,7 @@ One owner per file. If your scope overlaps an open row, do not edit â€” see
 | id | title | owner | phase | file |
 |---|---|---|---|---|
 | T-001 | fix Android debug/release build | gpt-6 | done | tasks/T-001-android-build.md |
-| T-002 | source account authentication on web/Android | gpt-6 | blocked (external-wait: source Google/native handoff) | tasks/T-002-source-account.md |
+| T-002 | source account authentication on web/Android | gpt-6 | partial (web Google prompt, native handoff pending) | tasks/T-002-source-account.md |
 | T-003 | connect existing Chrome with MCP | gpt-6 | done | tasks/T-003-chrome-mcp.md |
 
 ## Bugs
@@ -56,6 +56,7 @@ One owner per file. If your scope overlaps an open row, do not edit â€” see
 ## Last 3 handoffs
 
 <!-- newest first, trimmed to three -->
+- 2026-10-24 gpt-6: Added source-origin Google One Tap popup handoff; source GIS prompt should appear on open and app closes popup only after verified source session. Typecheck/lint pass; current Chrome MCP reconnect could not find `DevToolsActivePort`, so live prompt/return remain unverified. Native Google still unsupported. T-002 log 20261024T1322Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: Added web registration popup + source-session polling; removed the rejected source-login detour for Google. Direct Google needs source origin/callback authorization; native Google/register remain blocked. `pnpm typecheck`, `pnpm lint`, `git diff --check` passed; latest Chrome MCP reconnect could not find `DevToolsActivePort`. T-002 log 20261024T1314Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-003 Chrome DevTools MCP installed globally/tested, current Chrome connected. User Google POST /login/google/ ->302; source signed-in + Capynime received user verified. Registration schema/Turnstile recorded in T-002; app Google/register UI still unimplemented, native handoff unproven. Sessions/hooks cleaned; log/20261024T1253Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-002 follow-up needs-evidence; source login/register HTTP403 and no connected browser. Supplied /gsi/log is a Google event, not source callback; pending source POST URL/method/field names + registration link/form names. No application code changed; log/20261024T1223Z-gpt-6-01a16bc1.md.

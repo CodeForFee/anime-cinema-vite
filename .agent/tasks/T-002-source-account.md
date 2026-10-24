@@ -1,16 +1,18 @@
 ---
 id: T-002
 owner: gpt-6
-phase: blocked
-blocked: external-wait
+phase: execute
+blocked:
 scope: frontend-vite/src/features/account/**, frontend-vite/src/platform/source-account*, frontend-vite/src/core/source/endpoints/comments/fetch*, frontend-vite/android/app/src/main/AndroidManifest.xml, frontend-vite/android/app/src/main/java/app/capynime/{MainActivity,SourceAccountPlugin,SourceAccountActivity}.java, frontend-vite/docs/SOURCE-ACCOUNT.md, .agent/**
 exit: Normal login and official registration available on web and Android; official Google web login rechecks source session; no false native OAuth/session success; tests, typecheck, lint and APK build recorded; real-account verification explicitly distinguished.
 ---
 
 ## Plan
-- Current partial seam: the web login dialog links to AnimeVietsub's official registration page and verifies a resulting session. Direct Google and native signup/login completion wait on a source-supported callback/session flow.
+- Current seam: web Google CTA opens the official source login page, where its existing GIS One Tap can display on page load; after Google posts to the source callback, the app verifies the source session and closes the popup. Registration still uses the official Turnstile form.
 - Keep native Google unavailable with a clear reason until AnimeVietsub supports native OAuth/session handoff. Preserve restored extension transport and existing native player; no Vercel gateway.
 ## Execute
+- 2026-10-24T13:22Z: Re-added a Google CTA that opens `/account/login/` on the source origin (needed for its existing GIS client); the page has `g_id_onload` and no explicit `data-auto_prompt=false`, so GIS One Tap defaults to enabled. The existing app poll calls source `Me()` and closes the window only after a verified signed-in user. This avoids hardcoding the ephemeral chooser URL or changing OAuth origin.
+- Attempted to reconnect Chrome MCP to verify the One Tap popup; Chrome no longer exposes `DevToolsActivePort`, so live UI/One Tap display was not verified. Popup callback+session were verified in the earlier real Chrome observation, not in this code path.
 - 2026-10-24T13:14Z: Added the official AnimeVietsub registration popup entry to the web login dialog; it preserves the source form/Turnstile and checks the source session before dismissing the app dialog. No app-side Google button remains: the user rejected opening AnimeVietsub login just to click Google, and the source's GIS client/callback is tied to its own origin.
 - A follow-up direct Google popup cannot be implemented from Capynime using the observed client: source HTML sets `data-login_uri=https://animevietsub.sale/login/google/`, and the real POST/302 remains on the source. The user has no access to add Capynime origins or a native callback. Do not spoof origin or reuse the per-attempt accountchooser URL.
 - Native Google and native registration/session return remain unsupported/unverified; existing APK email/password login remains available. UI code change is local to the branch; no APK build, deploy or live Chrome UI verification was done.
@@ -26,13 +28,16 @@ exit: Normal login and official registration available on web and Android; offic
 - Retained independent session correctness fixes: fresh robust CSRF extraction, valid user markers, source-confirmed logout, challenge/network preservation, resume/focus recheck, race guard, per-user private query keys and cache disposal.
 - User supplied a Google GIS popup URL bound to source origin; examined parameters only, never opened/replayed or committed its per-attempt state. Official Google docs confirm callback/login-URI contract and unsupported Android WebView sign-in. No source-approved credential/session handoff has been demonstrated.
 ## Test
+- 2026-10-24T13:22Z: `pnpm typecheck` passed; `pnpm lint` passed (239 files); `git diff --check` passed.
 - 2026-10-24T13:14Z: `pnpm typecheck` passed; `pnpm lint` passed (239 files); `git diff --check` passed. No test suite run in this turn.
 - 16 new source/store/resume/cache tests passed; pnpm typecheck and pnpm lint passed (239 files).
 - Full pnpm test: 95 passed, 3 pre-existing failed (home/ranking fixture CRLF, architecture component lengths); no new failures.
 - pnpm build:apk: BUILD SUCCESSFUL in 16s; android/app/build/outputs/apk/debug/Capynime-2.0.20-debug.apk 9227410 bytes, 2026-10-24T12:14:16Z. No version bump or published release.
 - Updated T-003 verification: user manually completed real Google in current Chrome; callback POST302 and fresh source signed-in=true observed; Capynime has remembered user and no login button. Normal credentials login, actual signup and APK Google remain untested. Direct Node source fetch still403; MCP browser source requests now200.
 ## Handoff
+- The login popup implementation is local code that opens the source page first; GIS One Tap is configured by the source and defaults to enabled unless the page suppresses it. It may be suppressed by Google's browser eligibility rules; no live UI verification was possible after Chrome MCP reconnect failed. On successful source session, `syncSourceUser(true)` updates Capynime and closes the popup.
+- This uses the exact source origin and callback and does not need Capynime added to the source's OAuth client. APK Google remains unavailable because the Android app has no source-supported handoff; APK was not rebuilt.
 - Source schema/callback and real browser evidence are recorded above; do not ask the user for Network capture again. Chrome MCP setup is in T-003 and `C:/Users/NEO/.codex/tools/chrome-devtools-mcp/README.md`; the latest reconnect failed because Chrome no longer exposes `DevToolsActivePort`.
-- User explicitly rejected the source-login-page detour for Google. The direct one-click Google chooser requires AnimeVietsub to authorize the Capynime origin and provide a callback/session relay, or to add native OAuth/session handoff. User has no access; wait for that source-side change. Do not spoof origin/UA, replay a one-attempt chooser URL, or silently replace the source account with a Capynime account.
+- User clarified the desired experience is Google prompt first, then popup auto-close after callback. The CTA opens the source login page so its own GIS One Tap can prompt; do not represent this as a standalone Capynime-origin OAuth client. If One Tap is suppressed, the source's own Google button may remain visible behind it.
 - Web registration still opens the source's real form so Turnstile/CSRF/validation stay intact; success auto-returns only if the source establishes a session visible through AVS Helper. Actual registration was not submitted. APK Google and registration are not implemented; APK was not rebuilt after this UI edit.
-- To continue, obtain an AnimeVietsub-supported Capynime Google origin/callback and native session handoff, or explicit approval to use a separate Capynime identity system. Keep the existing browser extension transport and password login.
+- To finish, reconnect the user's Chrome and confirm the source One Tap prompt appears on open, then exercise successful callback/session detection and popup close. For APK Google, obtain source-supported native handoff or explicit approval for a separate Capynime identity system. Keep the browser extension transport and password login.
