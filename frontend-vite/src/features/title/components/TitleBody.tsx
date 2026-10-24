@@ -1,3 +1,4 @@
+import { CommentSection } from "@/features/comments";
 import { TitleAbout } from "@/features/title/components/TitleAbout";
 import { TitleEpisodes } from "@/features/title/components/TitleEpisodes";
 import { TitleFacts } from "@/features/title/components/TitleFacts";
@@ -15,6 +16,8 @@ export function TitleBody({ t }: { t: TitleView }) {
         <TitleEpisodes t={t} />
         <TitleRelated t={t} />
         <TitleAbout t={t} />
+        {/* only while open: the closed preview stays mounted for its animation and must not fetch */}
+        {t.isOpen && t.detailSlug && <CommentSection slug={t.detailSlug} />}
       </div>
     </div>
   );

@@ -14,7 +14,12 @@ import { NotFoundPage } from "@/app/NotFoundPage";
 import { queryClient } from "@/app/query-client";
 import { navKind } from "@/app/routes";
 import { pickEpisode } from "@/core/player/pick-episode";
-import { detailQuery, searchQuery, streamQuery } from "@/core/queries";
+import {
+  detailQuery,
+  scheduleQuery,
+  searchQuery,
+  streamQuery,
+} from "@/core/queries";
 import { useHistoryStore } from "@/core/stores/history";
 import { preconnectPlayer } from "@/platform/preconnect";
 import { isMobile } from "@/shared/lib/form-factor";
@@ -160,9 +165,40 @@ const favoritesRoute = createRoute({
   ),
 });
 
+const scheduleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/schedule",
+  loader: ({ context, preload }) => {
+    if (!preload) void context.queryClient.prefetchQuery(scheduleQuery);
+  },
+  component: lazyRouteComponent(
+    () => import("@/features/schedule/SchedulePage"),
+  ),
+  pendingComponent: () => <PosterGridSkeleton />,
+});
+
+const accountRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/account",
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { tab?: "hoso" | "taikhoan" | "binhluan" | "thongbao" } => {
+    const tab = text(search.tab);
+    return {
+      tab:
+        tab === "taikhoan" || tab === "binhluan" || tab === "thongbao"
+          ? tab
+          : undefined,
+    };
+  },
+  component: lazyRouteComponent(() => import("@/features/account/AccountPage")),
+});
+
 const routeTree = rootRoute.addChildren([
+  accountRoute,
   homeRoute,
   exploreRoute,
+  scheduleRoute,
   searchRoute,
   watchRoute,
   historyRoute,

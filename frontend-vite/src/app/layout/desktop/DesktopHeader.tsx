@@ -11,6 +11,7 @@ import {
 } from "@/app/layout/desktop/NavDropdown";
 import { useSearchBox } from "@/app/layout/hooks/use-search-box";
 import { useMenuQuery } from "@/core/queries";
+import { AccountButton } from "@/features/account";
 import { cn } from "@/shared/lib/utils";
 import { Input } from "@/shared/ui/input";
 import {
@@ -33,7 +34,10 @@ export function DesktopHeader() {
   const { data: menus = [], isLoading: isMenuLoading } = useMenuQuery();
   // which dropdown entry (if any) is the explore page on screen
   const currentPath = pathname === "/explore" ? (explorePath ?? null) : null;
-  const tab = (to: "/" | "/favorites" | "/history", label: string) => (
+  const tab = (
+    to: "/" | "/schedule" | "/favorites" | "/history",
+    label: string,
+  ) => (
     <NavigationMenuItem>
       <Link
         to={to}
@@ -79,6 +83,7 @@ export function DesktopHeader() {
                 <NavDropdown menu={menu} currentPath={currentPath} />
               </NavigationMenuItem>
             ))}
+            {tab("/schedule", "Lịch chiếu")}
             {tab("/favorites", "Danh sách của tôi")}
             {tab("/history", "Lịch sử")}
           </NavigationMenuList>
@@ -104,6 +109,9 @@ export function DesktopHeader() {
             className="h-9 rounded-full border-white/20 bg-black/60 pl-9 text-sm text-white focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <SearchResults box={box} />
+        </div>
+        <div className="ml-3">
+          <AccountButton />
         </div>
       </form>
     </HeaderBar>

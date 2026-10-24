@@ -7,6 +7,7 @@ export type NavKind = "tab" | "push" | "pop" | "up" | "down";
 const TAB_PATHS = new Set([
   "/",
   "/explore",
+  "/schedule",
   "/search",
   "/favorites",
   "/history",

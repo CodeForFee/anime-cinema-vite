@@ -1,0 +1,202 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Capynime",
+    "languages": [
+      "TypeScript",
+      "JavaScript",
+      "Java"
+    ],
+    "frameworks": [
+      "React",
+      "Vite",
+      "Capacitor",
+      "Gradle"
+    ],
+    "description": "godkit: focused map of the inspected Android build seam only; web features and legacy extension are not mapped here. Worktree contains ongoing feature changes; do not overwrite them.",
+    "generatedAt": "2026-10-24T11:45:34.618Z",
+    "sha": "6e7bbb7f96d839738d847b4c6aa70a3330635ec2"
+  },
+  "nodes": [
+    {
+      "id": "file:frontend-vite/package.json",
+      "type": "file",
+      "name": "package.json",
+      "filePath": "frontend-vite/package.json",
+      "lineRange": [
+        1,
+        81
+      ],
+      "summary": "Build scripts for web, enhancement bundle, debug APK and versioned release.",
+      "tags": [
+        "android",
+        "build"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/scripts/release.mjs",
+      "type": "file",
+      "name": "release.mjs",
+      "filePath": "frontend-vite/scripts/release.mjs",
+      "lineRange": [
+        1,
+        60
+      ],
+      "summary": "Selects JDK21+, builds web/sync, signs APK/AAB and rolls back version after failures.",
+      "tags": [
+        "android",
+        "build"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/scripts/build-enhance.mjs",
+      "type": "file",
+      "name": "build-enhance.mjs",
+      "filePath": "frontend-vite/scripts/build-enhance.mjs",
+      "lineRange": [
+        1,
+        48
+      ],
+      "summary": "Builds the standalone in-frame video/audio enhancement script before packaging.",
+      "tags": [
+        "android",
+        "build"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/android/app/build.gradle",
+      "type": "file",
+      "name": "build.gradle",
+      "filePath": "frontend-vite/android/app/build.gradle",
+      "lineRange": [
+        1,
+        85
+      ],
+      "summary": "Reads package version, configures release signing and artifact names.",
+      "tags": [
+        "android",
+        "build"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/android/app/src/main/java/app/capynime/MainActivity.java",
+      "type": "file",
+      "name": "MainActivity.java",
+      "filePath": "frontend-vite/android/app/src/main/java/app/capynime/MainActivity.java",
+      "lineRange": [
+        1,
+        231
+      ],
+      "summary": "Native player bridge/enhancement injection; escaped Java newline fixed and verified by debug/release compilation.",
+      "tags": [
+        "android",
+        "build"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/scripts/java-home.mjs",
+      "type": "file",
+      "name": "java-home.mjs",
+      "filePath": "frontend-vite/scripts/java-home.mjs",
+      "lineRange": [
+        1,
+        68
+      ],
+      "summary": "Shared JDK21+ lookup; rejects stale JAVA_HOME17 and JRE-only installs, checks PATH and common locations.",
+      "tags": [
+        "android",
+        "build"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend-vite/scripts/build-apk.mjs",
+      "type": "file",
+      "name": "build-apk.mjs",
+      "filePath": "frontend-vite/scripts/build-apk.mjs",
+      "lineRange": [
+        1,
+        42
+      ],
+      "summary": "Enhancement/web/sync/debug packaging with selected child-only JAVA_HOME and no version bump.",
+      "tags": [
+        "android",
+        "build"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:frontend-vite/package.json",
+      "target": "file:frontend-vite/scripts/build-apk.mjs",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "file:frontend-vite/package.json",
+      "target": "file:frontend-vite/scripts/release.mjs",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "file:frontend-vite/scripts/build-apk.mjs",
+      "target": "file:frontend-vite/scripts/java-home.mjs",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "file:frontend-vite/scripts/release.mjs",
+      "target": "file:frontend-vite/scripts/java-home.mjs",
+      "type": "calls",
+      "weight": 1
+    }
+  ],
+  "layers": [
+    {
+      "id": "build",
+      "name": "build",
+      "description": "Android build and packaging entry points.",
+      "nodeIds": [
+        "file:frontend-vite/package.json",
+        "file:frontend-vite/scripts/release.mjs",
+        "file:frontend-vite/scripts/build-enhance.mjs",
+        "file:frontend-vite/android/app/build.gradle",
+        "file:frontend-vite/android/app/src/main/java/app/capynime/MainActivity.java",
+        "file:frontend-vite/scripts/java-home.mjs",
+        "file:frontend-vite/scripts/build-apk.mjs"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "",
+      "description": "",
+      "nodeIds": []
+    },
+    {
+      "order": 2,
+      "title": "",
+      "description": "",
+      "nodeIds": []
+    },
+    {
+      "order": 3,
+      "title": "",
+      "description": "",
+      "nodeIds": []
+    },
+    {
+      "order": 4,
+      "title": "",
+      "description": "",
+      "nodeIds": []
+    }
+  ]
+}

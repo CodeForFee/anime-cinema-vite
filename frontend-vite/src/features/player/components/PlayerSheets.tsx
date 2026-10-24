@@ -22,11 +22,12 @@ const SHEET_OUT_MS = 220;
  * Rendered in the frame, not portalled to <body>, or it would not show in full screen.
  * Closing plays the exit animation first; children get `close` for the same reason.
  */
-function Sheet({
+export function Sheet({
   title,
   onClose,
   anchorX = 0,
   width,
+  panelClassName,
   children,
 }: {
   title: string;
@@ -35,6 +36,8 @@ function Sheet({
   anchorX?: number;
   /** Desktop popup width */
   width: string;
+  /** Extra panel classes, e.g. a side panel in portrait too (EnhanceSheet) */
+  panelClassName?: string;
   children: (close: () => void) => React.ReactNode;
 }) {
   const [closing, setClosing] = useState(false);
@@ -82,6 +85,7 @@ function Sheet({
           "landscape:inset-y-2 landscape:left-auto landscape:right-[max(0.5rem,var(--inset-right))] landscape:w-[min(380px,46%)]",
           // desktop: a drop-up popover above the control bar, like Netflix, not a side panel
           "lg:!inset-y-auto lg:!bottom-[5.5rem] lg:!left-[clamp(0.5rem,calc(var(--ax)_-_var(--w)/2),calc(100%_-_var(--w)_-_0.5rem))] lg:!right-auto lg:!w-[var(--w)] lg:!max-h-[min(70%,420px)] lg:rounded-2xl",
+          panelClassName,
           closing ? "cn-sheet-out" : "cn-sheet",
         )}
         style={{ "--w": width, "--ax": `${anchorX}px` } as React.CSSProperties}

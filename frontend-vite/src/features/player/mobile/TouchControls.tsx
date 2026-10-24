@@ -24,6 +24,7 @@ import {
   seekBy,
   TitleBar,
 } from "@/features/player/components/control-parts";
+import { EnhanceChip } from "@/features/player/components/EnhanceChip";
 import { useAutoHide } from "@/features/player/hooks/use-auto-hide";
 import { useTouchGestures } from "@/features/player/hooks/use-touch-gestures";
 import { cn } from "@/shared/lib/utils";
@@ -174,6 +175,14 @@ export default function TouchControls(props: ControlsProps) {
                         anchorOf(button, surfaceRef.current),
                       ),
                     )()
+                  }
+                />
+              )}
+              {props.enhance && (
+                <EnhanceChip
+                  active={props.enhance.active}
+                  onOpen={(button) =>
+                    act(() => props.enhance?.onOpen(anchorOf(button, surfaceRef.current)))()
                   }
                 />
               )}

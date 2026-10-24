@@ -26,9 +26,14 @@ export function useHeroSlides(items: AnimeItem[]) {
 
   // the sharp banner of the slide on screen; the next one is fetched ahead so the auto-advance finds it ready
   const current = useEnrichedItem(slides[index] || slides[0]);
-  useEnrichedItem(
+  const next = useEnrichedItem(
     slides.length > 1 ? slides[(index + 1) % slides.length] : undefined,
   );
+  // ...and its picture downloaded too, so the next slide appears sharp at once instead of loading in
+  const nextImage = next?.backdrop || next?.banner;
+  useEffect(() => {
+    if (nextImage) new Image().src = nextImage;
+  }, [nextImage]);
 
   const step = (by: number) =>
     setIndex((i) => (i + by + slides.length) % slides.length);

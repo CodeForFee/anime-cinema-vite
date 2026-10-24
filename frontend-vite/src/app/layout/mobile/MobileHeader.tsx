@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Brand, HeaderBar } from "@/app/layout/components/Brand";
 import { SearchResults } from "@/app/layout/components/SearchResults";
 import { useSearchBox } from "@/app/layout/hooks/use-search-box";
+import { AccountButton } from "@/features/account";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 
@@ -59,15 +60,18 @@ export function MobileHeader() {
           </Button>
         </form>
       )}
-      <Button
-        variant="unstyled"
-        size="unstyled"
-        aria-label="Tìm kiếm"
-        onClick={box.open}
-        className={ICON_BUTTON}
-      >
-        <Search className="w-4 h-4" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="unstyled"
+          size="unstyled"
+          aria-label="Tìm kiếm"
+          onClick={box.open}
+          className={ICON_BUTTON}
+        >
+          <Search className="w-4 h-4" />
+        </Button>
+        <AccountButton compact />
+      </div>
     </HeaderBar>
   );
 }

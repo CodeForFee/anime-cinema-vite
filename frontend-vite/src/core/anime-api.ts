@@ -5,7 +5,18 @@ import { PhimIdChap } from "@/core/source/endpoints/episodes/fetch";
 import { Index } from "@/core/source/endpoints/home/fetch";
 import { Browse } from "@/core/source/endpoints/list/browse";
 import { TypeNormalValue } from "@/core/source/endpoints/list/fetch";
+import * as Account from "@/core/source/endpoints/account/fetch";
+import {
+  Comments,
+  Login,
+  Logout,
+  Me,
+  SignedIn,
+  PostComment,
+  Replies,
+} from "@/core/source/endpoints/comments/fetch";
 import { Menu } from "@/core/source/endpoints/menu/fetch";
+import { Schedule } from "@/core/source/endpoints/schedule/fetch";
 import {
   PlayerLink,
   safePlayerUrl,
@@ -23,6 +34,11 @@ import type {
 export interface MenuGroup {
   label: string;
   items: { label: string; path: string }[];
+}
+
+export interface ScheduleDay {
+  day: string;
+  items: { anime: AnimeItem; time: string; at?: number }[];
 }
 
 export interface BrowseResult {
@@ -130,6 +146,21 @@ export const animeApi = {
   browse,
 
   enrich,
+
+  // The week's airing schedule: per day, each title with its air time ("15:30") and moment (ms, when known)
+  getSchedule: async (): Promise<ScheduleDay[]> =>
+    (await Schedule()).map(({ day, items }) => ({
+      day,
+      items: items.map((post) => ({
+        anime: toItem(post),
+        time: post.airTime,
+        at: post.time_release ?? undefined,
+      })),
+    })),
+
+  // The source's comment thread of a title, and the viewer's own account there (needed to post)
+  comments: { list: Comments, replies: Replies, post: PostComment },
+  account: { me: Me, signedIn: SignedIn, login: Login, logout: Logout, ...Account },
 
   getHomeData: async (): Promise<HomeDataResponse> => {
     try {

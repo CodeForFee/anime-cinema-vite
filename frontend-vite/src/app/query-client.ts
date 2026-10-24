@@ -3,6 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { del, get, set } from "idb-keyval";
 
 const DAY = 24 * 60 * 60 * 1000;
+const PRIVATE = new Set(["account", "notifications", "my-comments"]);
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,10 @@ export const persistOptions = {
     shouldDehydrateQuery: (query: {
       queryKey: readonly unknown[];
       state: { status: string };
-    }) => query.state.status === "success" && query.queryKey[1] !== "stream",
+    }) =>
+      query.state.status === "success" &&
+      query.queryKey[1] !== "stream" &&
+      // the viewer's own account data stays in memory only
+      !(query.queryKey[0] === "source" && PRIVATE.has(String(query.queryKey[1]))),
   },
 };

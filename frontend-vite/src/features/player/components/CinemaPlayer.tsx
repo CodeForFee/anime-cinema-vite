@@ -9,11 +9,13 @@ import {
   SkipIntroButton,
   WeakNetworkHint,
 } from "@/features/player/components/PlayerOverlays";
+import { EnhanceSheet } from "@/features/player/components/EnhanceSheet";
 import {
   EpisodeSheet,
   QualitySheet,
   SpeedSheet,
 } from "@/features/player/components/PlayerSheets";
+import { useEnhance } from "@/features/player/hooks/use-enhance";
 import {
   type SessionOptions,
   usePlayerSession,
@@ -72,9 +74,9 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [brightness, setBrightness] = useState(1);
-  const [sheet, setSheet] = useState<"speed" | "episodes" | "quality" | null>(
-    null,
-  );
+  const [sheet, setSheet] = useState<
+    "speed" | "episodes" | "quality" | "enhance" | null
+  >(null);
   const [anchorX, setAnchorX] = useState(0);
 
   const session = usePlayerSession(props, {
@@ -84,6 +86,7 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
   const { state, bridge, isFullscreen } = session;
   const quality = useQuality({ ...bridge, state }, props.progressKey);
   const source = embedUrl ? undefined : sources?.[0];
+  const enhance = useEnhance(bridge, videoRef, Boolean(source));
 
   // (re)mount the stream whenever the source changes; hls.js and the decryptor load only for this path
   // biome-ignore lint/correctness/useExhaustiveDependencies: the source is identified by its file and type
@@ -212,6 +215,10 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
                   ? openSheet("episodes")
                   : undefined
               }
+              enhance={{
+                active: enhance.surround || enhance.color || enhance.upscale !== "off",
+                onOpen: openSheet("enhance"),
+              }}
               quality={
                 quality.levels
                   ? { label: quality.label, onOpen: openSheet("quality") }
@@ -270,6 +277,13 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
             levels={quality.levels}
             pref={quality.pref}
             onSelect={quality.choose}
+            onClose={() => setSheet(null)}
+          />
+        )}
+        {sheet === "enhance" && (
+          <EnhanceSheet
+            view={enhance}
+            anchorX={anchorX}
             onClose={() => setSheet(null)}
           />
         )}
