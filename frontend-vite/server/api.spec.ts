@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { createHash } from "node:crypto";
 import player from "../api/player.js";
 import proxy from "../api/proxy.js";
 import { MAX_TEXT_BYTES } from "./upstream.js";
@@ -23,10 +24,14 @@ const request = (path: string, url: string, init?: RequestInit) =>
     init,
   );
 
-beforeEach(() => vi.stubGlobal("fetch", network));
+beforeEach(() => {
+  vi.stubGlobal("fetch", network);
+  vi.stubEnv("AVS_SESSION_KEY", "a".repeat(64));
+});
 afterEach(() => {
   network.mockReset();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 test("GET returns the parser envelope, strips tags and keeps upstream cookies private", async () => {
@@ -72,6 +77,8 @@ test("POST forwards the episode form, not caller headers or cookies", async () =
   expect(new URLSearchParams(options.body).get("link")).toBe("a+b&c");
   expect(options.headers.Cookie).toBeUndefined();
   expect(options.headers.Referer).toBe(target);
+  expect(options.headers.Origin).toBe("https://animevietsub.sale");
+  expect(options.headers["X-Requested-With"]).toBe("XMLHttpRequest");
 });
 
 test.each([
@@ -171,6 +178,27 @@ test("exposes a bounded timeout as 504", async () => {
   expect((await proxy.fetch(request("proxy", target))).status).toBe(504);
 });
 
+test("forwards viewer browser metadata while keeping app credentials private", async () => {
+  network.mockResolvedValue(html());
+  await proxy.fetch(
+    request("proxy", target, {
+      headers: {
+        "User-Agent": "ViewerBrowser/1.0",
+        "Accept-Language": "vi-VN,vi;q=0.9",
+        Cookie: "app=private",
+        Authorization: "Bearer private",
+        "X-Arbitrary": "private",
+      },
+    }),
+  );
+  const headers = new Headers(network.mock.calls[0][1].headers);
+  expect(headers.get("user-agent")).toBe("ViewerBrowser/1.0");
+  expect(headers.get("accept-language")).toBe("vi-VN,vi;q=0.9");
+  expect(headers.get("cookie")).toBeNull();
+  expect(headers.get("authorization")).toBeNull();
+  expect(headers.get("x-arbitrary")).toBeNull();
+});
+
 test("does not pass a successful HTTP challenge page to the catalog parser", async () => {
   network.mockResolvedValue(
     html(
@@ -258,4 +286,126 @@ test("player preserves rejection evidence and never injects a challenge page ret
     error: "UPSTREAM_HTTP_ERROR",
     upstreamStatus: 403,
   });
+});
+
+test("source cookies persist for one viewer, including a 403 response, without sharing with another viewer", async () => {
+  network
+    .mockResolvedValueOnce(
+      new Response("verify", {
+        status: 403,
+        headers: {
+          "content-type": "text/html",
+          "set-cookie": "source_session=viewer-a; Path=/; HttpOnly; Secure",
+        },
+      }),
+    )
+    .mockImplementation(() => html());
+  const first = await proxy.fetch(request("proxy", target));
+  const cookie = first.headers.getSetCookie()[0];
+  expect(first.status).toBe(403);
+  expect(cookie).toContain("HttpOnly; SameSite=Lax");
+  expect(cookie).toContain("Secure");
+  expect(cookie).not.toContain("viewer-a");
+  const pair = cookie.split(";")[0];
+  await proxy.fetch(
+    request("proxy", target, { headers: { Cookie: `${pair}; app=private` } }),
+  );
+  expect(new Headers(network.mock.calls[1][1].headers).get("cookie")).toBe(
+    "source_session=viewer-a",
+  );
+  await proxy.fetch(request("proxy", target));
+  expect(
+    new Headers(network.mock.calls[2][1].headers).get("cookie"),
+  ).toBeNull();
+});
+
+test("a redirect receives its session cookie and cookie host/path boundaries remain enforced", async () => {
+  network
+    .mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: {
+          location: "/phim/title/",
+          "set-cookie": "scoped=only; Path=/phim; Secure",
+        },
+      }),
+    )
+    .mockImplementation(() => html());
+  const first = await proxy.fetch(request("proxy", target));
+  expect(new Headers(network.mock.calls[1][1].headers).get("cookie")).toBe(
+    "scoped=only",
+  );
+  const cookie = first.headers.getSetCookie()[0].split(";")[0];
+  await proxy.fetch(
+    request("proxy", `${target}tim-kiem/`, { headers: { Cookie: cookie } }),
+  );
+  expect(
+    new Headers(network.mock.calls[2][1].headers).get("cookie"),
+  ).toBeNull();
+  await proxy.fetch(
+    request("proxy", "https://animevietsub.fan/phim/title/", {
+      headers: { Cookie: cookie },
+    }),
+  );
+  expect(
+    new Headers(network.mock.calls[3][1].headers).get("cookie"),
+  ).toBeNull();
+});
+
+test("an invalid session token never becomes an upstream Cookie header", async () => {
+  network.mockImplementation(() => html());
+  const response = await proxy.fetch(
+    request("proxy", target, {
+      headers: {
+        Cookie:
+          "avs-source-session=v1.invalid-token; source_session=pretend; app=private",
+      },
+    }),
+  );
+  expect(
+    new Headers(network.mock.calls[0][1].headers).get("cookie"),
+  ).toBeNull();
+  expect(response.headers.getSetCookie()[0]).toContain("Max-Age=0");
+});
+
+test("an expired encrypted session starts a new anonymous jar", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  try {
+    network
+      .mockResolvedValueOnce(
+        html("source", { "set-cookie": "session=old; Path=/; Secure" }),
+      )
+      .mockImplementation(() => html());
+    const first = await proxy.fetch(request("proxy", target));
+    const cookie = first.headers.getSetCookie()[0].split(";")[0];
+    vi.setSystemTime(Date.now() + 3601_000);
+    await proxy.fetch(
+      request("proxy", target, { headers: { Cookie: cookie } }),
+    );
+    expect(
+      new Headers(network.mock.calls[1][1].headers).get("cookie"),
+    ).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("a missing server key is reported before any upstream request", async () => {
+  vi.stubEnv("AVS_SESSION_KEY", undefined);
+  const response = await proxy.fetch(request("proxy", target));
+  expect(response.status).toBe(503);
+  expect((await response.json()).error).toBe("SESSION_NOT_CONFIGURED");
+  expect(network).not.toHaveBeenCalled();
+});
+
+test("a source session that cannot fit a browser cookie fails explicitly instead of truncating it", async () => {
+  const value = Array.from({ length: 80 }, (_, i) =>
+    createHash("sha256").update(String(i)).digest("base64url"),
+  ).join("");
+  network.mockResolvedValue(
+    html("source", { "set-cookie": `large=${value}; Path=/; Secure` }),
+  );
+  const response = await proxy.fetch(request("proxy", target));
+  expect(response.status).toBe(502);
+  expect((await response.json()).error).toBe("SESSION_TOO_LARGE");
 });

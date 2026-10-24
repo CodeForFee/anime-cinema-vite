@@ -1,7 +1,9 @@
 import { GatewayError, gatewayError, upstream } from "../server/upstream.js";
+import { SourceSession, sessionResponse } from "../server/session.js";
 
 export default {
   async fetch(request: Request): Promise<Response> {
+    let session: SourceSession | undefined;
     try {
       if (request.method !== "GET" && request.method !== "POST")
         return new Response(null, {
@@ -44,6 +46,7 @@ export default {
           Object.entries(data).map(([key, value]) => [key, String(value)]),
         ).toString();
       }
+      session = new SourceSession(request);
       const result = await upstream(
         new URL(request.url).searchParams.get("url"),
         "source",
@@ -51,6 +54,8 @@ export default {
           method: request.method,
           body,
           signal: request.signal,
+          clientHeaders: request.headers,
+          session,
         },
       );
       if (
@@ -72,16 +77,19 @@ export default {
           "Phản hồi nguồn vượt giới hạn",
           result.status,
         );
-      return new Response(payload, {
-        status: result.status >= 400 ? result.status : 200,
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Cache-Control": "no-store",
-          "X-Content-Type-Options": "nosniff",
-        },
-      });
+      return sessionResponse(
+        new Response(payload, {
+          status: result.status >= 400 ? result.status : 200,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+          },
+        }),
+        session,
+      );
     } catch (error) {
-      return gatewayError(error);
+      return sessionResponse(gatewayError(error), session);
     }
   },
 };

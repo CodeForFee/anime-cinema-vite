@@ -12,6 +12,7 @@ async function send(
     `/api/proxy?${new URLSearchParams({ url: input.url })}`,
     {
       method,
+    credentials: "same-origin",
       headers: {
         Accept: "application/json",
         ...(method === "POST" ? { "Content-Type": "application/json" } : {}),

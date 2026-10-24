@@ -1,8 +1,10 @@
 import { playerHtml } from "../server/player-html.js";
+import { SourceSession, sessionResponse } from "../server/session.js";
 import { GatewayError, gatewayError, upstream } from "../server/upstream.js";
 
 export default {
   async fetch(request: Request): Promise<Response> {
+    let session: SourceSession | undefined;
     try {
       if (request.method !== "GET")
         return new Response(null, { status: 405, headers: { Allow: "GET" } });
@@ -14,17 +16,23 @@ export default {
           "INVALID_CHANNEL",
           "Thiếu mã nhận diện player",
         );
+      session = new SourceSession(request);
       const result = await upstream(url.searchParams.get("url"), "player", {
         signal: request.signal,
+        clientHeaders: request.headers,
+        session,
       });
       if (result.status !== 200)
-        return Response.json(
-          {
-            error: "UPSTREAM_HTTP_ERROR",
-            upstreamStatus: result.status,
-            message: `Nguồn player từ chối yêu cầu (${result.status})`,
-          },
-          { status: 502, headers: { "Cache-Control": "no-store" } },
+        return sessionResponse(
+          Response.json(
+            {
+              error: "UPSTREAM_HTTP_ERROR",
+              upstreamStatus: result.status,
+              message: `Nguồn player từ chối yêu cầu (${result.status})`,
+            },
+            { status: 502, headers: { "Cache-Control": "no-store" } },
+          ),
+          session,
         );
       if (
         !/^text\/html\b/i.test(result.headers["content-type"] ?? "") ||
@@ -35,9 +43,8 @@ export default {
           "INVALID_PLAYER_HTML",
           "Nguồn không trả về trang player",
         );
-      return new Response(
-        playerHtml(result.data, result.url, url.origin, channel),
-        {
+      return sessionResponse(
+        new Response(playerHtml(result.data, result.url, url.origin, channel), {
           headers: {
             "Content-Type": "text/html; charset=utf-8",
             "Cache-Control": "no-store",
@@ -47,10 +54,11 @@ export default {
               "sandbox allow-scripts; frame-ancestors 'self'",
             "Referrer-Policy": "no-referrer",
           },
-        },
+        }),
+        session,
       );
     } catch (error) {
-      return gatewayError(error);
+      return sessionResponse(gatewayError(error), session);
     }
   },
 };

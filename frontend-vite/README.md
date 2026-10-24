@@ -16,6 +16,9 @@ npx vercel dev  # web + /api/*; requires a linked Vercel project
 # pnpm dev runs the Vite UI only; it does not serve the Functions.
 ```
 
+The server runtime also needs `AVS_SESSION_KEY` for per-viewer encrypted source cookies; configure a
+Preview Secret and an independent local environment key as shown in [`SERVERLESS.md`](SERVERLESS.md).
+
 `pnpm test` runs the specs, `pnpm lint` (Biome, errors only), `pnpm build` type-checks and builds,
 `pnpm analyze` writes `dist/stats.html`.
 

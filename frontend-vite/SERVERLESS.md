@@ -11,6 +11,7 @@ pnpm install
 cd .. # run Vercel CLI from the repository root; project Root Directory is frontend-vite
 npx vercel login
 npx vercel link --project anime-cinema-vite
+# Configure AVS_SESSION_KEY before using Functions (see below).
 npx vercel dev
 # Preview only, after checks:
 npx vercel deploy
@@ -18,6 +19,18 @@ npx vercel deploy
 
 Do not pass `--prod`. Plain `pnpm dev` and `pnpm preview` run only the UI, not the API. Never point an
 existing production deployment at this branch until the playback gate below passes.
+
+`AVS_SESSION_KEY` is a server-only, 64-hex-character AES key. The current project has it configured as
+a Vercel **Preview Secret**, not a Production variable. It encrypts each viewer's source cookie jar;
+it must never have a `VITE_` prefix or be committed. For an independent local session key in PowerShell:
+
+```powershell
+$env:AVS_SESSION_KEY = (node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex'))")
+npx vercel dev
+```
+
+For another Vercel project, add a separately generated key through `vercel env add AVS_SESSION_KEY
+--environment preview --sensitive`. Production needs its own configured key only after the gate passes.
 
 ## Interfaces and isolation
 
@@ -31,8 +44,16 @@ existing production deployment at this branch until the playback gate below pass
   an inventory update; the API deliberately does not trust an arbitrary `animevietsub.*` hostname.
   Player destinations are limited to `storage.googleapiscdn.com/player` and its subpaths.
 - HTML/JSON requests have a 12-second upstream deadline, at most five redirects, a 2 MiB decoded
-  response cap, a 4 MiB serialized JSON cap and `no-store`. The Function duration is capped at 30 seconds. Caller cookies and
-  arbitrary headers are not forwarded; source cookies are not shared between viewers.
+  response cap, a 4 MiB serialized JSON cap and `no-store`. The Function duration is capped at 30 seconds.
+- The proxy forwards the viewer's User-Agent/Accept-Language, derives the source Referer, and uses
+  source Origin plus X-Requested-With on AJAX POST. App cookies, authorization and arbitrary caller
+  headers are never forwarded.
+- `tough-cookie` keeps source cookies across redirects and subsequent requests, respecting host,
+  path, Secure and expiry rules. Each viewer's jar is stored as an AES-256-GCM-authenticated,
+  compressed HttpOnly `avs-source-session` cookie under `/api`, with SameSite=Lax and Secure on HTTPS.
+  It expires after one hour; cold Function instances recover it without a global jar or database.
+  Invalid/expired tokens start an anonymous jar. Oversized jars fail explicitly rather than losing cookies.
+  This preserves cookies issued to this proxy session; it does not import another site's browser cookies.
 - Player responses enforce `CSP: sandbox allow-scripts; frame-ancestors 'self'`, and the parent iframe
   also omits `allow-same-origin`. Remote code cannot read the app's DOM/storage. Classic bridge script
   loading remains cross-origin inside this sandbox; no wildcard API CORS permission is needed.
@@ -43,6 +64,8 @@ existing production deployment at this branch until the playback gate below pass
 Vercel Hobby has usage limits. Moving HTML to the app origin does not move external JS, playlist, key,
 or segment requests there. The player can reject opaque origins or need cookies/storage unavailable
 in a sandbox. Do not remove isolation to make an upstream player work.
+The proxy's outbound IP and TLS stack still belong to Vercel; forwarding browser metadata and maintaining
+cookies does not execute or solve an upstream browser-verification challenge.
 
 ## Acceptance gate
 
@@ -66,6 +89,10 @@ API responses, bridge readiness, metadata, mocks and a successful build are not 
 - Local invocation of the real `/api/proxy` handler for `https://animevietsub.sale/` returned HTTP 403
   with `upstreamStatus: 403`, `content-type: text/html;charset=utf8` and a 661-byte body on 2026-10-24.
   The handler preserved the rejection. No upstream bypass was attempted.
+- The initial stateless Preview at `anime-cinema-vite-ehg8i3wvp-dienhoanguyen11-gmailcoms-projects.vercel.app`
+  reached both Functions. Source home returned HTTP 403 and an 895014-byte page titled
+  `Xác Minh An Toàn - AnimeVietsub`; an invalid player destination returned 400 and `/api/missing`
+  returned 404 instead of the SPA. The session-aware revision must be verified separately.
 - Preview playback is unverified. Vercel CLI authentication is available and the existing project
   is linked from the repository root, with Root Directory `frontend-vite` and Node.js 24.x. The root
   `.vercelignore` excludes Android, signing keys, environment files, extension and build artifacts.

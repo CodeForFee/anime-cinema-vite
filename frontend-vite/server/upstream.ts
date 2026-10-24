@@ -1,4 +1,5 @@
 import inventory from "../src/core/source/hosts.json" with { type: "json" };
+import type { SourceSession } from "./session.js";
 
 export type UpstreamKind = "source" | "player";
 export const MAX_TEXT_BYTES = 2 * 1024 * 1024;
@@ -91,7 +92,13 @@ async function readText(response: Response): Promise<string> {
 export async function upstream(
   value: string | null,
   kind: UpstreamKind,
-  init: { method?: "GET" | "POST"; body?: string; signal: AbortSignal },
+  init: {
+    method?: "GET" | "POST";
+    body?: string;
+    signal: AbortSignal;
+    clientHeaders?: Headers;
+    session?: SourceSession;
+  },
 ) {
   let url = allowedUrl(value, kind);
   let method = init.method ?? "GET";
@@ -111,22 +118,35 @@ export async function upstream(
       kind === "source" && SOURCE_HOSTS.has(url.hostname)
         ? `${url.origin}/`
         : `https://${inventory.current}/`;
+    const headers: Record<string, string> = {
+      Accept:
+        method === "POST"
+          ? "application/json, text/javascript, */*; q=0.01"
+          : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      Referer: referer,
+      ...(body !== undefined
+        ? {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest",
+              Origin: url.origin,
+          }
+        : {}),
+    };
+    // Forward browser metadata only; app cookies, authorization and arbitrary caller headers stay private.
+    for (const name of ["user-agent", "accept-language"]) {
+      const value = init.clientHeaders?.get(name);
+      if (value && value.length <= 1024) headers[name] = value;
+    }
+    const cookie = init.session?.cookies(url);
+    if (cookie) headers.Cookie = cookie;
     const response = await fetch(url, {
       method,
       body,
       redirect: "manual",
       signal,
-      headers: {
-        Accept: kind === "player" ? "text/html" : "text/html, application/json",
-        Referer: referer,
-        ...(body !== undefined
-          ? {
-              "Content-Type":
-                "application/x-www-form-urlencoded; charset=UTF-8",
-            }
-          : {}),
-      },
+      headers,
     });
+    init.session?.capture(response, url);
     if (REDIRECTS.has(response.status)) {
       const location = response.headers.get("location");
       await response.body?.cancel();
@@ -159,7 +179,7 @@ export async function upstream(
         "Nguồn không trả về HTML hoặc JSON",
       );
     }
-    const headers: Record<string, string> = {};
+    const responseHeaders: Record<string, string> = {};
     for (const name of [
       "content-type",
       "cache-control",
@@ -167,13 +187,13 @@ export async function upstream(
       "last-modified",
     ]) {
       const header = response.headers.get(name);
-      if (header !== null) headers[name] = header;
+      if (header !== null) responseHeaders[name] = header;
     }
     return {
       status: response.status,
       url: url.href,
       data: await readText(response),
-      headers,
+      headers: responseHeaders,
     };
   }
   throw new GatewayError(

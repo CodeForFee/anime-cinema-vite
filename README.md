@@ -91,6 +91,8 @@ It ships in two forms that share one code base:
 The core uses one request API (`src/platform/transport.ts`, installed by `configureCore`). On web it calls
 `/api/proxy`; on Android it uses native HTTP. Functions only accept configured source/player destinations,
 validate redirects, bound responses and do not forward application cookies or relay video segments.
+Each viewer's upstream cookies are kept in an encrypted HttpOnly gateway session, across requests and
+Function instances. User-Agent/language and AJAX request headers follow the browser/source flow.
 
 ```mermaid
 flowchart LR
