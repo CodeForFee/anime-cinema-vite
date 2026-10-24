@@ -14,8 +14,8 @@
       "Gradle"
     ],
     "description": "Focused map of inspected Android build and source-account seams. Browser uses AVS Helper cookies; real source Google/browser session observed via Chrome MCP. Android uses Capacitor HTTP/WebView cookies; native Google handoff unproven. Vercel gateway removed at user request.",
-    "generatedAt": "2026-10-24T13:16:32.183Z",
-    "sha": "a965743eed5aac810e131269b096b67610d1ea88"
+    "generatedAt": "2026-10-24T13:23:06.855Z",
+    "sha": "525242d418295d428c2ea0277b58dcec3e618e24"
   },
   "nodes": [
     {
@@ -288,9 +288,9 @@
       "filePath": "frontend-vite/src/features/account/components/LoginForm.tsx",
       "lineRange": [
         1,
-        163
+        181
       ],
-      "summary": "Credentials login plus a web-only link to the official AnimeVietsub registration form; session return is verified. Direct Google is not integrated because the source callback is fixed to its own origin.",
+      "summary": "Credentials login and web-only source account actions. Google opens the official source page for its GIS One Tap; Capynime verifies the source session and closes the popup. Native Google handoff is not implemented.",
       "tags": [
         "auth"
       ],
