@@ -41,12 +41,14 @@ export async function getManifest() {
         js: ["./dist/contentScripts/index.global.js"]
       },
       {
-        // Ad shield + remote control inside the source player page; inert unless the web embedded it
+        // Ad shield + remote control inside the source player page, and the picture/sound enhancers it drives
+        // (player-enhance.js must come first: the bridge looks for window.__capyEnhance); inert unless the web
+        // embedded it
         matches: ["https://*.googleapiscdn.com/player/*"],
         all_frames: true,
         run_at: "document_start",
         world: "MAIN",
-        js: ["./assets/player-bridge.js"]
+        js: ["./assets/player-enhance.js", "./assets/player-bridge.js"]
       }
     ] as Manifest.WebExtensionManifest["content_scripts"],
     content_security_policy: {

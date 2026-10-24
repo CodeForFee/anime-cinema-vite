@@ -10,7 +10,8 @@
   "packageManager": "pnpm@11.15.1",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/build-enhance.mjs && tsc --noEmit && vite build",
+    "enhance": "node scripts/build-enhance.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint --diagnostic-level=error",
@@ -18,7 +19,7 @@
     "test": "vitest run",
     "analyze": "vite build --mode analyze",
     "icons": "node scripts/icons.mjs && pwa-assets-generator",
-    "build:apk": "vite build && cap sync android && cd android && gradlew assembleDebug",
+    "build:apk": "node scripts/build-apk.mjs",
     "release": "node scripts/release.mjs",
     "domains": "node scripts/check-domains.mjs"
   },
@@ -61,6 +62,7 @@
     "@types/react-dom": "^19.3.0",
     "@vite-pwa/assets-generator": "^2.0.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "@webgpu/types": "0.1.74",
     "autoprefixer": "^10.4.20",
     "babel-plugin-react-compiler": "^1.0.0",
     "domhandler": "^5.0.3",

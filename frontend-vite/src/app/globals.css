@@ -584,6 +584,13 @@ html {
     animation-name: cn-sheet-right;
   }
 }
+/* a side panel in portrait too (EnhanceSheet on phones): it slides in from the side, not up */
+.cn-side.cn-sheet {
+  animation-name: cn-sheet-left;
+}
+.cn-side.cn-sheet-out {
+  animation-name: cn-sheet-right;
+}
 /* desktop: the speed / episode menu pops up out of the control bar instead of sliding in */
 @keyframes cn-dropup-in {
   from {
@@ -598,11 +605,13 @@ html {
   }
 }
 @media (min-width: 1024px) {
-  .cn-sheet {
+  .cn-sheet,
+  .cn-side.cn-sheet {
     animation: cn-dropup-in 160ms var(--ease-ios) both;
     transform-origin: bottom center;
   }
-  .cn-sheet-out {
+  .cn-sheet-out,
+  .cn-side.cn-sheet-out {
     animation: cn-dropup-out 120ms ease-in both;
     transform-origin: bottom center;
   }

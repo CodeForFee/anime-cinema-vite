@@ -1,6 +1,13 @@
 import React from "react";
 import { m } from "framer-motion";
-import { Bookmark, Compass, History, Home, Search } from "lucide-react";
+import {
+  Bookmark,
+  CalendarDays,
+  Compass,
+  History,
+  Home,
+  Search,
+} from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { haptic } from "@/platform/haptics";
 import { cn } from "@/shared/lib/utils";
@@ -8,6 +15,7 @@ import { cn } from "@/shared/lib/utils";
 const MOBILE_NAV_LINKS = [
   { label: "Trang chủ", href: "/", icon: Home },
   { label: "Khám phá", href: "/explore", icon: Compass },
+  { label: "Lịch chiếu", href: "/schedule", icon: CalendarDays },
   { label: "Tìm kiếm", href: "/search", icon: Search },
   { label: "Danh sách", href: "/favorites", icon: Bookmark },
   { label: "Lịch sử", href: "/history", icon: History },

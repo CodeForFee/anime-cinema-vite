@@ -14,6 +14,8 @@ fs.ensureDirSync(r("extension"))
 fs.copySync(r("../lib/assets"), r("extension/assets"))
 // one source for the web, the Android app and the extension
 fs.copySync(r("../../frontend-vite/public/player-bridge.js"), r("extension/assets/player-bridge.js"))
+// built by frontend-vite/scripts/build-enhance.mjs (pnpm build in frontend-vite)
+fs.copySync(r("../../frontend-vite/public/player-enhance.js"), r("extension/assets/player-enhance.js"))
 writeManifest()
 
 if (isDev) {

@@ -79,6 +79,8 @@ export function HeroCard({
             draggable={false}
             src={image}
             alt={current.title}
+            decoding="async"
+            fetchPriority="high"
             className="absolute inset-y-0 right-0 h-full w-full lg:w-[58%] object-cover object-center lg:[mask-image:linear-gradient(to_right,transparent,black_30%)]"
             onError={(e) => {
               (e.target as HTMLImageElement).src = hero.poster;

@@ -241,12 +241,33 @@
     if ((api.getQualityLevels() || []).length) levels();
   }
 
+  // Picture/sound enhancers (public/player-enhance.js, injected next to this file): the app sends the viewer's
+  // choice ("enhance"), it is applied to the current <video> and re-applied when the player swaps it, and what
+  // actually runs comes back as "enhanced". No enhancer script (old extension/app): "enhanced" with an error.
+  var enhanceWanted = null;
+  var enhancer = null;
+  var enhancedVideo = null;
+  function applyEnhance() {
+    if (!enhanceWanted || !video) return;
+    var lib = window.__capyEnhance;
+    if (!lib) { send("enhanced", { surround: false, upscale: "off", support: null, error: "outdated" }); return; }
+    if (enhancedVideo !== video) {
+      if (enhancer) enhancer.destroy();
+      enhancedVideo = video;
+      enhancer = lib.createEnhancer(video, function (state) { send("enhanced", state); });
+    }
+    enhancer.set(enhanceWanted).then(function (state) { send("enhanced", state); }, function (error) {
+      send("enhanced", { surround: false, upscale: "off", support: null, error: String((error && error.message) || error) });
+    });
+  }
+
   function attach() {
     forwardResumeOffer();
     var found = document.querySelector("video.jwApi-video") || document.querySelector("video");
     if (found) hookQuality(); // only a set-up player has a <video>; before that jwplayer() may be a stub
     if (!found || found === video) return;
     video = found;
+    applyEnhance();
     ["play", "playing", "pause", "waiting", "seeked", "ratechange", "durationchange", "ended", "timeupdate", "volumechange", "progress"]
       .forEach(function (name) { video.addEventListener(name, report); });
     report();
@@ -278,6 +299,20 @@
     if (message.type === "resume") {
       var button = document.getElementById(message.value ? "avs-resume-btn-yes" : "avs-resume-btn-no");
       if (button) button.click();
+      return;
+    }
+    if (message.type === "enhance") {
+      var wanted = message.value || {};
+      var modes = ["off", "fsr", "anime4k"];
+      enhanceWanted = {
+        surround: wanted.surround === true,
+        surroundMode: wanted.surroundMode === "speakers" ? "speakers" : "headphones",
+        upscale: modes.indexOf(wanted.upscale) >= 0 ? wanted.upscale : "off",
+        color: wanted.color === true,
+        lite: wanted.lite === true,
+        mobile: wanted.mobile === true
+      };
+      applyEnhance(); // without a <video> yet, attach() applies it once one appears
       return;
     }
     var value = Number(message.value);

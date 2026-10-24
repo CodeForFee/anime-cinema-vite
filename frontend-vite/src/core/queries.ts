@@ -123,6 +123,18 @@ export function useMenuQuery() {
   });
 }
 
+// 5e. The week's airing schedule (the source updates it a few times a day). Shared with the route loader, so
+// it starts loading on the tap; kept in IndexedDB like the rest, so a revisit shows it at once.
+export const scheduleQuery = queryOptions({
+  queryKey: ["anime", "schedule", 2] as const,
+  queryFn: () => animeApi.getSchedule(),
+  staleTime: 15 * 60 * 1000,
+});
+
+export function useScheduleQuery() {
+  return useQuery(scheduleQuery);
+}
+
 // 5d. A whole list, one page more each time the viewer nears the end (pages/explore.tsx)
 export function useBrowseInfiniteQuery(path: string) {
   return useInfiniteQuery({

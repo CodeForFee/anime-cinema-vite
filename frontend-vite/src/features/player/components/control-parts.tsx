@@ -46,6 +46,8 @@ export interface ControlsProps {
   onOpenEpisodes?: (anchorX: number) => void;
   /** Missing when the player has no levels to pick from */
   quality?: { label: string; onOpen: (anchorX: number) => void };
+  /** Upscale / surround sheet (EnhanceSheet); `active` while one of them is on */
+  enhance?: { active: boolean; onOpen: (anchorX: number) => void };
 }
 
 /** `flag`, but turning true only once it has stayed true for `ms` */

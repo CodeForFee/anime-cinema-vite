@@ -83,10 +83,13 @@ public class MainActivity extends BridgeActivity {
             );
         }
 
-        // Ad shield + remote control for the embedded player (public/player-bridge.js)
+        // Ad shield + remote control for the embedded player (public/player-bridge.js), preceded by the picture and
+        // sound enhancers it drives (public/player-enhance.js, built by scripts/build-enhance.mjs)
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-            String script = readAsset("public/player-bridge.js");
-            if (script != null) {
+            String bridge = readAsset("public/player-bridge.js");
+            String enhance = readAsset("public/player-enhance.js");
+            if (bridge != null) {
+                String script = (enhance != null ? enhance + "\n;" : "") + bridge;
                 WebViewCompat.addDocumentStartJavaScript(webView, script, Collections.singleton(PLAYER_ORIGIN));
             }
         }

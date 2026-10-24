@@ -68,6 +68,10 @@ export const transport: Transport = isNativeApp
       get: (request) => ExtensionHttp.get(request) as Promise<SourceResponse>,
       post: (request) => ExtensionHttp.post(request) as Promise<SourceResponse>,
       // the extension's Referer rule is built for one host: tell it the new one
-      hostChanged: (origin) =>
-        setReferrers({ "#animevsub-vsub": `${origin}/` }).then(() => undefined),
+      // async: setReferrers throws synchronously without the extension, which used to blank the whole app
+      // before ExtensionGate could explain what is missing
+      hostChanged: async (origin) => {
+        if (!ExtensionHttp.version) return;
+        await setReferrers({ "#animevsub-vsub": `${origin}/` });
+      },
     };

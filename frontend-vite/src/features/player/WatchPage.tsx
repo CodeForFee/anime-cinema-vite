@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 
 import { MovieShelf } from "@/features/browse";
+import { CommentSection } from "@/features/comments";
 import { CinemaPlayer } from "@/features/player/components/CinemaPlayer";
 import { EpisodeGrid } from "@/features/player/components/EpisodeGrid";
 import {
@@ -77,6 +78,11 @@ export default function WatchPage() {
       </div>
 
       <AnimeDetailTabs anime={anime} />
+
+      <CommentSection
+        slug={watch.slug}
+        episode={episode ? { id: episode.id, name: episode.name } : undefined}
+      />
 
       {anime.related && anime.related.length > 0 && (
         <MovieShelf
