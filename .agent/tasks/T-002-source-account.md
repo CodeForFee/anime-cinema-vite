@@ -11,6 +11,7 @@ exit: Normal login and official registration available on web and Android; offic
 - Current seam: web Google CTA opens the official source login page, where its existing GIS One Tap can display on page load; after Google posts to the source callback, the app verifies the source session and closes the popup. Registration still uses the official Turnstile form.
 - Keep native Google unavailable with a clear reason until AnimeVietsub supports native OAuth/session handoff. Preserve restored extension transport and existing native player; no Vercel gateway.
 ## Execute
+- 2026-10-24T13:33Z: To reduce popup startup contention, preconnected to the current source origin and `accounts.google.com` when the login dialog mounts; changed source-session polling from every2s to every5s while auth is open. The popup still loads the source login page and its GIS scripts, so source-side load time remains outside app control.
 - 2026-10-24T13:22Z: Re-added a Google CTA that opens `/account/login/` on the source origin (needed for its existing GIS client); the page has `g_id_onload` and no explicit `data-auto_prompt=false`, so GIS One Tap defaults to enabled. The existing app poll calls source `Me()` and closes the window only after a verified signed-in user. This avoids hardcoding the ephemeral chooser URL or changing OAuth origin.
 - Attempted to reconnect Chrome MCP to verify the One Tap popup; Chrome no longer exposes `DevToolsActivePort`, so live UI/One Tap display was not verified. Popup callback+session were verified in the earlier real Chrome observation, not in this code path.
 - 2026-10-24T13:14Z: Added the official AnimeVietsub registration popup entry to the web login dialog; it preserves the source form/Turnstile and checks the source session before dismissing the app dialog. No app-side Google button remains: the user rejected opening AnimeVietsub login just to click Google, and the source's GIS client/callback is tied to its own origin.
@@ -28,6 +29,7 @@ exit: Normal login and official registration available on web and Android; offic
 - Retained independent session correctness fixes: fresh robust CSRF extraction, valid user markers, source-confirmed logout, challenge/network preservation, resume/focus recheck, race guard, per-user private query keys and cache disposal.
 - User supplied a Google GIS popup URL bound to source origin; examined parameters only, never opened/replayed or committed its per-attempt state. Official Google docs confirm callback/login-URI contract and unsupported Android WebView sign-in. No source-approved credential/session handoff has been demonstrated.
 ## Test
+- 2026-10-24T13:33Z: `pnpm typecheck` passed; `pnpm lint` passed (239 files); `git diff --check` passed. No live browser timing data available.
 - 2026-10-24T13:22Z: `pnpm typecheck` passed; `pnpm lint` passed (239 files); `git diff --check` passed.
 - 2026-10-24T13:14Z: `pnpm typecheck` passed; `pnpm lint` passed (239 files); `git diff --check` passed. No test suite run in this turn.
 - 16 new source/store/resume/cache tests passed; pnpm typecheck and pnpm lint passed (239 files).

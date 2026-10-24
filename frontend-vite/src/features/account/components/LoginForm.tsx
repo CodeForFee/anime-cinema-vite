@@ -31,6 +31,18 @@ export function LoginForm({ onCancel }: { onCancel?: () => void }) {
   onCancelRef.current = onCancel;
 
   useEffect(() => {
+    const links = [C_URL, "https://accounts.google.com"].map((url) => {
+      const link = document.createElement("link");
+      link.rel = "preconnect";
+      link.href = new URL(url).origin;
+      link.crossOrigin = "anonymous";
+      document.head.append(link);
+      return link;
+    });
+    return () => links.forEach((link) => link.remove());
+  }, []);
+
+  useEffect(() => {
     if (!sourceFlow) return;
     let active = true;
     let checking = false;
@@ -61,7 +73,7 @@ export function LoginForm({ onCancel }: { onCancel?: () => void }) {
       }
     };
 
-    const interval = window.setInterval(() => void checkSession(), 2000);
+    const interval = window.setInterval(() => void checkSession(), 5000);
     return () => {
       active = false;
       window.clearInterval(interval);

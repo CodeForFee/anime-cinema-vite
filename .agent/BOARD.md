@@ -56,6 +56,7 @@ One owner per file. If your scope overlaps an open row, do not edit â€” see
 ## Last 3 handoffs
 
 <!-- newest first, trimmed to three -->
+- 2026-10-24 gpt-6: Reduced popup startup contention with source/Google preconnects and 5s session polling (was2s); `pnpm typecheck`, lint, diff-check pass. Source page/GIS remains the main unmeasured load; Chrome MCP unavailable for timing. T-002 log 20261024T1333Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: Added source-origin Google One Tap popup handoff; source GIS prompt should appear on open and app closes popup only after verified source session. Typecheck/lint pass; current Chrome MCP reconnect could not find `DevToolsActivePort`, so live prompt/return remain unverified. Native Google still unsupported. T-002 log 20261024T1322Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: Added web registration popup + source-session polling; removed the rejected source-login detour for Google. Direct Google needs source origin/callback authorization; native Google/register remain blocked. `pnpm typecheck`, `pnpm lint`, `git diff --check` passed; latest Chrome MCP reconnect could not find `DevToolsActivePort`. T-002 log 20261024T1314Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-003 Chrome DevTools MCP installed globally/tested, current Chrome connected. User Google POST /login/google/ ->302; source signed-in + Capynime received user verified. Registration schema/Turnstile recorded in T-002; app Google/register UI still unimplemented, native handoff unproven. Sessions/hooks cleaned; log/20261024T1253Z-gpt-6-01a16bc1.md.
