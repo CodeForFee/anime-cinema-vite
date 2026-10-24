@@ -14,8 +14,8 @@
       "Gradle"
     ],
     "description": "Focused map of inspected Android build and source-account seams. Browser uses AVS Helper cookies; real source Google/browser session observed via Chrome MCP. Android uses Capacitor HTTP/WebView cookies; native Google handoff unproven. Vercel gateway removed at user request.",
-    "generatedAt": "2026-10-24T12:56:07.045Z",
-    "sha": "304fef1f9fd7e2da80d9a4f0dcd64690db992a47"
+    "generatedAt": "2026-10-24T13:16:32.183Z",
+    "sha": "a965743eed5aac810e131269b096b67610d1ea88"
   },
   "nodes": [
     {
@@ -140,21 +140,6 @@
         127
       ],
       "summary": "Header entry and login dialog; schedules session checks.",
-      "tags": [
-        "auth"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "file:frontend-vite/src/features/account/components/LoginForm.tsx",
-      "type": "file",
-      "name": "LoginForm.tsx",
-      "filePath": "frontend-vite/src/features/account/components/LoginForm.tsx",
-      "lineRange": [
-        1,
-        70
-      ],
-      "summary": "Normal source credentials form, validation and correct browser/native cookie-sharing explanation; no Google or registration completion claim.",
       "tags": [
         "auth"
       ],
@@ -295,6 +280,21 @@
         "docs"
       ],
       "complexity": "simple"
+    },
+    {
+      "id": "file:frontend-vite/src/features/account/components/LoginForm.tsx",
+      "type": "file",
+      "name": "LoginForm.tsx",
+      "filePath": "frontend-vite/src/features/account/components/LoginForm.tsx",
+      "lineRange": [
+        1,
+        163
+      ],
+      "summary": "Credentials login plus a web-only link to the official AnimeVietsub registration form; session return is verified. Direct Google is not integrated because the source callback is fixed to its own origin.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
     }
   ],
   "edges": [
