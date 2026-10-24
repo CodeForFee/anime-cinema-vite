@@ -14,8 +14,8 @@
       "Gradle"
     ],
     "description": "Focused map of inspected Android build and source-account seams. Browser uses AVS Helper cookies; real source Google/browser session observed via Chrome MCP. Android uses Capacitor HTTP/WebView cookies; native Google handoff unproven. Vercel gateway removed at user request.",
-    "generatedAt": "2026-10-24T13:23:06.855Z",
-    "sha": "525242d418295d428c2ea0277b58dcec3e618e24"
+    "generatedAt": "2026-10-24T13:34:22.362Z",
+    "sha": "b32cd76d28cc9fbefe1a139db1a6bb5af9f1a213"
   },
   "nodes": [
     {
@@ -288,9 +288,9 @@
       "filePath": "frontend-vite/src/features/account/components/LoginForm.tsx",
       "lineRange": [
         1,
-        181
+        193
       ],
-      "summary": "Credentials login and web-only source account actions. Google opens the official source page for its GIS One Tap; Capynime verifies the source session and closes the popup. Native Google handoff is not implemented.",
+      "summary": "Credentials login and web-only source account actions. Google opens the source GIS page; Capynime preconnects to the source/Google and verifies session before closing the popup. Native Google handoff is unavailable.",
       "tags": [
         "auth"
       ],
