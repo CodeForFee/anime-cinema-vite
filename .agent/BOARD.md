@@ -11,7 +11,6 @@ model. These rows are examples — replace them with the models this project act
 
 | model | tool | can | cost | use for |
 |---|---|---|---|---|
-| gpt-6 | frontend-vite/src/{features/account/**,platform/source-account*,core/source/endpoints/comments/fetch*}, frontend-vite/android/app/src/main/{AndroidManifest.xml,java/app/capynime/{MainActivity,SourceAccountPlugin,SourceAccountActivity}.java}, frontend-vite/docs/SOURCE-ACCOUNT.md, .agent/** | T-002 source account login/register and direct Google | 2026-10-24T12:06Z | released; independent session fixes verified, direct Google requires source owner; no opener/native Activity retained |
 | claude-opus-5 | claude-code | repo-wide, shell, plan | high | root cause, multi-file refactor, cutting seams |
 | claude-sonnet-5 | claude-code, cursor | repo-wide, shell | mid | scoped edits, tests, review passes |
 | codex-5.6-terra | codex | repo, shell | mid | mechanical passes, scripted repeats |
@@ -24,6 +23,8 @@ Route by capability first, then cheapest. Delete rows for models this project do
 
 | model | scope (file globs) | task | since (UTC) | status |
 |---|---|---|---|---|
+| gpt-6 | .agent/** | T-002 inspect source callback/registration contract after user proposes return via source | 2026-10-24T12:22Z | released; needs source-domain callback request + registration form; source requests HTTP403 |
+| gpt-6 | frontend-vite/src/{features/account/**,platform/source-account*,core/source/endpoints/comments/fetch*}, frontend-vite/android/app/src/main/{AndroidManifest.xml,java/app/capynime/{MainActivity,SourceAccountPlugin,SourceAccountActivity}.java}, frontend-vite/docs/SOURCE-ACCOUNT.md, .agent/** | T-002 source account login/register and direct Google | 2026-10-24T12:06Z | released; independent session fixes verified; no opener/native Activity retained |
 | gpt-6 | frontend-vite/{scripts/**,package.json,android/app/src/main/java/app/capynime/MainActivity.java}, .agent/** | fix debug JDK selection and release Java string compilation; preserve existing staged/unstaged work | 2026-10-24T11:37Z | done (released); debug + signed release/AAB built |
 | claude-opus-5-5 | frontend-vite/{api/proxy.ts,server/**,src/core/**,src/features/{comments,schedule,title,player}/**,src/app/**,SERVERLESS.md} | schedule/comments/account; revert to extension | 2026-10-24 | done |
 | claude-opus-5-5 | frontend-vite/{src/features/player/**,public/player-*.js,scripts/build-enhance.mjs,package.json,android/**/MainActivity.java}, avs-helper-extension/manifest-v3/{src/manifest.ts,scripts/prepare.ts} | player upscale (FSR1, Anime4K) + virtual surround | 2026-10-24 | done |
@@ -35,7 +36,7 @@ One owner per file. If your scope overlaps an open row, do not edit — see AGEN
 | id | title | owner | phase | file |
 |---|---|---|---|---|
 | T-001 | fix Android debug/release build | gpt-6 | done | tasks/T-001-android-build.md |
-| T-002 | source account authentication on web/Android | gpt-6 | blocked (needs-owner) | tasks/T-002-source-account.md |
+| T-002 | source account authentication on web/Android | gpt-6 | blocked (needs-evidence) | tasks/T-002-source-account.md |
 
 ## Bugs
 
@@ -53,5 +54,6 @@ One owner per file. If your scope overlaps an open row, do not edit — see AGEN
 ## Last 3 handoffs
 
 <!-- newest first, trimmed to three -->
+- 2026-10-24 gpt-6: T-002 follow-up needs-evidence; source login/register HTTP403 and no connected browser. Supplied /gsi/log is a Google event, not source callback; pending source POST URL/method/field names + registration link/form names. No application code changed; log/20261024T1223Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-002 partial; 16 auth/session/cache tests pass, typecheck/lint pass, debug APK built; 3 existing suite failures. User rejected source-tab login; direct Google + registration not done. Source OAuth/session handoff requires source owner; docs/SOURCE-ACCOUNT.md and log/20261024T1215Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: APK fix T-001 done; shared JDK21 selection, Java string corrected, release regenerates enhancement; 4 tests pass, debug and signed release/AAB build; version stays 2.0.20. Existing dirty index/user features preserved; see log/20261024T1137Z-gpt-6-android-build.md.
