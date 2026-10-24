@@ -1,13 +1,13 @@
-# Board — anime-cinema-vite
+﻿# Board â€” anime-cinema-vite
 
 One screen. Current truth. Rewritten often. Read this before you edit anything.
 
-**Sprint:** none — `godkit sprint new "<goal>"` opens one
+**Sprint:** none â€” `godkit sprint new "<goal>"` opens one
 
 ## Roster
 
 Name the **model**, not the tool. One tool runs many models, and cost and capability belong to the
-model. These rows are examples — replace them with the models this project actually uses.
+model. These rows are examples â€” replace them with the models this project actually uses.
 
 | model | tool | can | cost | use for |
 |---|---|---|---|---|
@@ -15,7 +15,7 @@ model. These rows are examples — replace them with the models this project act
 | claude-sonnet-5 | claude-code, cursor | repo-wide, shell | mid | scoped edits, tests, review passes |
 | codex-5.6-terra | codex | repo, shell | mid | mechanical passes, scripted repeats |
 | gemini-3.8-flash | antigravity | repo, browser | low | UI work, verification against a running app |
-| commands | — | rg, test suite, tsc | free | every "does X / did it pass" question |
+| commands | â€” | rg, test suite, tsc | free | every "does X / did it pass" question |
 
 Route by capability first, then cheapest. Delete rows for models this project does not use.
 
@@ -30,14 +30,14 @@ Route by capability first, then cheapest. Delete rows for models this project do
 | claude-opus-5-5 | frontend-vite/{api/proxy.ts,server/**,src/core/**,src/features/{comments,schedule,title,player}/**,src/app/**,SERVERLESS.md} | schedule/comments/account; revert to extension | 2026-10-24 | done |
 | claude-opus-5-5 | frontend-vite/{src/features/player/**,public/player-*.js,scripts/build-enhance.mjs,package.json,android/**/MainActivity.java}, avs-helper-extension/manifest-v3/{src/manifest.ts,scripts/prepare.ts} | player upscale (FSR1, Anime4K) + virtual surround | 2026-10-24 | done |
 
-One owner per file. If your scope overlaps an open row, do not edit — see AGENTS.md.
+One owner per file. If your scope overlaps an open row, do not edit â€” see AGENTS.md.
 
 ## Tasks
 
 | id | title | owner | phase | file |
 |---|---|---|---|---|
 | T-001 | fix Android debug/release build | gpt-6 | done | tasks/T-001-android-build.md |
-| T-002 | source account authentication on web/Android | gpt-6 | blocked (needs-evidence) | tasks/T-002-source-account.md |
+| T-002 | source account authentication on web/Android | gpt-6 | blocked (external-wait: source Google/native handoff) | tasks/T-002-source-account.md |
 | T-003 | connect existing Chrome with MCP | gpt-6 | done | tasks/T-003-chrome-mcp.md |
 
 ## Bugs
@@ -51,11 +51,12 @@ One owner per file. If your scope overlaps an open row, do not edit — see AGEN
 ## Decisions
 
 <!-- One line each: date, what was decided, why, who. These bind the next agent. -->
-- 2026-10-24: Vercel gateway (api/, server/, web-transport) removed at the user's request; the web app needs the AVS Helper extension again (requests carry the browser's own AnimeVietsub cookies, so its login is shared). Backup of the gateway state: `git stash list` -> "backup before reverting Vercel gateway" — claude-opus-5-5
+- 2026-10-24: Vercel gateway (api/, server/, web-transport) removed at the user's request; the web app needs the AVS Helper extension again (requests carry the browser's own AnimeVietsub cookies, so its login is shared). Backup of the gateway state: `git stash list` -> "backup before reverting Vercel gateway" â€” claude-opus-5-5
 
 ## Last 3 handoffs
 
 <!-- newest first, trimmed to three -->
+- 2026-10-24 gpt-6: Added web registration popup + source-session polling; removed the rejected source-login detour for Google. Direct Google needs source origin/callback authorization; native Google/register remain blocked. `pnpm typecheck`, `pnpm lint`, `git diff --check` passed; latest Chrome MCP reconnect could not find `DevToolsActivePort`. T-002 log 20261024T1314Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-003 Chrome DevTools MCP installed globally/tested, current Chrome connected. User Google POST /login/google/ ->302; source signed-in + Capynime received user verified. Registration schema/Turnstile recorded in T-002; app Google/register UI still unimplemented, native handoff unproven. Sessions/hooks cleaned; log/20261024T1253Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-002 follow-up needs-evidence; source login/register HTTP403 and no connected browser. Supplied /gsi/log is a Google event, not source callback; pending source POST URL/method/field names + registration link/form names. No application code changed; log/20261024T1223Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-002 partial; 16 auth/session/cache tests pass, typecheck/lint pass, debug APK built; 3 existing suite failures. User rejected source-tab login; direct Google + registration not done. Source OAuth/session handoff requires source owner; docs/SOURCE-ACCOUNT.md and log/20261024T1215Z-gpt-6-01a16bc1.md.

@@ -1,7 +1,9 @@
-import { LogIn } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { LogIn, UserRoundPlus } from "lucide-react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
-import { useSourceUser } from "@/features/account/store";
+import { C_URL } from "@/core/source/hosts";
+import { syncSourceUser, useSourceUser } from "@/features/account/store";
 import { isNativeApp } from "@/platform/transport";
 
 export const FIELD =
@@ -9,11 +11,81 @@ export const FIELD =
 export const PRIMARY =
   "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-bold text-black shadow-lg transition hover:bg-white/90 active:scale-95 disabled:opacity-50";
 
-/** Sign in with an AnimeVietsub account; only md5(password) leaves the device, like the source's own form */
+type SourceFlow = "register";
+
+function sourceAccountUrl() {
+  const url = new URL("/account/register/", C_URL);
+  url.searchParams.set("_fxRef", window.location.origin);
+  return url.toString();
+}
+
+/** Sign in with AnimeVietsub credentials or open its official registration page on web. */
 export function LoginForm({ onCancel }: { onCancel?: () => void }) {
   const { login } = useSourceUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [sourceFlow, setSourceFlow] = useState<SourceFlow | null>(null);
+  const [flowMessage, setFlowMessage] = useState("");
+  const popup = useRef<Window | null>(null);
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+
+  useEffect(() => {
+    if (!sourceFlow) return;
+    let active = true;
+    let checking = false;
+
+    const checkSession = async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        const user = await syncSourceUser(true);
+        if (active && user) {
+          popup.current?.close();
+          popup.current = null;
+          setSourceFlow(null);
+          setFlowMessage("");
+          onCancelRef.current?.();
+        } else if (active && popup.current?.closed) {
+          setSourceFlow(null);
+          setFlowMessage("Chưa xác nhận được phiên. Hãy kiểm tra đăng nhập rồi thử lại.");
+        }
+      } catch {
+        // The source request may fail while AVS Helper is unavailable; that is not a sign-out.
+        if (active && popup.current?.closed) {
+          setSourceFlow(null);
+          setFlowMessage("Chưa xác nhận được phiên. Hãy kiểm tra đăng nhập rồi thử lại.");
+        }
+      } finally {
+        checking = false;
+      }
+    };
+
+    const interval = window.setInterval(() => void checkSession(), 2000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      popup.current?.close();
+      popup.current = null;
+    };
+  }, [sourceFlow]);
+
+  const openSourcePage = () => {
+    const url = sourceAccountUrl();
+    const opened = window.open(
+      url,
+      "capynime-source-account",
+      "popup=yes,width=520,height=720,resizable=yes,scrollbars=yes",
+    );
+    if (!opened) {
+      setFlowMessage("Trình duyệt đã chặn cửa sổ đăng nhập. Hãy cho phép popup rồi thử lại.");
+      return;
+    }
+    popup.current = opened;
+    opened.focus();
+    setFlowMessage("Hoàn tất đăng ký ở cửa sổ AnimeVietsub; Capynime sẽ tự nhận phiên nếu nguồn đăng nhập tài khoản.");
+    setSourceFlow("register");
+  };
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -21,49 +93,70 @@ export function LoginForm({ onCancel }: { onCancel?: () => void }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-3">
-      <input
-        className={FIELD}
-        autoComplete="username"
-        required
-        disabled={login.isPending}
-        placeholder="Email hoặc tên đăng nhập"
-        aria-label="Email hoặc tên đăng nhập"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        className={FIELD}
-        type="password"
-        required
-        disabled={login.isPending}
-        autoComplete="current-password"
-        placeholder="Mật khẩu"
-        aria-label="Mật khẩu"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      {login.error && (
-        <p role="alert" className="text-xs text-red-400">
-          {login.error.message}
-        </p>
-      )}
-      <div className="flex justify-end gap-2 pt-1">
-        {onCancel && (
-          <button type="button" disabled={login.isPending} onClick={onCancel} className="glass-pill h-10 rounded-full px-4 text-sm font-semibold text-gray-200">
-            Huỷ
+    <div className="space-y-4">
+      {!isNativeApp && (
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={openSourcePage}
+            disabled={Boolean(sourceFlow)}
+            className="glass-pill flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-gray-200 transition hover:bg-white/10 disabled:opacity-50"
+          >
+            <UserRoundPlus aria-hidden className="h-4 w-4" />
+            Tạo tài khoản AnimeVietsub
           </button>
+          {flowMessage && (
+            <p role="status" className="text-center text-xs leading-relaxed text-gray-400">
+              {flowMessage}
+            </p>
+          )}
+        </div>
+      )}
+
+      <form onSubmit={submit} className="space-y-3">
+        <input
+          className={FIELD}
+          autoComplete="username"
+          required
+          disabled={login.isPending}
+          placeholder="Email hoặc tên đăng nhập"
+          aria-label="Email hoặc tên đăng nhập"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          className={FIELD}
+          type="password"
+          required
+          disabled={login.isPending}
+          autoComplete="current-password"
+          placeholder="Mật khẩu"
+          aria-label="Mật khẩu"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {login.error && (
+          <p role="alert" className="text-xs text-red-400">
+            {login.error.message}
+          </p>
         )}
-        <button type="submit" disabled={login.isPending} className={PRIMARY}>
-          <LogIn aria-hidden className="h-4 w-4" />
-          {login.isPending ? "Đang đăng nhập..." : "Đăng nhập"}
-        </button>
-      </div>
-      <p className="text-xs leading-relaxed text-gray-500">
-        {isNativeApp
-          ? "Dùng email hoặc tên đăng nhập và mật khẩu của AnimeVietsub. Phiên đăng nhập Chrome không tự chuyển vào APK."
-          : "Đã đăng nhập AnimeVietsub trong cùng trình duyệt? AVS Helper dùng phiên đó; ứng dụng kiểm tra lại khi bạn quay về."}
-      </p>
-    </form>
+        <div className="flex justify-end gap-2 pt-1">
+          {onCancel && (
+            <button type="button" disabled={login.isPending} onClick={onCancel} className="glass-pill h-10 rounded-full px-4 text-sm font-semibold text-gray-200">
+              Huỷ
+            </button>
+          )}
+          <button type="submit" disabled={login.isPending} className={PRIMARY}>
+            <LogIn aria-hidden className="h-4 w-4" />
+            {login.isPending ? "Đang đăng nhập..." : "Đăng nhập"}
+          </button>
+        </div>
+        {isNativeApp && (
+          <p className="text-xs leading-relaxed text-gray-500">
+            APK hiện đăng nhập bằng email hoặc tên đăng nhập và mật khẩu AnimeVietsub. Nguồn chưa cung cấp luồng Google chuyển phiên vào ứng dụng; Chrome và APK dùng kho phiên riêng.
+          </p>
+        )}
+      </form>
+    </div>
   );
 }
