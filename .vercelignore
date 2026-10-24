@@ -1,4 +1,5 @@
 avs-helper-extension/
+.vercel/
 frontend-vite/android/
 frontend-vite/release/
 frontend-vite/assets/
