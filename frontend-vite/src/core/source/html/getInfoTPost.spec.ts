@@ -1,7 +1,7 @@
-import { load } from "cheerio/slim"
-import { describe, expect, test } from "vitest"
+import { load } from "cheerio/slim";
+import { describe, expect, test } from "vitest";
 
-import { getInfoTPost } from "@/core/source/html/getInfoTPost"
+import { getInfoTPost } from "@/core/source/html/getInfoTPost";
 
 describe("getInfoTPost", () => {
   test("simple", () => {
@@ -14,10 +14,10 @@ describe("getInfoTPost", () => {
     </div>
     <div class="Title">Yofukashi no Uta</div>
     </a>
-    </div>`)
-    $("div")
+    </div>`);
+    $("div");
     expect(
-      JSON.parse(JSON.stringify(getInfoTPost($("div"), Date.now())))
+      JSON.parse(JSON.stringify(getInfoTPost($("div"), Date.now()))),
     ).toEqual({
       path: "/phim/call-of-the-night-a4536/",
       image:
@@ -29,9 +29,9 @@ describe("getInfoTPost", () => {
       description: "",
       process: "",
       quality: "",
-      year: null
-    })
-  })
+      year: null,
+    });
+  });
   test("full", () => {
     const $ =
       load(`<article id="post-3396" class="TPost C post-3396 post type-post status-publish format-standard has-post-thumbnail hentry">
@@ -52,9 +52,9 @@ describe("getInfoTPost", () => {
     <p class="Actors AAIco-person"><span>Diễn viên:</span> </p><div class="alert alert-warning">Nhân vật đang được cập nhật</div> <i class="Button STPa AAIco-more_horiz"></i><p></p>
     </div>
     </div>
-    </article>`)
+    </article>`);
     expect(
-      JSON.parse(JSON.stringify(getInfoTPost($("article"), Date.now())))
+      JSON.parse(JSON.stringify(getInfoTPost($("article"), Date.now()))),
     ).toEqual({
       path: "/phim/linh-kiem-ton-a3396/",
       image:
@@ -71,10 +71,10 @@ describe("getInfoTPost", () => {
       studio: "Soyep",
       genre: [
         { path: "/the-loai/phep-thuat/", name: "Fantasy" },
-        { path: "/the-loai/hanh-dong/", name: "Action" }
-      ]
-    })
-  })
+        { path: "/the-loai/hanh-dong/", name: "Action" },
+      ],
+    });
+  });
   test("countdown", () => {
     const $ =
       load(`<article id="post-4418" class="TPost C post-4418 post type-post status-publish format-standard has-post-thumbnail hentry">
@@ -95,11 +95,13 @@ describe("getInfoTPost", () => {
     <p class="Actors AAIco-person"><span>Diễn viên:</span> </p><div class="alert alert-warning">Nhân vật đang được cập nhật</div> <i class="Button STPa AAIco-more_horiz"></i><p></p>
     </div>
     </div>
-    </article>`)
+    </article>`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let tmp: any
+    let tmp: any;
     expect(
-      JSON.parse(JSON.stringify((tmp = getInfoTPost($("article"), Date.now()))))
+      JSON.parse(
+        JSON.stringify((tmp = getInfoTPost($("article"), Date.now()))),
+      ),
     ).toEqual({
       path: "/phim/detective-conan-movie-25-halloween-no-hanayome-a4418/",
       image:
@@ -121,11 +123,11 @@ describe("getInfoTPost", () => {
         { path: "/the-loai/drama/", name: "Drama" },
         { path: "/the-loai/hai-huoc/", name: "Comedy" },
         { path: "/the-loai/mystery/", name: "Mystery" },
-        { path: "/the-loai/hanh-dong/", name: "Action" }
+        { path: "/the-loai/hanh-dong/", name: "Action" },
       ],
-      time_release: tmp.time_release
-    })
-  })
+      time_release: tmp.time_release,
+    });
+  });
   test("countdown not absolute", () => {
     const $ =
       load(`<article id="post-4418" class="TPost C post-4418 post type-post status-publish format-standard has-post-thumbnail hentry">
@@ -146,9 +148,9 @@ describe("getInfoTPost", () => {
     <p class="Actors AAIco-person"><span>Diễn viên:</span> </p><div class="alert alert-warning">Nhân vật đang được cập nhật</div> <i class="Button STPa AAIco-more_horiz"></i><p></p>
     </div>
     </div>
-    </article>`)
+    </article>`);
     expect(
-      JSON.parse(JSON.stringify(getInfoTPost($("article"), Date.now())))
+      JSON.parse(JSON.stringify(getInfoTPost($("article"), Date.now()))),
     ).toEqual({
       path: "/phim/detective-conan-movie-25-halloween-no-hanayome-a4418/",
       image:
@@ -170,9 +172,9 @@ describe("getInfoTPost", () => {
         { path: "/the-loai/drama/", name: "Drama" },
         { path: "/the-loai/hai-huoc/", name: "Comedy" },
         { path: "/the-loai/mystery/", name: "Mystery" },
-        { path: "/the-loai/hanh-dong/", name: "Action" }
+        { path: "/the-loai/hanh-dong/", name: "Action" },
       ],
-      time_release: null
-    })
-  })
-})
+      time_release: null,
+    });
+  });
+});

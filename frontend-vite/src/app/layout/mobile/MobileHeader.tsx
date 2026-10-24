@@ -1,26 +1,27 @@
-import { Search, X } from "lucide-react"
-import { useEffect } from "react"
+import { Search, X } from "lucide-react";
+import { useEffect } from "react";
 
-import { Brand, HeaderBar } from "@/app/layout/components/Brand"
-import { SearchResults } from "@/app/layout/components/SearchResults"
-import { useSearchBox } from "@/app/layout/hooks/use-search-box"
-import { Button } from "@/shared/ui/button"
-import { Input } from "@/shared/ui/input"
+import { Brand, HeaderBar } from "@/app/layout/components/Brand";
+import { SearchResults } from "@/app/layout/components/SearchResults";
+import { useSearchBox } from "@/app/layout/hooks/use-search-box";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
 
-const ICON_BUTTON = "h-9 w-9 rounded-full text-gray-300 transition-colors hover:bg-white/10 hover:text-white [&_svg]:size-5"
+const ICON_BUTTON =
+  "h-9 w-9 rounded-full text-gray-300 transition-colors hover:bg-white/10 hover:text-white [&_svg]:size-5";
 
 /**
  * Mobile: the name and a search icon. The icon opens search as a spotlight popup near the top of the screen over
  * a dimmed page (a dense tint, no blur to redo while results scroll); tapping the dimmed part closes it.
  */
 export function MobileHeader() {
-  const box = useSearchBox()
+  const box = useSearchBox();
 
   // while the popup is open the tab bar hides and the page stops scrolling (globals.css html[data-search])
   useEffect(() => {
-    document.documentElement.toggleAttribute("data-search", box.isOpen)
-    return () => document.documentElement.removeAttribute("data-search")
-  }, [box.isOpen])
+    document.documentElement.toggleAttribute("data-search", box.isOpen);
+    return () => document.documentElement.removeAttribute("data-search");
+  }, [box.isOpen]);
 
   return (
     <HeaderBar>
@@ -58,9 +59,15 @@ export function MobileHeader() {
           </Button>
         </form>
       )}
-      <Button variant="unstyled" size="unstyled" aria-label="Tìm kiếm" onClick={box.open} className={ICON_BUTTON}>
+      <Button
+        variant="unstyled"
+        size="unstyled"
+        aria-label="Tìm kiếm"
+        onClick={box.open}
+        className={ICON_BUTTON}
+      >
         <Search className="w-4 h-4" />
       </Button>
     </HeaderBar>
-  )
+  );
 }

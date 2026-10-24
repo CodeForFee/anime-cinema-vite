@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
 import { m, AnimatePresence } from "framer-motion";
@@ -16,43 +15,60 @@ interface TabsContextValue {
   scheduleUpdateIndicator: () => void;
   indicatorStyle: React.CSSProperties;
   mounted: boolean;
-  registerTabTrigger: (value: string, element: HTMLButtonElement | null) => void;
+  registerTabTrigger: (
+    value: string,
+    element: HTMLButtonElement | null,
+  ) => void;
   registerTabsList: (element: HTMLDivElement | null) => void;
 }
 
 const TabsContext = React.createContext<TabsContextValue>({
   value: "",
-  onValueChange: () => { },
-  updateIndicator: () => { },
-  scheduleUpdateIndicator: () => { },
+  onValueChange: () => {},
+  updateIndicator: () => {},
+  scheduleUpdateIndicator: () => {},
   indicatorStyle: {},
   mounted: false,
-  registerTabTrigger: () => { },
-  registerTabsList: () => { },
+  registerTabTrigger: () => {},
+  registerTabsList: () => {},
 });
 
 const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
-  ({ className, defaultValue, value, onValueChange, children, ...props }, ref) => {
-    const [internalValue, setInternalValue] = React.useState(defaultValue || "");
-    const [indicatorStyle, setIndicatorStyle] = React.useState<React.CSSProperties>({});
+  (
+    { className, defaultValue, value, onValueChange, children, ...props },
+    ref,
+  ) => {
+    const [internalValue, setInternalValue] = React.useState(
+      defaultValue || "",
+    );
+    const [indicatorStyle, setIndicatorStyle] =
+      React.useState<React.CSSProperties>({});
     const [mounted, setMounted] = React.useState(false);
     const tabsListRef = React.useRef<HTMLDivElement | null>(null);
-    const tabTriggerRefs = React.useRef(new Map<string, HTMLButtonElement | null>());
+    const tabTriggerRefs = React.useRef(
+      new Map<string, HTMLButtonElement | null>(),
+    );
 
     const controlled = value !== undefined;
     const currentValue = controlled ? value : internalValue;
 
-    const registerTabsList = React.useCallback((element: HTMLDivElement | null) => {
-      tabsListRef.current = element;
-    }, []);
+    const registerTabsList = React.useCallback(
+      (element: HTMLDivElement | null) => {
+        tabsListRef.current = element;
+      },
+      [],
+    );
 
-    const registerTabTrigger = React.useCallback((value: string, element: HTMLButtonElement | null) => {
-      if (element) {
-        tabTriggerRefs.current.set(value, element);
-      } else {
-        tabTriggerRefs.current.delete(value);
-      }
-    }, []);
+    const registerTabTrigger = React.useCallback(
+      (value: string, element: HTMLButtonElement | null) => {
+        if (element) {
+          tabTriggerRefs.current.set(value, element);
+        } else {
+          tabTriggerRefs.current.delete(value);
+        }
+      },
+      [],
+    );
 
     const updateIndicator = React.useCallback(() => {
       if (tabsListRef.current && currentValue) {
@@ -83,7 +99,8 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
       // Schedule update after paint so dimensions are correct even inside popovers/dialogs
       scheduleUpdateIndicator();
       window.addEventListener("resize", scheduleUpdateIndicator);
-      return () => window.removeEventListener("resize", scheduleUpdateIndicator);
+      return () =>
+        window.removeEventListener("resize", scheduleUpdateIndicator);
     }, [scheduleUpdateIndicator]);
 
     // Watch for when the tabs list becomes visible in the DOM
@@ -98,7 +115,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
             scheduleUpdateIndicator();
           }
         },
-        { threshold: 0.1 }
+        { threshold: 0.1 },
       );
       observer.observe(listEl);
       return () => observer.disconnect();
@@ -109,7 +126,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
         if (!controlled) setInternalValue(newValue);
         onValueChange?.(newValue);
       },
-      [controlled, onValueChange]
+      [controlled, onValueChange],
     );
 
     return (
@@ -130,56 +147,63 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
         </div>
       </TabsContext.Provider>
     );
-  }
+  },
 );
 Tabs.displayName = "Tabs";
 
-const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => {
-    const { indicatorStyle, registerTabsList, mounted } = React.useContext(TabsContext);
+const TabsList = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { indicatorStyle, registerTabsList, mounted } =
+    React.useContext(TabsContext);
 
-    return (
-      <div
-        ref={(el) => {
-          if (typeof ref === "function") ref(el);
-          else if (ref) ref.current = el;
-          registerTabsList(el);
-        }}
-        className={cn(
-          `relative inline-flex h-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 p-0.5 text-neutral-900 dark:text-neutral-100`,
-          `[.lw-3d_&]:bg-gradient-to-b [.lw-3d_&]:from-zinc-200 [.lw-3d_&]:to-zinc-100 dark:[.lw-3d_&]:from-zinc-900 dark:[.lw-3d_&]:to-zinc-950`,
-          `[.lw-3d_&]:shadow-[inset_0_2px_4px_rgba(0,0,0,0.12),0_1px_0_rgba(255,255,255,0.6)] dark:[.lw-3d_&]:shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)]`,
-          `[.lw-3d_&]:border-black/15 dark:[.lw-3d_&]:border-white/15`,
-          className
-        )}
-        {...props}
-      >
-        {mounted && (
-          <m.div
-            layout
-            className="tabs-bg-indicator absolute top-0.5 bottom-0.5 rounded-full bg-neutral-900 dark:bg-white [.lw-3d_&]:bg-gradient-to-b [.lw-3d_&]:from-zinc-800 [.lw-3d_&]:to-zinc-950 dark:[.lw-3d_&]:from-white dark:[.lw-3d_&]:to-zinc-200 [.lw-3d_&]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_3px_6px_-1px_rgba(0,0,0,0.3)] dark:[.lw-3d_&]:shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.8),0_3px_6px_-1px_rgba(0,0,0,0.4)]"
-            style={{
-              ...indicatorStyle,
-              position: "absolute",
-              borderRadius: "9999px",
-              zIndex: 0,
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          />
-        )}
-        {props.children}
-      </div>
-    );
-  }
-);
+  return (
+    <div
+      ref={(el) => {
+        if (typeof ref === "function") ref(el);
+        else if (ref) ref.current = el;
+        registerTabsList(el);
+      }}
+      className={cn(
+        `relative inline-flex h-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 p-0.5 text-neutral-900 dark:text-neutral-100`,
+        `[.lw-3d_&]:bg-gradient-to-b [.lw-3d_&]:from-zinc-200 [.lw-3d_&]:to-zinc-100 dark:[.lw-3d_&]:from-zinc-900 dark:[.lw-3d_&]:to-zinc-950`,
+        `[.lw-3d_&]:shadow-[inset_0_2px_4px_rgba(0,0,0,0.12),0_1px_0_rgba(255,255,255,0.6)] dark:[.lw-3d_&]:shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)]`,
+        `[.lw-3d_&]:border-black/15 dark:[.lw-3d_&]:border-white/15`,
+        className,
+      )}
+      {...props}
+    >
+      {mounted && (
+        <m.div
+          layout
+          className="tabs-bg-indicator absolute top-0.5 bottom-0.5 rounded-full bg-neutral-900 dark:bg-white [.lw-3d_&]:bg-gradient-to-b [.lw-3d_&]:from-zinc-800 [.lw-3d_&]:to-zinc-950 dark:[.lw-3d_&]:from-white dark:[.lw-3d_&]:to-zinc-200 [.lw-3d_&]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),0_3px_6px_-1px_rgba(0,0,0,0.3)] dark:[.lw-3d_&]:shadow-[inset_0_1.5px_0_0_rgba(255,255,255,0.8),0_3px_6px_-1px_rgba(0,0,0,0.4)]"
+          style={{
+            ...indicatorStyle,
+            position: "absolute",
+            borderRadius: "9999px",
+            zIndex: 0,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+      )}
+      {props.children}
+    </div>
+  );
+});
 TabsList.displayName = "TabsList";
 
 const TabsTrigger = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & { value: string }
 >(({ className, value, ...props }, ref) => {
-  const { value: selectedValue, onValueChange, registerTabTrigger, updateIndicator, scheduleUpdateIndicator } =
-    React.useContext(TabsContext);
+  const {
+    value: selectedValue,
+    onValueChange,
+    registerTabTrigger,
+    updateIndicator,
+    scheduleUpdateIndicator,
+  } = React.useContext(TabsContext);
   const isActive = selectedValue === value;
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
 
@@ -213,7 +237,7 @@ const TabsTrigger = React.forwardRef<
         isActive
           ? "text-white dark:text-neutral-950 font-bold"
           : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white font-semibold",
-        className
+        className,
       )}
       onClick={(e) => {
         onValueChange(value);
@@ -229,7 +253,8 @@ const TabsContent = React.forwardRef<
   HTMLDivElement,
   { value: string } & React.ComponentPropsWithoutRef<"div">
 >(({ className, value, ...props }, ref) => {
-  const { value: selectedValue, updateIndicator } = React.useContext(TabsContext);
+  const { value: selectedValue, updateIndicator } =
+    React.useContext(TabsContext);
   const isActive = selectedValue === value;
   const contentRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -263,7 +288,7 @@ const TabsContent = React.forwardRef<
             `mt-2 ring-offset-background focus-visible:outline-none  
              focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 
              mx-auto w-full`,
-            className
+            className,
           )}
           style={{
             scrollbarWidth: "none",

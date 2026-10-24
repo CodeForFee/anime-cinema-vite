@@ -1,37 +1,43 @@
-import type { QueryClient } from "@tanstack/react-query"
+import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
   type ErrorComponentProps,
   lazyRouteComponent,
-  useRouter
-} from "@tanstack/react-router"
-import { CircleAlert, RotateCw } from "lucide-react"
+  useRouter,
+} from "@tanstack/react-router";
+import { CircleAlert, RotateCw } from "lucide-react";
 
-import { AppShell } from "@/app/AppShell"
-import { NotFoundPage } from "@/app/NotFoundPage"
-import { queryClient } from "@/app/query-client"
-import { navKind } from "@/app/routes"
-import { pickEpisode } from "@/core/player/pick-episode"
-import { detailQuery, searchQuery, streamQuery } from "@/core/queries"
-import { useHistoryStore } from "@/core/stores/history"
-import { preconnectPlayer } from "@/platform/preconnect"
-import { isMobile } from "@/shared/lib/form-factor"
-import { HomeSkeleton, PosterGridSkeleton } from "@/shared/ui/skeletons"
+import { AppShell } from "@/app/AppShell";
+import { NotFoundPage } from "@/app/NotFoundPage";
+import { queryClient } from "@/app/query-client";
+import { navKind } from "@/app/routes";
+import { pickEpisode } from "@/core/player/pick-episode";
+import { detailQuery, searchQuery, streamQuery } from "@/core/queries";
+import { useHistoryStore } from "@/core/stores/history";
+import { preconnectPlayer } from "@/platform/preconnect";
+import { isMobile } from "@/shared/lib/form-factor";
+import { HomeSkeleton, PosterGridSkeleton } from "@/shared/ui/skeletons";
 
 // ---- search params: plain ?key=value, so old links and history entries keep working ------------------------
 
 const text = (value: unknown) =>
-  typeof value === "string" && value !== "" ? value : typeof value === "number" ? String(value) : undefined
+  typeof value === "string" && value !== ""
+    ? value
+    : typeof value === "number"
+      ? String(value)
+      : undefined;
 
-const parseSearch = (search: string) => Object.fromEntries(new URLSearchParams(search))
+const parseSearch = (search: string) =>
+  Object.fromEntries(new URLSearchParams(search));
 const stringifySearch = (search: Record<string, unknown>) => {
-  const params = new URLSearchParams()
-  for (const [key, value] of Object.entries(search)) if (value !== undefined && value !== "") params.set(key, String(value))
-  const query = params.toString()
-  return query ? `?${query}` : ""
-}
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(search))
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  const query = params.toString();
+  return query ? `?${query}` : "";
+};
 
 // ---- data first: a page's data starts loading on the tap, alongside its chunk --------------------------------
 
@@ -40,24 +46,37 @@ const stringifySearch = (search: Record<string, unknown>) => {
  * skeleton. Never on a preload: touching a card while scrolling a list must not start requests to the source.
  */
 async function prefetchWatch(client: QueryClient, slug: string, ep?: string) {
-  preconnectPlayer()
-  const detail = await client.fetchQuery(detailQuery(slug)).catch(() => undefined)
-  const episode = pickEpisode(detail?.data.episodes ?? [], ep, useHistoryStore.getState().getAnimeHistory(slug)?.episodeSlug)
-  if (episode?.hash && episode.id) void client.prefetchQuery(streamQuery(episode.hash, episode.id, episode.play || "api"))
+  preconnectPlayer();
+  const detail = await client
+    .fetchQuery(detailQuery(slug))
+    .catch(() => undefined);
+  const episode = pickEpisode(
+    detail?.data.episodes ?? [],
+    ep,
+    useHistoryStore.getState().getAnimeHistory(slug)?.episodeSlug,
+  );
+  if (episode?.hash && episode.id)
+    void client.prefetchQuery(
+      streamQuery(episode.hash, episode.id, episode.play || "api"),
+    );
 }
 
 function RouteError({ error, reset }: ErrorComponentProps) {
-  const router = useRouter()
+  const router = useRouter();
   return (
     <div className="mx-auto my-20 max-w-xl space-y-4 rounded-3xl border border-white/10 bg-[#10121A] p-8 text-center">
       <CircleAlert className="mx-auto h-14 w-14 text-primaryRed" aria-hidden />
       <h2 className="text-xl font-bold text-white">Trang này chưa tải được</h2>
-      <p className="text-sm text-gray-400">{error instanceof Error ? error.message : "Kiểm tra kết nối rồi thử lại."}</p>
+      <p className="text-sm text-gray-400">
+        {error instanceof Error
+          ? error.message
+          : "Kiểm tra kết nối rồi thử lại."}
+      </p>
       <button
         type="button"
         onClick={() => {
-          reset()
-          void router.invalidate()
+          reset();
+          void router.invalidate();
         }}
         className="inline-flex h-10 items-center gap-2 rounded-full bg-white px-6 font-semibold text-black"
       >
@@ -65,73 +84,90 @@ function RouteError({ error, reset }: ErrorComponentProps) {
         Thử lại
       </button>
     </div>
-  )
+  );
 }
 
 // ---- routes ----------------------------------------------------------------------------------------------------
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: AppShell,
-  notFoundComponent: NotFoundPage
-})
+  notFoundComponent: NotFoundPage,
+});
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: lazyRouteComponent(() => import("@/features/home/HomePage")),
-  pendingComponent: HomeSkeleton
-})
+  pendingComponent: HomeSkeleton,
+});
 
 const exploreRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/explore",
-  validateSearch: (search: Record<string, unknown>): { path?: string; type?: string } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { path?: string; type?: string } => ({
     path: text(search.path),
-    type: text(search.type)
+    type: text(search.type),
   }),
   component: lazyRouteComponent(() => import("@/features/browse/ExplorePage")),
-  pendingComponent: () => <PosterGridSkeleton />
-})
+  pendingComponent: () => <PosterGridSkeleton />,
+});
 
 const searchRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/search",
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({ q: text(search.q) }),
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+    q: text(search.q),
+  }),
   loaderDeps: ({ search }) => ({ q: search.q }),
   loader: ({ context, deps, preload }) => {
-    if (!preload && deps.q) void context.queryClient.prefetchQuery(searchQuery(deps.q))
+    if (!preload && deps.q)
+      void context.queryClient.prefetchQuery(searchQuery(deps.q));
   },
   component: lazyRouteComponent(() => import("@/features/browse/SearchPage")),
-  pendingComponent: () => <PosterGridSkeleton />
-})
+  pendingComponent: () => <PosterGridSkeleton />,
+});
 
 const watchRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/watch",
-  validateSearch: (search: Record<string, unknown>): { slug: string; ep?: string } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { slug: string; ep?: string } => ({
     slug: text(search.slug) ?? "",
-    ep: text(search.ep)
+    ep: text(search.ep),
   }),
   loaderDeps: ({ search }) => ({ slug: search.slug, ep: search.ep }),
   loader: ({ context, deps, preload }) => {
-    if (!preload && deps.slug) void prefetchWatch(context.queryClient, deps.slug, deps.ep)
+    if (!preload && deps.slug)
+      void prefetchWatch(context.queryClient, deps.slug, deps.ep);
   },
-  component: lazyRouteComponent(() => import("@/features/player/WatchPage"))
-})
+  component: lazyRouteComponent(() => import("@/features/player/WatchPage")),
+});
 
 const historyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/history",
-  component: lazyRouteComponent(() => import("@/features/library/HistoryPage"))
-})
+  component: lazyRouteComponent(() => import("@/features/library/HistoryPage")),
+});
 
 const favoritesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/favorites",
-  component: lazyRouteComponent(() => import("@/features/library/FavoritesPage"))
-})
+  component: lazyRouteComponent(
+    () => import("@/features/library/FavoritesPage"),
+  ),
+});
 
-const routeTree = rootRoute.addChildren([homeRoute, exploreRoute, searchRoute, watchRoute, historyRoute, favoritesRoute])
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  exploreRoute,
+  searchRoute,
+  watchRoute,
+  historyRoute,
+  favoritesRoute,
+]);
 
 export const router = createRouter({
   routeTree,
@@ -152,19 +188,26 @@ export const router = createRouter({
     // mobile: iOS-like slides by direction (app/routes.ts); desktop: a short cross-fade. Same page (another
     // episode, another filter): none
     types: ({ fromLocation, toLocation, pathChanged }) => {
-      if (!fromLocation || !pathChanged || matchMedia("(prefers-reduced-motion: reduce)").matches) return false
-      if (!isMobile()) return ["fade"]
-      const back = (toLocation.state.__TSR_index ?? 0) < (fromLocation.state.__TSR_index ?? 0)
-      return [navKind(fromLocation.pathname, toLocation.pathname, back)]
-    }
-  }
-})
+      if (
+        !fromLocation ||
+        !pathChanged ||
+        matchMedia("(prefers-reduced-motion: reduce)").matches
+      )
+        return false;
+      if (!isMobile()) return ["fade"];
+      const back =
+        (toLocation.state.__TSR_index ?? 0) <
+        (fromLocation.state.__TSR_index ?? 0);
+      return [navKind(fromLocation.pathname, toLocation.pathname, back)];
+    },
+  },
+});
 
 declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router
+    router: typeof router;
   }
 }
 
 /** history.back() with the slide back; the Android back button comes through here too (platform/back.ts) */
-export const goBack = () => router.history.back()
+export const goBack = () => router.history.back();

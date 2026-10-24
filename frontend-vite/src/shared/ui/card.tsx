@@ -10,22 +10,32 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   compact?: boolean;
 }
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  CardProps
->(({ className, hoverable = false, bordered = false, compact = false, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-2xl bg-white/80 dark:bg-zinc-900/60 text-card-foreground border border-zinc-200/80 dark:border-zinc-800/80 shadow-xs transition-colors duration-300",
-      bordered && "border border-zinc-200/80 dark:border-zinc-800/80",
-      hoverable ? "hover:shadow-xl hover:shadow-primarylw/5 hover:border-zinc-300 dark:hover:border-zinc-700/80 hover:-translate-y-0.5" : "",
-      compact ? "p-3 sm:p-4" : "p-0",
-      className
-    )}
-    {...props}
-  />
-));
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  (
+    {
+      className,
+      hoverable = false,
+      bordered = false,
+      compact = false,
+      ...props
+    },
+    ref,
+  ) => (
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-2xl bg-white/80 dark:bg-zinc-900/60 text-card-foreground border border-zinc-200/80 dark:border-zinc-800/80 shadow-xs transition-colors duration-300",
+        bordered && "border border-zinc-200/80 dark:border-zinc-800/80",
+        hoverable
+          ? "hover:shadow-xl hover:shadow-primarylw/5 hover:border-zinc-300 dark:hover:border-zinc-700/80 hover:-translate-y-0.5"
+          : "",
+        compact ? "p-3 sm:p-4" : "p-0",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
 Card.displayName = "Card";
 
 interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -33,24 +43,23 @@ interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   spacing?: "default" | "compact" | "relaxed";
 }
 
-const CardHeader = React.forwardRef<
-  HTMLDivElement,
-  CardHeaderProps
->(({ className, spacing = "default", ...props }, ref) => {
-  const spacingClasses = {
-    compact: "flex flex-col space-y-1 p-4",
-    default: "flex flex-col space-y-1.5 p-6",
-    relaxed: "flex flex-col space-y-2 p-8",
-  };
+const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
+  ({ className, spacing = "default", ...props }, ref) => {
+    const spacingClasses = {
+      compact: "flex flex-col space-y-1 p-4",
+      default: "flex flex-col space-y-1.5 p-6",
+      relaxed: "flex flex-col space-y-2 p-8",
+    };
 
-  return (
-    <div
-      ref={ref}
-      className={cn(spacingClasses[spacing], className)}
-      {...props}
-    />
-  );
-});
+    return (
+      <div
+        ref={ref}
+        className={cn(spacingClasses[spacing], className)}
+        {...props}
+      />
+    );
+  },
+);
 CardHeader.displayName = "CardHeader";
 
 interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
@@ -60,29 +69,28 @@ interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
   size?: "sm" | "default" | "lg";
 }
 
-const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  CardTitleProps
->(({ className, as = "h3", size = "default", ...props }, ref) => {
-  const Component = as;
-  const sizeClasses = {
-    sm: "text-lg",
-    default: "text-2xl",
-    lg: "text-3xl"
-  };
+const CardTitle = React.forwardRef<HTMLParagraphElement, CardTitleProps>(
+  ({ className, as = "h3", size = "default", ...props }, ref) => {
+    const Component = as;
+    const sizeClasses = {
+      sm: "text-lg",
+      default: "text-2xl",
+      lg: "text-3xl",
+    };
 
-  return (
-    <Component
-      ref={ref}
-      className={cn(
-        "font-semibold leading-none tracking-tight",
-        sizeClasses[size],
-        className
-      )}
-      {...props}
-    />
-  );
-});
+    return (
+      <Component
+        ref={ref}
+        className={cn(
+          "font-semibold leading-none tracking-tight",
+          sizeClasses[size],
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
 CardTitle.displayName = "CardTitle";
 
 interface CardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
@@ -97,17 +105,13 @@ const CardDescription = React.forwardRef<
   const sizeClasses = {
     xs: "text-xs",
     sm: "text-sm",
-    default: "text-sm"
+    default: "text-sm",
   };
 
   return (
     <p
       ref={ref}
-      className={cn(
-        "text-muted-foreground",
-        sizeClasses[size],
-        className
-      )}
+      className={cn("text-muted-foreground", sizeClasses[size], className)}
       {...props}
     />
   );
@@ -121,29 +125,31 @@ interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: "none" | "sm" | "default" | "lg";
 }
 
-const CardContent = React.forwardRef<
-  HTMLDivElement,
-  CardContentProps
->(({ className, removeTopPadding = true, padding = "default", ...props }, ref) => {
-  const paddingClasses = {
-    none: "p-0",
-    sm: "px-4 py-3",
-    default: "p-6",
-    lg: "p-8"
-  };
+const CardContent = React.forwardRef<HTMLDivElement, CardContentProps>(
+  (
+    { className, removeTopPadding = true, padding = "default", ...props },
+    ref,
+  ) => {
+    const paddingClasses = {
+      none: "p-0",
+      sm: "px-4 py-3",
+      default: "p-6",
+      lg: "p-8",
+    };
 
-  return (
-    <div 
-      ref={ref} 
-      className={cn(
-        paddingClasses[padding], 
-        removeTopPadding && padding !== "none" ? "pt-0" : "",
-        className
-      )} 
-      {...props}
-    />
-  );
-});
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          paddingClasses[padding],
+          removeTopPadding && padding !== "none" ? "pt-0" : "",
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
 CardContent.displayName = "CardContent";
 
 interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -153,36 +159,42 @@ interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
   direction?: "row" | "column";
 }
 
-const CardFooter = React.forwardRef<
-  HTMLDivElement,
-  CardFooterProps
->(({ className, align = "center", direction = "row", ...props }, ref) => {
-  const alignClasses = {
-    start: "justify-start",
-    center: "justify-center",
-    end: "justify-end",
-    between: "justify-between",
-    around: "justify-around"
-  };
+const CardFooter = React.forwardRef<HTMLDivElement, CardFooterProps>(
+  ({ className, align = "center", direction = "row", ...props }, ref) => {
+    const alignClasses = {
+      start: "justify-start",
+      center: "justify-center",
+      end: "justify-end",
+      between: "justify-between",
+      around: "justify-around",
+    };
 
-  const directionClasses = {
-    row: "flex-row",
-    column: "flex-col"
-  };
+    const directionClasses = {
+      row: "flex-row",
+      column: "flex-col",
+    };
 
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "flex items-center p-6 pt-0",
-        alignClasses[align],
-        directionClasses[direction],
-        className
-      )}
-      {...props}
-    />
-  );
-});
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "flex items-center p-6 pt-0",
+          alignClasses[align],
+          directionClasses[direction],
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
 CardFooter.displayName = "CardFooter";
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+};

@@ -1,9 +1,9 @@
-import { LazyImage } from "@/features/title/components/LazyImage"
-import type { TitleView } from "@/features/title/hooks/use-title-detail"
+import { LazyImage } from "@/features/title/components/LazyImage";
+import type { TitleView } from "@/features/title/hooks/use-title-detail";
 
 /** "Nội dung tương tự": up to six related titles; a tap opens that title's preview in place */
 export function TitleRelated({ t }: { t: TitleView }) {
-  if (t.related.length === 0) return null
+  if (t.related.length === 0) return null;
 
   return (
     <div className="space-y-4 pt-6">
@@ -33,20 +33,25 @@ export function TitleRelated({ t }: { t: TitleView }) {
             <div className="p-2.5 sm:p-4 space-y-2 sm:space-y-3 flex-1 flex flex-col justify-between">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-[#46d369]">97% Phù hợp</span>
+                  <span className="text-xs font-bold text-[#46d369]">
+                    97% Phù hợp
+                  </span>
                   <span className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-bold border border-gray-500 text-gray-300">
                     {item.quality || "HD"}
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-white group-hover:text-primaryRed transition-colors line-clamp-1">{item.title}</h4>
+                <h4 className="text-sm font-bold text-white group-hover:text-primaryRed transition-colors line-clamp-1">
+                  {item.title}
+                </h4>
               </div>
               <p className="text-xs text-[#d2d2d2] line-clamp-3 leading-relaxed max-sm:hidden">
-                {item.synopsis || "Khám phá bộ anime hấp dẫn với chất lượng hình ảnh sắc nét và nội dung lôi cuốn."}
+                {item.synopsis ||
+                  "Khám phá bộ anime hấp dẫn với chất lượng hình ảnh sắc nét và nội dung lôi cuốn."}
               </p>
             </div>
           </button>
         ))}
       </div>
     </div>
-  )
+  );
 }

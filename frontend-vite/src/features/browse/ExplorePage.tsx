@@ -1,4 +1,3 @@
-
 import React, { Suspense, useEffect, useMemo, useRef } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { PosterTile } from "@/features/browse/components/PosterTile";
@@ -6,28 +5,45 @@ import { AmbientBackdrop } from "@/shared/ui/AmbientBackdrop";
 import { InfoModal } from "@/features/title";
 import { buttonVariants } from "@/shared/ui/button";
 import { PosterGridSkeleton } from "@/shared/ui/skeletons";
-import { useBrowseInfiniteQuery, useHomeQuery, useMenuQuery } from "@/core/queries";
+import {
+  useBrowseInfiniteQuery,
+  useHomeQuery,
+  useMenuQuery,
+} from "@/core/queries";
 import { cn } from "@/shared/lib/utils";
 
 // Older links use ?type=...; each maps to the source list it always meant
 const TYPE_PATHS: Record<string, { path: string; label: string }> = {
   "phim-bo": { path: "/anime-bo/", label: "TV/Series" },
   "phim-le": { path: "/anime-le/", label: "Movie/OVA" },
-  "hoat-hinh-trung-quoc": { path: "/hoat-hinh-trung-quoc/", label: "HH Trung Quốc" },
+  "hoat-hinh-trung-quoc": {
+    path: "/hoat-hinh-trung-quoc/",
+    label: "HH Trung Quốc",
+  },
   "sap-chieu": { path: "/anime-sap-chieu/", label: "Anime Sắp Chiếu" },
-  "phim-moi": { path: "/danh-sach/list-dang-chieu/", label: "Anime Đang Chiếu" },
+  "phim-moi": {
+    path: "/danh-sach/list-dang-chieu/",
+    label: "Anime Đang Chiếu",
+  },
   "hoan-thanh": { path: "/danh-sach/list-tron-bo/", label: "Anime Trọn Bộ" },
   "top-day": { path: "/bang-xep-hang/day.html", label: "Top Anime Theo Ngày" },
-  "top-month": { path: "/bang-xep-hang/month.html", label: "Top Anime Theo Tháng" },
-  "top-season": { path: "/bang-xep-hang/season.html", label: "Top Anime Theo Mùa" },
+  "top-month": {
+    path: "/bang-xep-hang/month.html",
+    label: "Top Anime Theo Tháng",
+  },
+  "top-season": {
+    path: "/bang-xep-hang/season.html",
+    label: "Top Anime Theo Mùa",
+  },
   "top-year": { path: "/bang-xep-hang/year.html", label: "Top Anime Theo Năm" },
 };
 
-
-const PILL = "h-9 flex-shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors";
+const PILL =
+  "h-9 flex-shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors";
 const PILL_IDLE = "glass-pill text-gray-200 hover:text-white";
 const PILL_ACTIVE = "border-white bg-white text-black";
-const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-5 xl:grid-cols-6";
+const GRID =
+  "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-5 xl:grid-cols-6";
 
 function ExploreContent() {
   const search = useSearch({ from: "/explore" });
@@ -42,14 +58,19 @@ function ExploreContent() {
 
   // pages can overlap when the source list moves between two requests: one card per title
   const items = useMemo(() => {
-    if (!path) return homeRes?.featured?.length ? homeRes.featured : homeRes?.latest || [];
+    if (!path)
+      return homeRes?.featured?.length
+        ? homeRes.featured
+        : homeRes?.latest || [];
     const seen = new Set<string>();
-    return (browse.data?.pages ?? []).flatMap((p) => p.items).filter((item) => {
-      const key = item.slug || item.title;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+    return (browse.data?.pages ?? [])
+      .flatMap((p) => p.items)
+      .filter((item) => {
+        const key = item.slug || item.title;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
   }, [path, homeRes, browse.data]);
   const loading = path ? browse.isLoading : isHomeLoading;
 
@@ -60,8 +81,9 @@ function ExploreContent() {
     const node = sentinel.current;
     if (!node || !hasNextPage) return;
     const observer = new IntersectionObserver(
-      ([entry]) => entry.isIntersecting && !isFetchingNextPage && void fetchNextPage(),
-      { rootMargin: "1200px 0px" }
+      ([entry]) =>
+        entry.isIntersecting && !isFetchingNextPage && void fetchNextPage(),
+      { rootMargin: "1200px 0px" },
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -73,23 +95,29 @@ function ExploreContent() {
   const title = !path
     ? "Thịnh Hành"
     : entry
-    ? group && group !== menus[0]
-      ? `${group.label}: ${entry.label}`
-      : entry.label
-    : TYPE_PATHS[type]?.label || "Danh sách anime";
+      ? group && group !== menus[0]
+        ? `${group.label}: ${entry.label}`
+        : entry.label
+      : TYPE_PATHS[type]?.label || "Danh sách anime";
 
   const quickLinks = menus[0]?.items || [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 pt-4 pb-6 md:py-10 space-y-5 md:space-y-6">
       <AmbientBackdrop src={items[0]?.poster || items[0]?.image} />
-      <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h1>
+      <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
+        {title}
+      </h1>
 
       {/* Quick filter: the main anime types */}
       <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-2 pt-1">
         <Link
           to="/explore"
-          className={buttonVariants({ variant: "unstyled", size: "unstyled", className: cn(PILL, !path ? PILL_ACTIVE : PILL_IDLE) })}
+          className={buttonVariants({
+            variant: "unstyled",
+            size: "unstyled",
+            className: cn(PILL, !path ? PILL_ACTIVE : PILL_IDLE),
+          })}
         >
           Thịnh Hành
         </Link>
@@ -114,9 +142,13 @@ function ExploreContent() {
       ) : items.length === 0 ? (
         <div className="glass-card rounded-3xl px-6 py-12">
           <p className="text-base font-semibold text-white">
-            {isError ? "Không tải được danh sách này." : "Chưa có phim nào trong mục này."}
+            {isError
+              ? "Không tải được danh sách này."
+              : "Chưa có phim nào trong mục này."}
           </p>
-          <p className="mt-1 text-sm text-gray-400">Thử chọn mục khác ở trên hoặc trong menu.</p>
+          <p className="mt-1 text-sm text-gray-400">
+            Thử chọn mục khác ở trên hoặc trong menu.
+          </p>
         </div>
       ) : (
         <div className={GRID}>
@@ -129,11 +161,22 @@ function ExploreContent() {
 
       {/* Next page: loads by itself as the sentinel nears the screen */}
       {path && hasNextPage && (
-        <div ref={sentinel} className="flex justify-center py-6" aria-live="polite">
+        <div
+          ref={sentinel}
+          className="flex justify-center py-6"
+          aria-live="polite"
+        >
           {isFetchingNextPage ? (
-            <span className="h-7 w-7 animate-spin rounded-full border-2 border-white/20 border-t-white" aria-label="Đang tải thêm" />
+            <span
+              className="h-7 w-7 animate-spin rounded-full border-2 border-white/20 border-t-white"
+              aria-label="Đang tải thêm"
+            />
           ) : (
-            <button type="button" onClick={() => void fetchNextPage()} className={cn(PILL, PILL_IDLE)}>
+            <button
+              type="button"
+              onClick={() => void fetchNextPage()}
+              className={cn(PILL, PILL_IDLE)}
+            >
               Tải thêm
             </button>
           )}

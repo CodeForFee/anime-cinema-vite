@@ -1,3 +1,3 @@
 export function int(text?: string) {
-  return text ? parseInt(text) : undefined
+  return text ? parseInt(text) : undefined;
 }

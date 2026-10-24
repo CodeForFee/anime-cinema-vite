@@ -1,29 +1,29 @@
-import { getInfoTPost } from "@/core/source/html/getInfoTPost"
-import { parserDom } from "@/core/source/html/parserDom"
+import { getInfoTPost } from "@/core/source/html/getInfoTPost";
+import { parserDom } from "@/core/source/html/parserDom";
 
 export default function Index(html: string) {
-  const $ = parserDom(html)
-  const now = Date.now()
+  const $ = parserDom(html);
+  const now = Date.now();
 
   const thisSeason = $(".MovieListTopCn:eq(0)")
     .find(".TPostMv")
     .map((_i, item) => getInfoTPost($(item), now))
-    .toArray()
+    .toArray();
   const carousel = $(".MovieListSldCn .TPostMv")
     .map((_i, item) => getInfoTPost($(item), now))
-    .toArray()
+    .toArray();
   const lastUpdate = $("#single-home .TPostMv")
     .map((_i, item) => getInfoTPost($(item), now))
-    .toArray()
+    .toArray();
   const preRelease = $("#new-home .TPostMv")
     .map((_i, item) => getInfoTPost($(item), now))
-    .toArray()
+    .toArray();
   const nominate = $("#hot-home .TPostMv")
     .map((_i, item) => getInfoTPost($(item), now))
-    .toArray()
+    .toArray();
   const hotUpdate = $("#showTopPhim .TPost")
     .map((_i, item) => getInfoTPost($(item), now))
-    .toArray()
+    .toArray();
 
   return {
     thisSeason,
@@ -31,8 +31,8 @@ export default function Index(html: string) {
     lastUpdate,
     preRelease,
     nominate,
-    hotUpdate
-  }
+    hotUpdate,
+  };
 }
 
 /**

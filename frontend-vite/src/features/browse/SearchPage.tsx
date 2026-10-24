@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, Suspense } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { PosterGridSkeleton } from "@/shared/ui/skeletons";
@@ -10,7 +9,10 @@ import { CircleAlert, Search, X } from "lucide-react";
 
 function SearchContent() {
   const navigate = useNavigate();
-  const queryParam = useSearch({ from: "/search", select: (search) => search.q ?? "" });
+  const queryParam = useSearch({
+    from: "/search",
+    select: (search) => search.q ?? "",
+  });
   const [searchTerm, setSearchTerm] = useState(queryParam);
   const debouncedSearch = useDebounce(searchTerm, 350);
 
@@ -37,7 +39,9 @@ function SearchContent() {
           <Search className="w-3.5 h-3.5" />
           <span>Tìm Kiếm Trực Tuyến</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-white mb-6">Tìm Kiếm Anime Yêu Thích</h1>
+        <h1 className="text-3xl font-extrabold text-white mb-6">
+          Tìm Kiếm Anime Yêu Thích
+        </h1>
 
         {/* Big Search Input */}
         <div className="glass-field flex h-14 items-center gap-3 rounded-full px-5 focus-within:!border-primaryRed">
@@ -51,7 +55,12 @@ function SearchContent() {
             className="min-w-0 flex-1 bg-transparent text-base text-white placeholder:text-gray-400 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           {searchTerm && (
-            <button type="button" aria-label="Xoá" onClick={handleClear} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-300 hover:bg-white/10 hover:text-white">
+            <button
+              type="button"
+              aria-label="Xoá"
+              onClick={handleClear}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-300 hover:bg-white/10 hover:text-white"
+            >
               <X className="h-4 w-4" />
             </button>
           )}
@@ -61,18 +70,23 @@ function SearchContent() {
       {/* Suggested Keywords */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="text-gray-400">Gợi ý tìm kiếm:</span>
-        {["One Piece", "Chú Thuật Hồi Chiến", "Thám Tử Conan", "Solo Leveling", "Bleach", "Naruto"].map(
-          (kw) => (
-            <button
-              type="button"
-              key={kw}
-              onClick={() => setSearchTerm(kw)}
-              className="glass-chip h-7 rounded-full px-3 text-gray-200 hover:text-white cursor-pointer transition-colors"
-            >
-              {kw}
-            </button>
-          )
-        )}
+        {[
+          "One Piece",
+          "Chú Thuật Hồi Chiến",
+          "Thám Tử Conan",
+          "Solo Leveling",
+          "Bleach",
+          "Naruto",
+        ].map((kw) => (
+          <button
+            type="button"
+            key={kw}
+            onClick={() => setSearchTerm(kw)}
+            className="glass-chip h-7 rounded-full px-3 text-gray-200 hover:text-white cursor-pointer transition-colors"
+          >
+            {kw}
+          </button>
+        ))}
       </div>
 
       {/* Search Results Display */}
@@ -82,7 +96,8 @@ function SearchContent() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-white">
-              Kết quả tìm kiếm cho &ldquo;{debouncedSearch}&rdquo; ({results.length} anime)
+              Kết quả tìm kiếm cho &ldquo;{debouncedSearch}&rdquo; (
+              {results.length} anime)
             </h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-5 gap-y-8 sm:gap-x-6 sm:gap-y-9">
@@ -102,7 +117,8 @@ function SearchContent() {
             Không tìm thấy kết quả nào cho &ldquo;{debouncedSearch}&rdquo;
           </p>
           <p className="text-xs max-w-sm mx-auto">
-            Vui lòng kiểm tra lại chính tả hoặc thử tìm kiếm bằng từ khóa tiếng Việt / tiếng Anh khác.
+            Vui lòng kiểm tra lại chính tả hoặc thử tìm kiếm bằng từ khóa tiếng
+            Việt / tiếng Anh khác.
           </p>
         </div>
       ) : null}
@@ -115,11 +131,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-[70vh]" />
-      }
-    >
+    <Suspense fallback={<div className="min-h-[70vh]" />}>
       <SearchContent />
     </Suspense>
   );

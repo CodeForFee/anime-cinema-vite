@@ -31,21 +31,31 @@ function Skeleton({
     default: "rounded-md",
     circle: "rounded-full",
     rounded: "rounded-xl",
-    square: "rounded-none"
+    square: "rounded-none",
   };
 
   // Animation classes
   const animationClasses = {
     pulse: "animate-pulse",
     wave: "",
-    none: ""
+    none: "",
   };
 
   // Style object for width and height
   const style: React.CSSProperties = {
-    width: width !== undefined ? (typeof width === "number" ? `${width}px` : width) : undefined,
-    height: height !== undefined ? (typeof height === "number" ? `${height}px` : height) : undefined,
-    ...props.style
+    width:
+      width !== undefined
+        ? typeof width === "number"
+          ? `${width}px`
+          : width
+        : undefined,
+    height:
+      height !== undefined
+        ? typeof height === "number"
+          ? `${height}px`
+          : height
+        : undefined,
+    ...props.style,
   };
 
   const hasShimmer = shimmer || animation === "wave";
@@ -65,7 +75,8 @@ function Skeleton({
               "[.lw-3d_&]:border [.lw-3d_&]:border-black/5 dark:[.lw-3d_&]:border-white/5",
               variantClasses[variant],
               animationClasses[animation],
-              hasShimmer && "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/20 dark:before:via-white/10 before:to-transparent"
+              hasShimmer &&
+                "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/20 dark:before:via-white/10 before:to-transparent",
             )}
             style={style}
           />
@@ -84,8 +95,9 @@ function Skeleton({
         "[.lw-3d_&]:border [.lw-3d_&]:border-black/5 dark:[.lw-3d_&]:border-white/5",
         variantClasses[variant],
         animationClasses[animation],
-        hasShimmer && "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/20 dark:before:via-white/10 before:to-transparent",
-        className
+        hasShimmer &&
+          "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/20 dark:before:via-white/10 before:to-transparent",
+        className,
       )}
       style={style}
       {...props}

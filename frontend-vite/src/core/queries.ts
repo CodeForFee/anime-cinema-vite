@@ -1,5 +1,8 @@
-
-import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 import { animeApi } from "@/core/anime-api";
 import type { AnimeItem, HomeDataResponse } from "@/core/types/anime";
 
@@ -54,7 +57,11 @@ export function useHomeQuery() {
     },
     placeholderData: () => {
       try {
-        return JSON.parse(localStorage.getItem(HOME_CACHE_KEY) || "null") as HomeDataResponse | null ?? undefined;
+        return (
+          (JSON.parse(
+            localStorage.getItem(HOME_CACHE_KEY) || "null",
+          ) as HomeDataResponse | null) ?? undefined
+        );
       } catch {
         return undefined;
       }
@@ -84,18 +91,26 @@ export function useAnimeDetailQuery(slug: string) {
     // Switching to another part of the same show keeps the page up (isPlaceholderData) instead of a
     // full-page skeleton; any other title starts clean
     placeholderData: (previous) =>
-      previous?.data.seasons?.some((season) => season.slug === slug) ? previous : undefined,
+      previous?.data.seasons?.some((season) => season.slug === slug)
+        ? previous
+        : undefined,
   });
 }
 
 // 3. Stream Source Query
 export function useStreamQuery(hash: string, id: string, play: string) {
-  return useQuery({ ...streamQuery(hash, id, play), enabled: Boolean(hash && id) });
+  return useQuery({
+    ...streamQuery(hash, id, play),
+    enabled: Boolean(hash && id),
+  });
 }
 
 // 5. Search Query
 export function useSearchQuery(query: string) {
-  return useQuery({ ...searchQuery(query), enabled: Boolean(query && query.trim().length > 0) });
+  return useQuery({
+    ...searchQuery(query),
+    enabled: Boolean(query && query.trim().length > 0),
+  });
 }
 
 // 5b. Navigation menu from the source site (changes rarely, so keep it for an hour)
@@ -114,7 +129,8 @@ export function useBrowseInfiniteQuery(path: string) {
     queryKey: ["anime", "browse-all", path] as const,
     queryFn: ({ pageParam }) => animeApi.browse(path, pageParam),
     initialPageParam: 1,
-    getNextPageParam: (last, all) => (all.length < (last.totalPages || 1) ? all.length + 1 : undefined),
+    getNextPageParam: (last, all) =>
+      all.length < (last.totalPages || 1) ? all.length + 1 : undefined,
     enabled: Boolean(path),
     staleTime: 5 * 60 * 1000,
   });

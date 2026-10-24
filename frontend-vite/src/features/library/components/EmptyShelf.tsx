@@ -17,7 +17,10 @@ export function EmptyShelf({ line, hint }: { line: string; hint: string }) {
         <p className="font-display text-lg font-semibold text-white">{line}</p>
         <p className="mt-1 text-sm text-gray-400">
           {hint}{" "}
-          <Link to="/explore" className="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">
+          <Link
+            to="/explore"
+            className="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white"
+          >
             Khám phá phim
           </Link>
         </p>

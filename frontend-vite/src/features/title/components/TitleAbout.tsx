@@ -1,13 +1,13 @@
-import type { TitleView } from "@/features/title/hooks/use-title-detail"
+import type { TitleView } from "@/features/title/hooks/use-title-detail";
 
 function Line({ label, value }: { label: string; value: unknown }) {
-  if (!value) return null
+  if (!value) return null;
   return (
     <div>
       <span>{label}: </span>
       <span className="text-[#a3a3a3]">{String(value)}</span>
     </div>
-  )
+  );
 }
 
 /** "Giới thiệu về …": the full credits at the end of the preview */
@@ -28,5 +28,5 @@ export function TitleAbout({ t }: { t: TitleView }) {
         />
       </div>
     </div>
-  )
+  );
 }

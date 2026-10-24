@@ -20,7 +20,7 @@ const buttonStyles = {
     lg: "h-11 px-8 rounded-xl",
     icon: "h-10 w-10 rounded-lg",
     unstyled: "",
-  }
+  },
 };
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -30,27 +30,38 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 // Define the buttonVariants function (exported)
-export function buttonVariants(options: {
-  variant?: keyof typeof buttonStyles.variant;
-  size?: keyof typeof buttonStyles.size;
-  className?: string;
-} = {}): string {
+export function buttonVariants(
+  options: {
+    variant?: keyof typeof buttonStyles.variant;
+    size?: keyof typeof buttonStyles.size;
+    className?: string;
+  } = {},
+): string {
   const { variant = "default", size = "default", className } = options;
 
   return cn(
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-transform active:scale-[0.97] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
     buttonStyles.variant[variant],
     buttonStyles.size[size],
-    className
+    className,
   );
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
+  (
+    {
+      className,
+      variant = "default",
+      size = "default",
+      asChild = false,
+      ...props
+    },
+    ref,
+  ) => {
     if (asChild) {
       return (
         <React.Fragment>
-          {React.Children.map(props.children, child => {
+          {React.Children.map(props.children, (child) => {
             if (React.isValidElement(child)) {
               // Instead of cloneElement with complex props, use a wrapper
               return (
@@ -72,7 +83,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       />
     );
-  }
+  },
 );
 Button.displayName = "Button";
 

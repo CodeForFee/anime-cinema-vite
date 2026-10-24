@@ -8,21 +8,41 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <img src="/app-icon.png" alt="" width={32} height={32} className="w-8 h-8 rounded-lg" />
+          <img
+            src="/app-icon.png"
+            alt=""
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-lg"
+          />
           <div>
-            <p className="font-bold text-white text-sm tracking-wider">CAPYNIME</p>
-            <p className="text-[11px] text-gray-400">Trải nghiệm xem Anime chuẩn rạp & Không quảng cáo</p>
+            <p className="font-bold text-white text-sm tracking-wider">
+              CAPYNIME
+            </p>
+            <p className="text-[11px] text-gray-400">
+              Trải nghiệm xem Anime chuẩn rạp & Không quảng cáo
+            </p>
           </div>
         </div>
 
         {/* Links */}
         <div className="flex flex-wrap items-center justify-center gap-6 text-gray-300">
-          <Link to="/" className="hover:text-white transition-colors">Trang chủ</Link>
-          <Link to="/explore" className="hover:text-white transition-colors">Khám phá</Link>
-          <Link to="/history" className="hover:text-white transition-colors">Lịch sử xem</Link>
-          <Link to="/favorites" className="hover:text-white transition-colors">Yêu thích</Link>
+          <Link to="/" className="hover:text-white transition-colors">
+            Trang chủ
+          </Link>
+          <Link to="/explore" className="hover:text-white transition-colors">
+            Khám phá
+          </Link>
+          <Link to="/history" className="hover:text-white transition-colors">
+            Lịch sử xem
+          </Link>
+          <Link to="/favorites" className="hover:text-white transition-colors">
+            Yêu thích
+          </Link>
           <span className="text-gray-400">|</span>
-          <span className="text-gray-400">All rights reserved © 2026 Movion</span>
+          <span className="text-gray-400">
+            All rights reserved © 2026 Movion
+          </span>
         </div>
 
         {/* Protection Note */}

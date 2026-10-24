@@ -1,58 +1,57 @@
 // イニシャル
 
-
-import Worker from "@/features/player/engines/hls/resolve-master-manifest.worker?worker"
+import Worker from "@/features/player/engines/hls/resolve-master-manifest.worker?worker";
 
 export async function resolveMasterManifestWorker(
   segments: string[],
   map: Map<string, readonly [string, number]> = new Map(),
   index = 0,
-  balance?: number
+  balance?: number,
 ) {
   return new Promise<void>((resolve, reject) => {
-    const worker = new Worker()
+    const worker = new Worker();
     worker.addEventListener(
       "message",
       ({
-        data
+        data,
       }: MessageEvent<
         | {
-            map: Record<string, readonly [string, number]>
-            err?: string
+            map: Record<string, readonly [string, number]>;
+            err?: string;
           }
         | {
-            segment: string
-            value: readonly [string, number]
+            segment: string;
+            value: readonly [string, number];
           }
       >) => {
         if ("segment" in data) {
-          map.set(data.segment, data.value)
-          return
+          map.set(data.segment, data.value);
+          return;
         }
 
-        const { err } = data
+        const { err } = data;
         // resolve ok
         // for (const name in newMap) map.set(name, newMap[name])
 
-        if (err) reject(new Error(err))
-        else resolve()
+        if (err) reject(new Error(err));
+        else resolve();
 
         // free memory
-        worker.terminate()
-      }
-    )
+        worker.terminate();
+      },
+    );
     worker.addEventListener("messageerror", (event) => {
-      console.warn(event)
-      reject(event)
+      console.warn(event);
+      reject(event);
 
       // free memory
-      worker.terminate()
-    })
+      worker.terminate();
+    });
 
     // { uris: string[]; old: Record<string, string>  }
     worker.postMessage({
       old: Object.fromEntries(Array.from(map.entries())),
-      uris: segments.slice(index, balance ? index + balance : -1)
-    })
-  })
+      uris: segments.slice(index, balance ? index + balance : -1),
+    });
+  });
 }

@@ -1,4 +1,10 @@
-import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import type { QualityLevel } from "@/core/player/pick-quality";
 
@@ -35,7 +41,8 @@ export interface VisualQuality {
 
 /** "resume": answers the player's own resume box, 1 = "Xem tiếp", 0 = "Từ đầu" */
 /** "quality": a level index from `levels` */
-export type PlayerCommand = "play" | "pause" | "seek" | "rate" | "volume" | "resume" | "quality";
+export type PlayerCommand =
+  "play" | "pause" | "seek" | "rate" | "volume" | "resume" | "quality";
 
 /**
  * Remote control of the source player embedded in `iframeRef`.
@@ -44,7 +51,11 @@ export type PlayerCommand = "play" | "pause" | "seek" | "rate" | "volume" | "res
  * `ready` stays false when the bridge script is not there (old extension build); the caller then leaves
  * the player alone.
  */
-export function usePlayerBridge(iframeRef: RefObject<HTMLIFrameElement | null>, embedUrl: string | undefined, control: boolean) {
+export function usePlayerBridge(
+  iframeRef: RefObject<HTMLIFrameElement | null>,
+  embedUrl: string | undefined,
+  control: boolean,
+) {
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<PlayerState | null>(null);
   /** Position (s) the player's own resume box offers; the bridge hid that box, the app asks instead */
@@ -60,9 +71,13 @@ export function usePlayerBridge(iframeRef: RefObject<HTMLIFrameElement | null>, 
   const send = useCallback(
     (type: PlayerCommand | "hello" | "observe", value?: number) => {
       if (type === "seek") seekedAt.current = Date.now();
-      if (origin) iframeRef.current?.contentWindow?.postMessage({ source: APP, type, value }, origin);
+      if (origin)
+        iframeRef.current?.contentWindow?.postMessage(
+          { source: APP, type, value },
+          origin,
+        );
     },
-    [iframeRef, origin]
+    [iframeRef, origin],
   );
 
   useEffect(() => {
@@ -74,16 +89,27 @@ export function usePlayerBridge(iframeRef: RefObject<HTMLIFrameElement | null>, 
     if (!origin) return;
 
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== origin || event.source !== iframeRef.current?.contentWindow) return;
+      if (
+        event.origin !== origin ||
+        event.source !== iframeRef.current?.contentWindow
+      )
+        return;
       const message = event.data;
       if (!message || message.source !== BRIDGE) return;
 
       if (message.type === "present") send(greeting);
       else if (message.type === "ready") setReady(true);
       else if (message.type === "state") setState(message as PlayerState);
-      else if (message.type === "resume" && message.at > 0) setResumeOffer(message.at);
-      else if (message.type === "levels" && Array.isArray(message.levels)) setLevels({ levels: message.levels, current: message.current });
-      else if (message.type === "visual") setVisual({ label: message.label, height: message.height, auto: Boolean(message.auto) });
+      else if (message.type === "resume" && message.at > 0)
+        setResumeOffer(message.at);
+      else if (message.type === "levels" && Array.isArray(message.levels))
+        setLevels({ levels: message.levels, current: message.current });
+      else if (message.type === "visual")
+        setVisual({
+          label: message.label,
+          height: message.height,
+          auto: Boolean(message.auto),
+        });
     };
 
     window.addEventListener("message", onMessage);
@@ -91,5 +117,14 @@ export function usePlayerBridge(iframeRef: RefObject<HTMLIFrameElement | null>, 
     return () => window.removeEventListener("message", onMessage);
   }, [embedUrl, greeting, origin, iframeRef, send]);
 
-  return { ready, state, send, resumeOffer, clearResumeOffer: () => setResumeOffer(null), levels, visual, seekedAt };
+  return {
+    ready,
+    state,
+    send,
+    resumeOffer,
+    clearResumeOffer: () => setResumeOffer(null),
+    levels,
+    visual,
+    seekedAt,
+  };
 }

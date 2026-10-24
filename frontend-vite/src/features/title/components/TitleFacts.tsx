@@ -1,14 +1,14 @@
-import type { TitleView } from "@/features/title/hooks/use-title-detail"
-import { cn } from "@/shared/lib/utils"
+import type { TitleView } from "@/features/title/hooks/use-title-detail";
+import { cn } from "@/shared/lib/utils";
 
 function Fact({ label, value }: { label: string; value: unknown }) {
-  if (!value) return null
+  if (!value) return null;
   return (
     <div>
       <span className="text-[#777]">{label}: </span>
       <span className="text-white">{String(value)}</span>
     </div>
-  )
+  );
 }
 
 /** Match score, year, length, rating and the synopsis on the left; people, genres and studio on the right */
@@ -26,15 +26,24 @@ export function TitleFacts({ t }: { t: TitleView }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 text-sm text-white">
-          <span className="px-2 leading-6 border border-[#808080]">{t.ageCode}</span>
+          <span className="px-2 leading-6 border border-[#808080]">
+            {t.ageCode}
+          </span>
           {t.ageNote && <span>{t.ageNote}</span>}
         </div>
 
         {Boolean(t.meta["Lịch chiếu"]) && (
-          <p className="text-lg font-bold text-white pt-2">Tập mới ra mắt: {String(t.meta["Lịch chiếu"])}</p>
+          <p className="text-lg font-bold text-white pt-2">
+            Tập mới ra mắt: {String(t.meta["Lịch chiếu"])}
+          </p>
         )}
 
-        <p className={cn("text-[15px] text-white leading-relaxed font-normal pt-1", !t.isSynopsisOpen && "max-sm:line-clamp-4")}>
+        <p
+          className={cn(
+            "text-[15px] text-white leading-relaxed font-normal pt-1",
+            !t.isSynopsisOpen && "max-sm:line-clamp-4",
+          )}
+        >
           {t.synopsis}
         </p>
         {t.synopsis.length > 180 && (
@@ -57,5 +66,5 @@ export function TitleFacts({ t }: { t: TitleView }) {
         <Fact label="Bộ phim này" value="Hóm hỉnh, Hồi hộp, Đầy cảm xúc" />
       </div>
     </div>
-  )
+  );
 }

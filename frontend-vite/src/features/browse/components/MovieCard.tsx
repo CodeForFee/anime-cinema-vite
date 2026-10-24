@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { LazyImage } from "@/features/title";
@@ -23,7 +22,10 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
     setMounted(true);
   }, []);
 
-  const isFavorite = mounted && anime?.slug ? favorites.some((f) => f.slug === anime.slug) : false;
+  const isFavorite =
+    mounted && anime?.slug
+      ? favorites.some((f) => f.slug === anime.slug)
+      : false;
 
   const fallbackImage =
     "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=60";
@@ -46,12 +48,15 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
         "card-lift group relative flex-shrink-0 bg-[#10121A]/90 hover:shadow-[0_10px_30px_rgba(229,9,20,0.25)] transition-shadow duration-300 rounded-xl overflow-hidden select-none cursor-pointer",
         // Grids pass w-full and size the card by their columns; everywhere else it gets the shelf width
         !className?.includes("w-full") && "w-44 md:w-52",
-        className
+        className,
       )}
     >
       <div className="p-0 overflow-hidden relative aspect-[2/3] bg-black/40">
         {/* Main Poster Image, under the card's glass rim (globals.css) */}
-        <span aria-hidden className="glass-rim absolute inset-0 z-[5] rounded-t-xl" />
+        <span
+          aria-hidden
+          className="glass-rim absolute inset-0 z-[5] rounded-t-xl"
+        />
         <LazyImage
           alt={anime.title}
           art={anime}
@@ -68,42 +73,47 @@ export const MovieCard: React.FC<MovieCardProps> = ({ anime, className }) => {
               anime.isUpcoming
                 ? "bg-primaryRed text-white border-red-400"
                 : anime.rank
-                ? "bg-amber-500 text-black border-amber-300"
-                : "bg-black/80 border-white/10"
+                  ? "bg-amber-500 text-black border-amber-300"
+                  : "bg-black/80 border-white/10"
             }`}
           >
             {anime.isUpcoming
               ? anime.releaseDate || "SẮP CHIẾU"
               : anime.rank
-              ? `TOP #${anime.rank}`
-              : anime.latestEpisode || anime.episode || anime.quality || "HD Vietsub"}
+                ? `TOP #${anime.rank}`
+                : anime.latestEpisode ||
+                  anime.episode ||
+                  anime.quality ||
+                  "HD Vietsub"}
           </span>
 
           {/* Favorite Toggle Button */}
           <button
-              type="button"
-              title={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
-              aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
-              aria-pressed={isFavorite}
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFavorite({
-                  slug: anime.slug,
-                  title: anime.title,
-                  poster: anime.poster || anime.image || fallbackImage,
-                  genres: anime.genres,
-                  year: anime.year,
-                  rating: anime.rating,
-                });
-              }}
-              className={`flex w-7 h-7 items-center justify-center rounded-full transition-colors ${
-                isFavorite
-                  ? "bg-primaryRed text-white shadow-[0_0_10px_#E50914]"
-                  : "bg-black/80 text-white/80 hover:text-white hover:bg-black/90 border border-white/10"
-              }`}
-            >
-              <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current text-white" : "text-gray-300"}`} />
-            </button>
+            type="button"
+            title={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+            aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+            aria-pressed={isFavorite}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite({
+                slug: anime.slug,
+                title: anime.title,
+                poster: anime.poster || anime.image || fallbackImage,
+                genres: anime.genres,
+                year: anime.year,
+                rating: anime.rating,
+              });
+            }}
+            className={`flex w-7 h-7 items-center justify-center rounded-full transition-colors ${
+              isFavorite
+                ? "bg-primaryRed text-white shadow-[0_0_10px_#E50914]"
+                : "bg-black/80 text-white/80 hover:text-white hover:bg-black/90 border border-white/10"
+            }`}
+          >
+            <Heart
+              className={`w-3.5 h-3.5 ${isFavorite ? "fill-current text-white" : "text-gray-300"}`}
+            />
+          </button>
         </div>
 
         {/* Hover Overlay with Quick Action Buttons. Mouse only: it can't be seen on a touch screen, so there

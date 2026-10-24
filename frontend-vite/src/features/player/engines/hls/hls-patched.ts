@@ -4,64 +4,64 @@ import type {
   LoaderConfiguration,
   LoaderContext,
   LoaderOnProgress,
-  LoaderResponse
-} from "hls.js"
-import Hls from "hls.js"
+  LoaderResponse,
+} from "hls.js";
+import Hls from "hls.js";
 // eslint-disable-next-line camelcase
-import { decrypt_segment } from "@/features/player/engines/hls/new-dha/pkg/new_dha"
+import { decrypt_segment } from "@/features/player/engines/hls/new-dha/pkg/new_dha";
 
 function getRequestParameters(
   context: LoaderContext,
-  signal: AbortSignal
+  signal: AbortSignal,
 ): RequestInit & { headers: Headers } {
   const initParams: RequestInit & { headers: Headers } = {
     method: "GET",
     mode: "cors",
     credentials: "same-origin",
     signal,
-    headers: new self.Headers(Object.assign({}, context.headers))
-  }
+    headers: new self.Headers(Object.assign({}, context.headers)),
+  };
 
   if (context.rangeEnd) {
     initParams.headers.set(
       "Range",
-      "bytes=" + context.rangeStart + "-" + String(context.rangeEnd - 1)
-    )
+      "bytes=" + context.rangeStart + "-" + String(context.rangeEnd - 1),
+    );
   }
 
-  return initParams
+  return initParams;
 }
 
-const BYTERANGE = /(\d+)-(\d+)\/(\d+)/
+const BYTERANGE = /(\d+)-(\d+)\/(\d+)/;
 
 function getByteRangeLength(byteRangeHeader: string): number | undefined {
-  const result = BYTERANGE.exec(byteRangeHeader)
+  const result = BYTERANGE.exec(byteRangeHeader);
   if (result) {
-    return parseInt(result[2]) - parseInt(result[1]) + 1
+    return parseInt(result[2]) - parseInt(result[1]) + 1;
   }
 }
 
 function getContentLength(headers: Headers): number | undefined {
-  const contentRange = headers.get("Content-Range")
+  const contentRange = headers.get("Content-Range");
   if (contentRange) {
-    const byteRangeLength = getByteRangeLength(contentRange)
+    const byteRangeLength = getByteRangeLength(contentRange);
     if (Number.isFinite(byteRangeLength)) {
-      return byteRangeLength
+      return byteRangeLength;
     }
   }
-  const contentLength = headers.get("Content-Length")
+  const contentLength = headers.get("Content-Length");
   if (contentLength) {
-    return parseInt(contentLength)
+    return parseInt(contentLength);
   }
 }
 
 class FetchError extends Error {
-  public code: number
-  public details: any
+  public code: number;
+  public details: any;
   constructor(message: string, code: number, details: any) {
-    super(message)
-    this.code = code
-    this.details = details
+    super(message);
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -69,78 +69,81 @@ export class HlsPatched extends Hls {
   constructor(
     userConfig: Partial<HlsConfig>,
     fetch: (request: Request) => Promise<Response>,
-    onSlow?: () => void
+    onSlow?: () => void,
   ) {
-    super(userConfig)
+    super(userConfig);
 
     this.config.loader = class extends this.config.loader {
       load(
         this: any,
         context: LoaderContext,
         config: LoaderConfiguration,
-        callbacks: LoaderCallbacks<LoaderContext>
+        callbacks: LoaderCallbacks<LoaderContext>,
       ): void {
-        const stats = this.stats
+        const stats = this.stats;
         if (stats.loading.start) {
-          throw new Error("Loader can only be used once.")
+          throw new Error("Loader can only be used once.");
         }
-        stats.loading.start = self.performance.now()
+        stats.loading.start = self.performance.now();
 
-        const initParams = getRequestParameters(context, this.controller.signal)
+        const initParams = getRequestParameters(
+          context,
+          this.controller.signal,
+        );
         const onProgress: LoaderOnProgress<LoaderContext> | undefined =
-          callbacks.onProgress
-        const isArrayBuffer = context.responseType === "arraybuffer"
-        const LENGTH = isArrayBuffer ? "byteLength" : "length"
-        const { maxTimeToFirstByteMs, maxLoadTimeMs } = config.loadPolicy
+          callbacks.onProgress;
+        const isArrayBuffer = context.responseType === "arraybuffer";
+        const LENGTH = isArrayBuffer ? "byteLength" : "length";
+        const { maxTimeToFirstByteMs, maxLoadTimeMs } = config.loadPolicy;
 
-        this.context = context
-        this.config = config
-        this.callbacks = callbacks
-        this.request = this.fetchSetup(context, initParams)
-        self.clearTimeout(this.requestTimeout)
+        this.context = context;
+        this.config = config;
+        this.callbacks = callbacks;
+        this.request = this.fetchSetup(context, initParams);
+        self.clearTimeout(this.requestTimeout);
         config.timeout =
           maxTimeToFirstByteMs && Number.isFinite(maxTimeToFirstByteMs)
             ? maxTimeToFirstByteMs
-            : maxLoadTimeMs
+            : maxLoadTimeMs;
         this.requestTimeout = self.setTimeout(() => {
-          this.abortInternal()
-          callbacks.onTimeout(stats, context, this.response)
-        }, config.timeout)
+          this.abortInternal();
+          callbacks.onTimeout(stats, context, this.response);
+        }, config.timeout);
 
-        const now = performance.now()
+        const now = performance.now();
         decrypt_segment(context.url)
           .then((decryptedUrl) => {
             const resolvedUrl = decryptedUrl.startsWith("http")
               ? decryptedUrl
-              : new URL(decryptedUrl, context.url).href
-            return fetch(new Request(resolvedUrl, initParams))
+              : new URL(decryptedUrl, context.url).href;
+            return fetch(new Request(resolvedUrl, initParams));
           })
           .then((response: Response): Promise<string | ArrayBuffer> => {
-            this.response = this.loader = response
+            this.response = this.loader = response;
 
-            const first = Math.max(self.performance.now(), stats.loading.start)
+            const first = Math.max(self.performance.now(), stats.loading.start);
 
-            self.clearTimeout(this.requestTimeout)
-            config.timeout = maxLoadTimeMs
+            self.clearTimeout(this.requestTimeout);
+            config.timeout = maxLoadTimeMs;
             this.requestTimeout = self.setTimeout(
               () => {
-                this.abortInternal()
-                callbacks.onTimeout(stats, context, this.response)
+                this.abortInternal();
+                callbacks.onTimeout(stats, context, this.response);
               },
-              maxLoadTimeMs - (first - stats.loading.start)
-            )
+              maxLoadTimeMs - (first - stats.loading.start),
+            );
 
             if (!response.ok) {
-              const { status, statusText } = response
+              const { status, statusText } = response;
               throw new FetchError(
                 statusText || "fetch, bad network response",
                 status,
-                response
-              )
+                response,
+              );
             }
-            stats.loading.first = first
+            stats.loading.first = first;
 
-            stats.total = getContentLength(response.headers) || stats.total
+            stats.total = getContentLength(response.headers) || stats.total;
 
             if (onProgress && Number.isFinite(config.highWaterMark)) {
               return this.loadProgressively(
@@ -148,72 +151,72 @@ export class HlsPatched extends Hls {
                 stats,
                 context,
                 config.highWaterMark,
-                onProgress
-              )
+                onProgress,
+              );
             }
 
-            let data: any
+            let data: any;
 
             if (isArrayBuffer) {
-              data = response.arrayBuffer()
+              data = response.arrayBuffer();
             }
             if (context.responseType === "json") {
-              data = response.json()
+              data = response.json();
             }
-            data = response.text()
+            data = response.text();
 
-            return data
+            return data;
           })
           .then((responseData: string | ArrayBuffer) => {
-            const dur = performance.now() - now
+            const dur = performance.now() - now;
             if (dur > 14_000) {
-              onSlow?.()
+              onSlow?.();
             }
 
-            const response = this.response
+            const response = this.response;
             if (!response) {
-              throw new Error("loader destroyed")
+              throw new Error("loader destroyed");
             }
-            self.clearTimeout(this.requestTimeout)
+            self.clearTimeout(this.requestTimeout);
             stats.loading.end = Math.max(
               self.performance.now(),
-              stats.loading.first
-            )
-            const total = (responseData as unknown as any)[LENGTH]
+              stats.loading.first,
+            );
+            const total = (responseData as unknown as any)[LENGTH];
             if (total) {
-              stats.loaded = stats.total = total
+              stats.loaded = stats.total = total;
             }
 
             const loaderResponse: LoaderResponse = {
               url: response.url,
               data: responseData,
-              code: response.status
-            }
+              code: response.status,
+            };
 
             // eslint-disable-next-line promise/always-return
             if (onProgress && !Number.isFinite(config.highWaterMark)) {
-              onProgress(stats, context, responseData, response)
+              onProgress(stats, context, responseData, response);
             }
 
-            callbacks.onSuccess(loaderResponse, stats, context, response)
+            callbacks.onSuccess(loaderResponse, stats, context, response);
           })
           .catch((error) => {
-            self.clearTimeout(this.requestTimeout)
+            self.clearTimeout(this.requestTimeout);
             if (stats.aborted) {
-              return
+              return;
             }
             // CORS errors result in an undefined code. Set it to 0 here to align with XHR's behavior
             // when destroying, 'error' itself can be undefined
-            const code: number = !error ? 0 : error.code || 0
-            const text: string = !error ? null : error.message
+            const code: number = !error ? 0 : error.code || 0;
+            const text: string = !error ? null : error.message;
             callbacks.onError(
               { code, text },
               context,
               error ? error.details : null,
-              stats
-            )
-          })
+              stats,
+            );
+          });
       }
-    }
+    };
   }
 }

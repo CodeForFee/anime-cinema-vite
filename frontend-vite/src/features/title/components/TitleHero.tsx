@@ -1,15 +1,20 @@
-import { Check, Play, Plus, ThumbsUp, Volume2, VolumeX, X } from "lucide-react"
+import { Check, Play, Plus, ThumbsUp, Volume2, VolumeX, X } from "lucide-react";
 
-import type { TitleView } from "@/features/title/hooks/use-title-detail"
-import { Button } from "@/shared/ui/button"
+import type { TitleView } from "@/features/title/hooks/use-title-detail";
+import { Button } from "@/shared/ui/button";
 
-const ROUND = "w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer"
-const ROUND_IDLE = "bg-[#2a2a2a]/60 border-[#808080] hover:border-white text-white hover:bg-[#2a2a2a]/90"
+const ROUND =
+  "w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer";
+const ROUND_IDLE =
+  "bg-[#2a2a2a]/60 border-[#808080] hover:border-white text-white hover:bg-[#2a2a2a]/90";
 
 /** Trailer (or backdrop), title and the play / list / like buttons. On mobile dragging it pulls the sheet down. */
 export function TitleHero({ t }: { t: TitleView }) {
   return (
-    <div data-sheet-handle className="relative w-full sm:aspect-video bg-[#181818] sm:bg-black overflow-hidden select-none">
+    <div
+      data-sheet-handle
+      className="relative w-full sm:aspect-video bg-[#181818] sm:bg-black overflow-hidden select-none"
+    >
       {/* the trailer plays muted behind the title */}
       {t.trailerEmbed ? (
         <iframe
@@ -25,7 +30,7 @@ export function TitleHero({ t }: { t: TitleView }) {
           alt={t.title}
           className="w-full aspect-video sm:aspect-auto sm:h-full object-cover object-top"
           onError={(e) => {
-            ;(e.target as HTMLImageElement).src = t.poster
+            (e.target as HTMLImageElement).src = t.poster;
           }}
         />
       )}
@@ -49,7 +54,11 @@ export function TitleHero({ t }: { t: TitleView }) {
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] leading-none line-clamp-2">
               {t.title}
             </h2>
-            {t.subTitle && <p className="text-xs sm:text-sm text-gray-300 font-medium drop-shadow-md mt-1.5 line-clamp-1">{t.subTitle}</p>}
+            {t.subTitle && (
+              <p className="text-xs sm:text-sm text-gray-300 font-medium drop-shadow-md mt-1.5 line-clamp-1">
+                {t.subTitle}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2.5 pt-1">
@@ -66,10 +75,18 @@ export function TitleHero({ t }: { t: TitleView }) {
             <button
               onClick={t.toggleFavorite}
               type="button"
-              title={t.isFavorite ? "Xóa khỏi danh sách của tôi" : "Thêm vào danh sách của tôi"}
+              title={
+                t.isFavorite
+                  ? "Xóa khỏi danh sách của tôi"
+                  : "Thêm vào danh sách của tôi"
+              }
               className={`${ROUND} ${t.isFavorite ? "bg-white/20 border-white text-white" : ROUND_IDLE}`}
             >
-              {t.isFavorite ? <Check className="w-4 h-4 text-white" /> : <Plus className="w-4 h-4 text-white" />}
+              {t.isFavorite ? (
+                <Check className="w-4 h-4 text-white" />
+              ) : (
+                <Plus className="w-4 h-4 text-white" />
+              )}
             </button>
 
             <button
@@ -87,13 +104,21 @@ export function TitleHero({ t }: { t: TitleView }) {
           <button
             onClick={t.toggleAudio}
             type="button"
-            title={t.isMuted ? "Bật âm thanh (Đang tắt tiếng)" : "Tắt âm thanh (Đang phát tiếng)"}
+            title={
+              t.isMuted
+                ? "Bật âm thanh (Đang tắt tiếng)"
+                : "Tắt âm thanh (Đang phát tiếng)"
+            }
             className="w-10 h-10 rounded-full bg-[#181818]/80 hover:bg-[#282828] border border-[#808080] hover:border-white text-white flex items-center justify-center transition-colors shadow-lg cursor-pointer flex-shrink-0"
           >
-            {t.isMuted ? <VolumeX className="w-4 h-4 text-gray-300" /> : <Volume2 className="w-4 h-4 text-white" />}
+            {t.isMuted ? (
+              <VolumeX className="w-4 h-4 text-gray-300" />
+            ) : (
+              <Volume2 className="w-4 h-4 text-white" />
+            )}
           </button>
         )}
       </div>
     </div>
-  )
+  );
 }

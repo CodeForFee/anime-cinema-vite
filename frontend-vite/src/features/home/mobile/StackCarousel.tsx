@@ -2,7 +2,14 @@ import { useDrag } from "@use-gesture/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { AnimeItem } from "@/core/types/anime";
-import { episodeNumber, loopOffset, partLabel, place, STEP, VISIBLE } from "@/features/home/model/coverflow";
+import {
+  episodeNumber,
+  loopOffset,
+  partLabel,
+  place,
+  STEP,
+  VISIBLE,
+} from "@/features/home/model/coverflow";
 import { LazyImage, useUIStore } from "@/features/title";
 
 const SETTLE = "transform 460ms var(--ease-ios), opacity 460ms";
@@ -20,7 +27,8 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
   const openInfoModal = useUIStore((state) => state.openInfoModal);
   const count = items.length;
   const around = (i: number) => loopOffset(i, index, count);
-  const go = (step: number) => setIndex((i) => (((i + step) % count) + count) % count);
+  const go = (step: number) =>
+    setIndex((i) => (((i + step) % count) + count) % count);
 
   /** Places every mounted card for a drag of `drag` cards (0 = at rest) */
   const layout = (drag: number, animate: boolean) => {
@@ -54,7 +62,7 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
       if (step === 0) layout(0, true);
       else go(step);
     },
-    { axis: "x", filterTaps: true, pointer: { touch: true } }
+    { axis: "x", filterTaps: true, pointer: { touch: true } },
   );
 
   if (items.length === 0) return null;
@@ -85,11 +93,22 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
               aria-label={anime.title}
               onClick={() => (i === index ? openInfoModal(anime) : setIndex(i))}
               className={`absolute left-1/2 top-0 aspect-[2/3] w-[min(62vw,280px)] overflow-hidden rounded-xl bg-[#1c1c1f] text-left [backface-visibility:hidden] will-change-transform ${
-                i === index ? "stack-card-front" : "shadow-[0_10px_20px_rgba(0,0,0,0.55)] ring-1 ring-white/10"
+                i === index
+                  ? "stack-card-front"
+                  : "shadow-[0_10px_20px_rgba(0,0,0,0.55)] ring-1 ring-white/10"
               }`}
-              style={{ transform: spot.transform, zIndex: spot.zIndex, opacity: spot.opacity }}
+              style={{
+                transform: spot.transform,
+                zIndex: spot.zIndex,
+                opacity: spot.opacity,
+              }}
             >
-              <LazyImage art={anime} src={anime.poster || anime.image} alt="" className="h-full w-full object-cover" />
+              <LazyImage
+                art={anime}
+                src={anime.poster || anime.image}
+                alt=""
+                className="h-full w-full object-cover"
+              />
               {/* cards behind the middle one sink into the dark */}
               <span
                 ref={(node) => {
@@ -142,14 +161,21 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
       </div>
 
       {/* the middle card: same rank / title / part • episode as the desktop shelf */}
-      <div key={current.slug || index} className="cn-pop mx-auto mt-3 flex max-w-[min(70vw,300px)] items-center gap-3 px-1">
+      <div
+        key={current.slug || index}
+        className="cn-pop mx-auto mt-3 flex max-w-[min(70vw,300px)] items-center gap-3 px-1"
+      >
         <span className="select-none text-5xl font-black italic leading-none tracking-tighter text-amber-400 drop-shadow-[0_2px_12px_rgba(251,191,36,0.6)]">
           {index + 1}
         </span>
         <div className="min-w-0 flex-1 space-y-0.5">
-          <h4 className="line-clamp-1 text-sm font-bold leading-snug text-white drop-shadow">{current.title}</h4>
+          <h4 className="line-clamp-1 text-sm font-bold leading-snug text-white drop-shadow">
+            {current.title}
+          </h4>
           {current.subTitle && current.subTitle !== current.title && (
-            <p className="line-clamp-1 text-xs italic text-gray-400">{current.subTitle}</p>
+            <p className="line-clamp-1 text-xs italic text-gray-400">
+              {current.subTitle}
+            </p>
           )}
           <div className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
             {currentPart && (
@@ -158,7 +184,9 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
                 <span aria-hidden>•</span>
               </>
             )}
-            <span className="font-bold text-primaryRed">{currentEpisode ? `Tập ${currentEpisode}` : "Tập mới"}</span>
+            <span className="font-bold text-primaryRed">
+              {currentEpisode ? `Tập ${currentEpisode}` : "Tập mới"}
+            </span>
           </div>
         </div>
       </div>
@@ -168,7 +196,10 @@ export function StackCarousel({ items }: { items: AnimeItem[] }) {
       <div className="mt-3 flex justify-center" aria-hidden>
         <div className="relative flex gap-1.5">
           {items.map((anime, i) => (
-            <span key={anime.slug || i} className="h-1.5 w-1.5 rounded-full bg-white/30" />
+            <span
+              key={anime.slug || i}
+              className="h-1.5 w-1.5 rounded-full bg-white/30"
+            />
           ))}
           <span
             className="absolute left-0 top-0 h-1.5 w-5 rounded-full bg-white transition-transform duration-300 ease-[var(--ease-ios)]"

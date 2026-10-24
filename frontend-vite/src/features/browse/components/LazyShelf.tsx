@@ -17,7 +17,12 @@ interface LazyShelfProps {
  * A shelf that only asks the source for its list once it is about to scroll into view,
  * and holds its place with a skeleton until the list arrives.
  */
-export const LazyShelf: React.FC<LazyShelfProps> = ({ title, icon, path, seeMore }) => {
+export const LazyShelf: React.FC<LazyShelfProps> = ({
+  title,
+  icon,
+  path,
+  seeMore,
+}) => {
   const ref = useRef<HTMLDivElement>(null);
   const [near, setNear] = useState(false);
 
@@ -28,7 +33,7 @@ export const LazyShelf: React.FC<LazyShelfProps> = ({ title, icon, path, seeMore
       ([entry]) => {
         if (entry.isIntersecting) setNear(true);
       },
-      { rootMargin: "400px 0px" }
+      { rootMargin: "400px 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -42,9 +47,18 @@ export const LazyShelf: React.FC<LazyShelfProps> = ({ title, icon, path, seeMore
   return (
     <div ref={ref}>
       {data ? (
-        <MovieShelf title={title} icon={icon} items={data.items} seeMore={seeMore} />
+        <MovieShelf
+          title={title}
+          icon={icon}
+          items={data.items}
+          seeMore={seeMore}
+        />
       ) : (
-        <div className="my-5 md:my-8" aria-busy="true" aria-label={`Đang tải ${title}`}>
+        <div
+          className="my-5 md:my-8"
+          aria-busy="true"
+          aria-label={`Đang tải ${title}`}
+        >
           <ShelfSkeleton />
         </div>
       )}

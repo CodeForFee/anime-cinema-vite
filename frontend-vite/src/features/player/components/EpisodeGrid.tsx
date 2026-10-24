@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Card } from "@/shared/ui/card";
@@ -41,7 +40,8 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
     const slug = (ep.slug || "").trim().toLowerCase();
     const index = String(ep.index || "");
 
-    if (name === cur || id === cur || slug === cur || index === cur) return true;
+    if (name === cur || id === cur || slug === cur || index === cur)
+      return true;
     const numCur = cur.replace(/^tập\s*/i, "").replace(/^0+/, "");
     const numName = name.replace(/^tập\s*/i, "").replace(/^0+/, "");
     if (numCur && numName && numCur === numName) return true;
@@ -62,7 +62,8 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
   }, [episodes]);
 
   const watchingGroup = groups.find((g) => g.items.some(isCurrentEpisode));
-  const activeGroup = groups.find((g) => g.key === pickedGroup) || watchingGroup || groups[0];
+  const activeGroup =
+    groups.find((g) => g.key === pickedGroup) || watchingGroup || groups[0];
 
   // Filtered episodes if searching
   const filteredEpisodes = useMemo(() => {
@@ -72,12 +73,14 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
       (ep) =>
         ep.name.toLowerCase().includes(query) ||
         (ep.title && ep.title.toLowerCase().includes(query)) ||
-        String(ep.index).includes(query)
+        String(ep.index).includes(query),
     );
   }, [episodes, filterText]);
 
   const displayEpisodes = filteredEpisodes || activeGroup?.items || [];
-  const activeSeason = seasons.find((s) => s.slug === currentSlug) || seasons.find((s) => s.isCurrent);
+  const activeSeason =
+    seasons.find((s) => s.slug === currentSlug) ||
+    seasons.find((s) => s.isCurrent);
 
   return (
     <Card className="glass-card space-y-4 rounded-3xl p-5">
@@ -85,7 +88,10 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h3 className="text-2xl font-bold text-white">Tập</h3>
-          <Badge variant="unstyled" className="border-white/15 bg-white/5 font-medium text-gray-300">
+          <Badge
+            variant="unstyled"
+            className="border-white/15 bg-white/5 font-medium text-gray-300"
+          >
             {episodes.length} tập
           </Badge>
         </div>
@@ -121,9 +127,18 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
               label={activeSeason?.partLabel || "Chọn phần"}
               selectedKey={currentSlug}
               onSelect={(slug) => {
-                if (slug !== currentSlug) void navigate({ to: "/watch", search: { slug }, resetScroll: false });
+                if (slug !== currentSlug)
+                  void navigate({
+                    to: "/watch",
+                    search: { slug },
+                    resetScroll: false,
+                  });
               }}
-              options={seasons.map((s) => ({ key: s.slug, label: s.partLabel || s.title, hint: s.title }))}
+              options={seasons.map((s) => ({
+                key: s.slug,
+                label: s.partLabel || s.title,
+                hint: s.title,
+              }))}
             />
           )}
         </div>
@@ -132,7 +147,9 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
       {/* Episode Buttons */}
       {displayEpisodes.length === 0 ? (
         <p className="py-8 text-center text-sm text-gray-400">
-          {episodes.length === 0 ? "Chưa có danh sách tập phim cho nội dung này." : "Không tìm thấy tập phù hợp."}
+          {episodes.length === 0
+            ? "Chưa có danh sách tập phim cho nội dung này."
+            : "Không tìm thấy tập phù hợp."}
         </p>
       ) : (
         <div className="grid max-h-80 grid-cols-4 gap-2 overflow-y-auto pr-1 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
@@ -149,7 +166,7 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                   "h-10 min-w-0 rounded-xl px-1 text-sm font-semibold transition active:scale-95",
                   isActive
                     ? "bg-primaryRed text-white shadow-[0_0_18px_rgba(229,9,20,0.5)]"
-                    : "glass-pill text-gray-200 hover:text-white"
+                    : "glass-pill text-gray-200 hover:text-white",
                 )}
               >
                 <span className="truncate">{formatEpisodeName(ep.name)}</span>

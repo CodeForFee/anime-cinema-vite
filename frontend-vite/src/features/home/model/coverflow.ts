@@ -1,13 +1,18 @@
-import type { AnimeItem } from "@/core/types/anime"
+import type { AnimeItem } from "@/core/types/anime";
 
 /** "02" from "TẬP 02" */
-export const episodeNumber = (anime: AnimeItem) => (anime.episode || "").replace(/^TẬP\s*/i, "").trim();
+export const episodeNumber = (anime: AnimeItem) =>
+  (anime.episode || "").replace(/^TẬP\s*/i, "").trim();
 
 /** "Phần 2" when the title or its metadata names a part, otherwise null (part 1 is not worth saying) */
 export function partLabel(anime: AnimeItem): string | null {
-  const inTitle = anime.title.match(/(?:Season|Mùa|Phần|SS|Part)\s*(\d+|[IVXLCDM]+)/i);
+  const inTitle = anime.title.match(
+    /(?:Season|Mùa|Phần|SS|Part)\s*(\d+|[IVXLCDM]+)/i,
+  );
   if (inTitle) return `Phần ${inTitle[1]}`;
-  const meta = String((anime as { metadata?: Record<string, string> }).metadata?.Season ?? "").trim();
+  const meta = String(
+    (anime as { metadata?: Record<string, string> }).metadata?.Season ?? "",
+  ).trim();
   if (!meta || meta === "1" || meta === "Phần 1") return null;
   return meta.startsWith("Phần") ? meta : `Phần ${meta}`;
 }
@@ -44,7 +49,8 @@ export function coverflow(offset: number) {
 }
 
 /** How dark a card sits behind the middle one: the middle stays clear, one step out is already well in the dark */
-export const shadeOpacity = (offset: number) => Math.min(Math.min(Math.abs(offset), VISIBLE) * 0.42, 0.78);
+export const shadeOpacity = (offset: number) =>
+  Math.min(Math.min(Math.abs(offset), VISIBLE) * 0.42, 0.78);
 
 /**
  * Where a card at `offset` sits and how dark it is. Render uses it too, so a card that mounts without the

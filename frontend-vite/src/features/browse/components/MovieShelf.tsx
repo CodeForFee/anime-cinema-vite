@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
@@ -28,7 +27,10 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
   const handleScroll = (direction: "left" | "right") => {
     if (!scrollContainerRef.current) return;
     const scrollAmount = direction === "left" ? -500 : 500;
-    scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    scrollContainerRef.current.scrollBy({
+      left: scrollAmount,
+      behavior: "smooth",
+    });
   };
 
   if (!items || items.length === 0) return null;
@@ -37,7 +39,9 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
     <section className="my-5 md:my-8 relative group/shelf">
       {/* Shelf Header */}
       <div className="flex items-center justify-between mb-3 px-4 md:px-12">
-        <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">{title}</h3>
+        <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">
+          {title}
+        </h3>
 
         {seeMore && (
           <Link
@@ -70,7 +74,10 @@ export const MovieShelf: React.FC<MovieShelfProps> = ({
           className="no-scrollbar flex items-start gap-3 snap-shelf overflow-x-auto scroll-smooth py-2 md:gap-4"
         >
           {items.map((anime) => (
-            <div key={anime.slug || anime.title} className="w-44 shrink-0 md:w-52">
+            <div
+              key={anime.slug || anime.title}
+              className="w-44 shrink-0 md:w-52"
+            >
               <PosterTile anime={anime} />
             </div>
           ))}
