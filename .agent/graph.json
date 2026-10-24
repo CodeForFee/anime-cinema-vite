@@ -13,9 +13,9 @@
       "Capacitor",
       "Gradle"
     ],
-    "description": "Focused map of inspected Android build and source-account seams. Browser uses AVS Helper cookies; Android uses Capacitor HTTP/WebView cookies. Vercel gateway removed at user request; no demonstrated native Google session handoff.",
-    "generatedAt": "2026-10-24T12:17:08.946Z",
-    "sha": "01ab444511fc128c2408250cded86d62836e45f9"
+    "description": "Focused map of inspected Android build and source-account seams. Browser uses AVS Helper cookies; real source Google/browser session observed via Chrome MCP. Android uses Capacitor HTTP/WebView cookies; native Google handoff unproven. Vercel gateway removed at user request.",
+    "generatedAt": "2026-10-24T12:56:07.045Z",
+    "sha": "304fef1f9fd7e2da80d9a4f0dcd64690db992a47"
   },
   "nodes": [
     {
@@ -279,6 +279,22 @@
         "auth"
       ],
       "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/docs/SOURCE-ACCOUNT.md",
+      "type": "file",
+      "name": "SOURCE-ACCOUNT.md",
+      "filePath": "frontend-vite/docs/SOURCE-ACCOUNT.md",
+      "lineRange": [
+        1,
+        32
+      ],
+      "summary": "Verified source Google callback and browser-cookie reuse, registration fields/Turnstile and outstanding native session handoff; current Chrome MCP setup documented outside app.",
+      "tags": [
+        "auth",
+        "docs"
+      ],
+      "complexity": "simple"
     }
   ],
   "edges": [
@@ -354,7 +370,8 @@
         "file:frontend-vite/src/features/account/hooks/use-session-return.ts",
         "file:frontend-vite/src/features/account/hooks/use-session-return.spec.tsx",
         "file:frontend-vite/src/features/account/store.spec.ts",
-        "file:frontend-vite/src/core/source/endpoints/comments/fetch.spec.ts"
+        "file:frontend-vite/src/core/source/endpoints/comments/fetch.spec.ts",
+        "file:frontend-vite/docs/SOURCE-ACCOUNT.md"
       ]
     }
   ],
