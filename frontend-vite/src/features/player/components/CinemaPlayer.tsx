@@ -19,7 +19,6 @@ import {
   usePlayerSession,
 } from "@/features/player/hooks/use-player-session";
 import { useQuality } from "@/features/player/hooks/use-quality";
-import { usePlayerFrame } from "@/features/player/hooks/use-player-frame";
 import { usePlayerStore } from "@/features/player/store";
 import { useFormFactor } from "@/shared/lib/form-factor";
 import { cn } from "@/shared/lib/utils";
@@ -50,7 +49,7 @@ interface CinemaPlayerProps extends SessionOptions {
 /** The player on the watch page: the source's own player in a frame (or hls.js), with the app's controls over it */
 export function CinemaPlayer(props: CinemaPlayerProps) {
   const {
-    embedUrl: upstreamEmbedUrl,
+    embedUrl,
     sources,
     failed,
     title,
@@ -77,10 +76,8 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
     null,
   );
   const [anchorX, setAnchorX] = useState(0);
-  const frame = usePlayerFrame(upstreamEmbedUrl);
-  const embedUrl = frame.url;
 
-  const session = usePlayerSession({ ...props, embedUrl, frameChannel: frame?.channel }, {
+  const session = usePlayerSession(props, {
     iframe: iframeRef,
     frame: frameRef,
   });
@@ -114,7 +111,7 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
     };
   }, [embedUrl, source?.file, source?.type]);
 
-  const showError = hasError || failed || Boolean(bridge.failure);
+  const showError = hasError || failed;
   const Controls = formFactor === "mobile" ? TouchControls : DesktopControls;
   const openSheet = (kind: NonNullable<typeof sheet>) => (x: number) => {
     setAnchorX(x);
@@ -166,7 +163,7 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
               <Button
                 variant="unstyled"
                 size="unstyled"
-                onClick={() => { frame.reload(); onRefresh(); }}
+                onClick={onRefresh}
                 className="h-10 rounded-full bg-white px-6 font-semibold text-black hover:bg-white/90"
               >
                 <RotateCw className="mr-2 h-4 w-4" />
@@ -181,7 +178,6 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
             ref={iframeRef}
             key={embedUrl}
             src={embedUrl}
-            sandbox={frame?.channel ? "allow-scripts" : undefined}
             title={`${title} - ${episodeName}`}
             className="absolute inset-0 z-[5] h-full w-full border-0"
             style={

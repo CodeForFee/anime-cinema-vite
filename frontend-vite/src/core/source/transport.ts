@@ -23,8 +23,8 @@ async function send(
 ): Promise<SourceResponse> {
   if (!core().transport.version)
     throw Object.assign(
-      new Error("Không kết nối được nguồn dữ liệu"),
-      { transportNotAvailable: true },
+      new Error("Trang web cần extension AVS Helper để hoạt động bình thường"),
+      { extesionNotExists: true },
     );
   const initialHost = HOST_CURL;
   const isSource = Boolean(sourceOrigin(input.url));

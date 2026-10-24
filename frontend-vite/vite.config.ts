@@ -43,8 +43,7 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         // the decryptor and hls.js serve only the rare non-iframe source: fetched when needed, not up front
         globIgnores: ["**/*.wasm", "**/HlsPlayer-*.js", "**/hls.worker-*.js", "**/stats.html"],
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api(?:\/|$)/]
+        navigateFallback: "/index.html"
       }
     }),
     // pnpm analyze -> dist/stats.html
@@ -53,7 +52,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: { "@": src }
   },
-  // Vite alone serves the UI; vercel dev also provides the same-origin Functions.
+  // The extension only injects its bridge on the hosts in avs-helper-extension/allowlist.yaml
   server: { host: "localhost", port: 4100 },
   test: { environment: "jsdom", globals: true }
 }))

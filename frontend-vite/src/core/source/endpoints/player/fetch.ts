@@ -16,8 +16,7 @@ export interface PlayerAnswer {
 
 /**
  * The player of an episode; id / play / hash are the data-* attributes of its link on the watch page. Asked from
- * through the installed transport: Vercel on web, or the viewer's native HTTP stack in Android.
- * A server-issued session is not assumed to be valid for browser media requests; verify on Preview.
+ * the viewer's own device (extension or native HTTP), so the answer is issued to the viewer's IP.
  */
 export async function PlayerLink(
   id: string,

@@ -3,4 +3,3 @@ dist
 *.local
 *.tsbuildinfo
 /release
-.vercel

@@ -44,31 +44,6 @@ export interface VisualQuality {
 export type PlayerCommand =
   "play" | "pause" | "seek" | "rate" | "volume" | "resume" | "quality";
 
-function isPlayerState(
-  value: Record<string, unknown>,
-): value is Record<string, unknown> & PlayerState {
-  return (
-    ["currentTime", "duration", "rate"].every(
-      (key) =>
-        typeof value[key] === "number" &&
-        Number.isFinite(value[key]) &&
-        (value[key] as number) >= 0,
-    ) &&
-    ["paused", "waiting", "ended"].every(
-      (key) => typeof value[key] === "boolean",
-    ) &&
-    (value.volume === undefined ||
-      (typeof value.volume === "number" &&
-        Number.isFinite(value.volume) &&
-        value.volume >= 0 &&
-        value.volume <= 1)) &&
-    (value.ahead === undefined ||
-      (typeof value.ahead === "number" &&
-        Number.isFinite(value.ahead) &&
-        value.ahead >= 0))
-  );
-}
-
 /**
  * Remote control of the source player embedded in `iframeRef`.
  * `control`: the app draws the controls and the player's own are hidden (touch). Otherwise the player
@@ -80,7 +55,6 @@ export function usePlayerBridge(
   iframeRef: RefObject<HTMLIFrameElement | null>,
   embedUrl: string | undefined,
   control: boolean,
-  channel?: string,
 ) {
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<PlayerState | null>(null);
@@ -88,11 +62,10 @@ export function usePlayerBridge(
   const [resumeOffer, setResumeOffer] = useState<number | null>(null);
   const [levels, setLevels] = useState<PlayerLevels | null>(null);
   const [visual, setVisual] = useState<VisualQuality | null>(null);
-  const [failure, setFailure] = useState<string | null>(null);
   /** When the app last sent a seek (ms): the wait after it is the seek loading, not a stall */
   const seekedAt = useRef(0);
 
-  const origin = embedUrl ? new URL(embedUrl, window.location.href).origin : "";
+  const origin = embedUrl ? new URL(embedUrl).origin : "";
   const greeting = control ? "hello" : "observe";
 
   const send = useCallback(
@@ -100,11 +73,11 @@ export function usePlayerBridge(
       if (type === "seek") seekedAt.current = Date.now();
       if (origin)
         iframeRef.current?.contentWindow?.postMessage(
-          { source: APP, type, value, ...(channel ? { channel } : {}) },
-          channel ? "*" : origin,
+          { source: APP, type, value },
+          origin,
         );
     },
-    [iframeRef, origin, channel],
+    [iframeRef, origin],
   );
 
   useEffect(() => {
@@ -113,75 +86,25 @@ export function usePlayerBridge(
     setResumeOffer(null);
     setLevels(null);
     setVisual(null);
-    setFailure(null);
     if (!origin) return;
-    let timeout = channel
-      ? setTimeout(() => {
-          clearInterval(greetingTimer);
-          setFailure(
-            "Không khởi tạo được video từ nguồn. Vui lòng thử tải lại.",
-          );
-        }, 30_000)
-      : undefined;
-    const greetingTimer = channel
-      ? setInterval(() => send(greeting), 500)
-      : undefined;
 
     const onMessage = (event: MessageEvent) => {
       if (
-        event.origin !== (channel ? "null" : origin) ||
+        event.origin !== origin ||
         event.source !== iframeRef.current?.contentWindow
       )
         return;
       const message = event.data;
-      if (
-        !message ||
-        typeof message !== "object" ||
-        message.source !== BRIDGE ||
-        (channel && message.channel !== channel)
-      )
-        return;
+      if (!message || message.source !== BRIDGE) return;
 
       if (message.type === "present") send(greeting);
-      else if (message.type === "ready") {
-        setReady(true);
-        clearInterval(greetingTimer);
-      } else if (message.type === "state" && isPlayerState(message)) {
-        setState(message);
-        if (message.duration > 0) {
-          clearTimeout(timeout);
-          timeout = undefined;
-          setFailure(null);
-        }
-      } else if (
-        message.type === "resume" &&
-        Number.isFinite(message.at) &&
-        message.at > 0
-      )
+      else if (message.type === "ready") setReady(true);
+      else if (message.type === "state") setState(message as PlayerState);
+      else if (message.type === "resume" && message.at > 0)
         setResumeOffer(message.at);
-      else if (
-        message.type === "levels" &&
-        Array.isArray(message.levels) &&
-        message.levels.length <= 128 &&
-        message.levels.every(
-          (level: QualityLevel) =>
-            level &&
-            Number.isInteger(level.index) &&
-            level.index >= 0 &&
-            typeof level.label === "string" &&
-            Number.isFinite(level.height) &&
-            level.height >= 0,
-        ) &&
-        Number.isInteger(message.current)
-      )
+      else if (message.type === "levels" && Array.isArray(message.levels))
         setLevels({ levels: message.levels, current: message.current });
-      else if (
-        message.type === "visual" &&
-        typeof message.label === "string" &&
-        Number.isFinite(message.height) &&
-        message.height >= 0 &&
-        typeof message.auto === "boolean"
-      )
+      else if (message.type === "visual")
         setVisual({
           label: message.label,
           height: message.height,
@@ -191,16 +114,11 @@ export function usePlayerBridge(
 
     window.addEventListener("message", onMessage);
     send(greeting); // the frame may already be up
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(greetingTimer);
-      window.removeEventListener("message", onMessage);
-    };
-  }, [embedUrl, greeting, origin, iframeRef, send, channel]);
+    return () => window.removeEventListener("message", onMessage);
+  }, [embedUrl, greeting, origin, iframeRef, send]);
 
   return {
     ready,
-    failure,
     state,
     send,
     resumeOffer,

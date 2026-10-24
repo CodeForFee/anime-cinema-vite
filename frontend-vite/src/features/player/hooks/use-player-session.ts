@@ -21,8 +21,6 @@ const nativeShell = () =>
 
 export interface SessionOptions {
   embedUrl?: string;
-  /** Only the web proxy frame uses an opaque sandbox and a per-load message channel. */
-  frameChannel?: string;
   /** Where the watch position of this episode is kept (core/player/progress.ts progressKey) */
   progressKey?: string;
   episodes?: Episode[];
@@ -47,7 +45,6 @@ export interface SessionOptions {
 export function usePlayerSession(
   {
     embedUrl,
-    frameChannel,
     progressKey,
     episodes,
     currentEpisodeId,
@@ -61,7 +58,7 @@ export function usePlayerSession(
     frame: RefObject<HTMLDivElement | null>;
   },
 ) {
-  const bridge = usePlayerBridge(refs.iframe, embedUrl, true, frameChannel);
+  const bridge = usePlayerBridge(refs.iframe, embedUrl, true);
   const state = bridge.ready ? bridge.state : null;
 
   // ---- per-episode state: resume point, dismissed cards ----
@@ -81,7 +78,7 @@ export function usePlayerSession(
     setNextDismissed(false);
     lastSave.current = 0;
     nearEndSent.current = false;
-  }, [progressKey, frameChannel]);
+  }, [progressKey]);
 
   // our saved position wins; else the one the player's own (hidden) resume box offers
   const offeredAt = resumeAt ?? bridge.resumeOffer;
