@@ -15,10 +15,17 @@ Link mẫu dùng client ID của nguồn, `origin=https://animevietsub.sale`, `d
 
 [Tài liệu GIS popup](https://developers.google.com/identity/gsi/web/guides/display-button) yêu cầu nơi nhận credential tương ứng (callback JavaScript hoặc login URI theo kiểu tích hợp). Sau khi có credential hợp lệ, phía nguồn vẫn phải xác thực nó và tạo session. Riêng Android, [Google không hỗ trợ đăng nhập trong WebView](https://developers.google.com/identity/siwg/best-practices); tích hợp native cần OAuth client Android trong cùng Google Cloud project của bên xác thực.
 
-Người dùng xác nhận không có quyền cấu hình OAuth của AnimeVietsub. Chưa có hợp đồng callback/token/session-handoff được nguồn cho phép dành cho Capynime. Vì vậy chưa có cơ sở để hứa Google trực tiếp cho tài khoản nguồn trên cả hai nền tảng. Tài khoản Capynime riêng là một phương án khác, cần OAuth/backend riêng và không tự đồng bộ tài khoản nguồn; người dùng chưa chấp thuận.
+Người dùng xác nhận không có quyền cấu hình OAuth của AnimeVietsub. Google trên trang nguồn đã được kiểm chứng bằng Chrome thật và web Capynime nhận được phiên qua AVS Helper. Chưa có hợp đồng chuyển phiên từ Chrome sang APK được nguồn hỗ trợ; việc đọc Network bằng MCP khi phát triển không cung cấp khả năng đó cho ứng dụng Android. Tài khoản Capynime riêng là một phương án khác, cần OAuth/backend riêng và không tự đồng bộ tài khoản nguồn; người dùng chưa chấp thuận.
+
+## Hợp đồng nguồn đã quan sát
+
+- HTML Google dùng `data-login_uri="https://animevietsub.sale/login/google/"`. Người dùng tự chọn tài khoản; request POST callback trả 302, thấy tên trường `credential` và `g_csrf_token`. Không lưu các giá trị này vào repo.
+- Đã mở login với `_fxRef=http://localhost:4100/`; sau Google trình duyệt vẫn ở trang chủ nguồn, không tự về Capynime. Không được giả định `_fxRef` điều khiển được chuyển hướng Google; phía app cần xác nhận phiên rồi xử lý việc quay về.
+- Đăng ký: POST `/account/register/`, `form#form-register`; trường `username`, `password`, `repassword`, `email`, `_csrf`, `_fxRef`, `register[password_md5]`, `submit`. Tên đăng nhập 3–20 ký tự chữ/số/gạch dưới. Có Cloudflare Turnstile nằm trong form, nên chỉ biết tên trường chưa đủ để gửi đăng ký hợp lệ.
+- Script kiểm tra username gọi GET `/ajax/check-handle.php?handle=...`. Chưa gửi đăng ký/tạo tài khoản thật; chưa kiểm chứng widget khi nhúng vào app.
 
 ## Kiểm chứng
 
 `pnpm exec vitest run src/core/source/endpoints/comments/fetch.spec.ts src/features/account/store.spec.ts src/features/account/hooks/use-session-return.spec.tsx` kiểm tra CSRF/hash, thất bại nguồn, xác minh phiên, lỗi mạng, race với logout, focus/native resume và cách ly cache tài khoản.
 
-Chưa đăng nhập/đăng ký bằng tài khoản thật hoặc kiểm chứng Google trên thiết bị. Không có thông tin đăng nhập thử; các request tự động đến trang login/register bị chặn/xác minh khu vực. Build/test qua không chứng minh đăng nhập nguồn thật thành công.
+Ngày 2026-10-24 đã kết nối Chrome hiện tại bằng Chrome DevTools MCP1.12.0. Login/register trả HTTP200 trong browser dù Node fetch trực tiếp vẫn HTTP403. Sau khi người dùng tự đăng nhập Google, đọc lại trang lịch chiếu xác nhận nguồn đã đăng nhập; web Capynime tại localhost4100 có user và không còn nút đăng nhập. Đây là kiểm chứng việc dùng chung phiên trình duyệt hiện có, chưa phải nút Google/đăng ký mới trong ứng dụng hoặc Google trong APK.

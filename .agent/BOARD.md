@@ -23,6 +23,7 @@ Route by capability first, then cheapest. Delete rows for models this project do
 
 | model | scope (file globs) | task | since (UTC) | status |
 |---|---|---|---|---|
+| gpt-6 | .agent/**; frontend-vite/docs/SOURCE-ACCOUNT.md; C:/Users/NEO/.codex/config.toml and tools/chrome-devtools-mcp/** | T-003 configure Chrome MCP for current browser after bundled Browser/Computer Use unavailable | 2026-10-24T12:31Z | done (released); current Chrome connected, source callback captured; app direct-Google/register features remain incomplete |
 | gpt-6 | .agent/** | T-002 inspect source callback/registration contract after user proposes return via source | 2026-10-24T12:22Z | released; needs source-domain callback request + registration form; source requests HTTP403 |
 | gpt-6 | frontend-vite/src/{features/account/**,platform/source-account*,core/source/endpoints/comments/fetch*}, frontend-vite/android/app/src/main/{AndroidManifest.xml,java/app/capynime/{MainActivity,SourceAccountPlugin,SourceAccountActivity}.java}, frontend-vite/docs/SOURCE-ACCOUNT.md, .agent/** | T-002 source account login/register and direct Google | 2026-10-24T12:06Z | released; independent session fixes verified; no opener/native Activity retained |
 | gpt-6 | frontend-vite/{scripts/**,package.json,android/app/src/main/java/app/capynime/MainActivity.java}, .agent/** | fix debug JDK selection and release Java string compilation; preserve existing staged/unstaged work | 2026-10-24T11:37Z | done (released); debug + signed release/AAB built |
@@ -37,6 +38,7 @@ One owner per file. If your scope overlaps an open row, do not edit — see AGEN
 |---|---|---|---|---|
 | T-001 | fix Android debug/release build | gpt-6 | done | tasks/T-001-android-build.md |
 | T-002 | source account authentication on web/Android | gpt-6 | blocked (needs-evidence) | tasks/T-002-source-account.md |
+| T-003 | connect existing Chrome with MCP | gpt-6 | done | tasks/T-003-chrome-mcp.md |
 
 ## Bugs
 
@@ -54,6 +56,6 @@ One owner per file. If your scope overlaps an open row, do not edit — see AGEN
 ## Last 3 handoffs
 
 <!-- newest first, trimmed to three -->
+- 2026-10-24 gpt-6: T-003 Chrome DevTools MCP installed globally/tested, current Chrome connected. User Google POST /login/google/ ->302; source signed-in + Capynime received user verified. Registration schema/Turnstile recorded in T-002; app Google/register UI still unimplemented, native handoff unproven. Sessions/hooks cleaned; log/20261024T1253Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-002 follow-up needs-evidence; source login/register HTTP403 and no connected browser. Supplied /gsi/log is a Google event, not source callback; pending source POST URL/method/field names + registration link/form names. No application code changed; log/20261024T1223Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: T-002 partial; 16 auth/session/cache tests pass, typecheck/lint pass, debug APK built; 3 existing suite failures. User rejected source-tab login; direct Google + registration not done. Source OAuth/session handoff requires source owner; docs/SOURCE-ACCOUNT.md and log/20261024T1215Z-gpt-6-01a16bc1.md.
-- 2026-10-24 gpt-6: APK fix T-001 done; shared JDK21 selection, Java string corrected, release regenerates enhancement; 4 tests pass, debug and signed release/AAB build; version stays 2.0.20. Existing dirty index/user features preserved; see log/20261024T1137Z-gpt-6-android-build.md.
