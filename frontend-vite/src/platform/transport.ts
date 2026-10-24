@@ -1,11 +1,5 @@
-// One transport, two hosts. In a browser the AVS Helper extension performs the request; inside the
-// Android app (Capacitor) the native HTTP stack does. Either way there is no CORS, the request leaves
-// the viewer's device, and a URL tagged "#animevsub-vsub" is sent with the source Referer.
+// Web requests go through this deployment's Vercel API; the native HTTP adapter stays on-device.
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
-import {
-  Http as ExtensionHttp,
-  setReferrers,
-} from "client-ext-animevsub-helper";
 
 import type {
   SourceRequest,
@@ -13,6 +7,7 @@ import type {
   Transport,
 } from "@/core/configure";
 import { C_URL } from "@/core/source/hosts";
+import { webTransport } from "@/platform/web-transport";
 
 export const isNativeApp = Capacitor.isNativePlatform();
 
@@ -60,14 +55,4 @@ export const transport: Transport = isNativeApp
       post: (request) => nativeRequest("POST", request),
       // no hostChanged: the native request sets the Referer from C_URL every time
     }
-  : {
-      // stamped on <html> by the extension at document start; empty without it
-      get version() {
-        return ExtensionHttp.version;
-      },
-      get: (request) => ExtensionHttp.get(request) as Promise<SourceResponse>,
-      post: (request) => ExtensionHttp.post(request) as Promise<SourceResponse>,
-      // the extension's Referer rule is built for one host: tell it the new one
-      hostChanged: (origin) =>
-        setReferrers({ "#animevsub-vsub": `${origin}/` }).then(() => undefined),
-    };
+  : webTransport;

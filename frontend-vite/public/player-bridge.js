@@ -16,6 +16,10 @@
   "use strict";
   if (window.top === window || window.__avsBridge || !/animevsub-vsub/.test(location.hash)) return;
   window.__avsBridge = true;
+  // Only the Vercel sandbox supplies these attributes; native/extension callers keep the legacy protocol.
+  var bridgeScript = document.currentScript;
+  var channel = bridgeScript && bridgeScript.getAttribute("data-avs-channel") || "";
+  var parentOrigin = bridgeScript && bridgeScript.getAttribute("data-avs-parent-origin") || "*";
 
   /* ---------- 1. Ad shield ---------- */
 
@@ -186,7 +190,11 @@
   }
 
   function send(type, data) {
-    try { window.parent.postMessage(Object.assign({ source: BRIDGE, type: type }, data), "*"); } catch (e) { /* parent gone */ }
+    try {
+      var message = Object.assign({ source: BRIDGE, type: type }, data);
+      if (channel) message.channel = channel;
+      window.parent.postMessage(message, channel ? parentOrigin : "*");
+    } catch (e) { /* parent gone */ }
   }
 
   function report() {
@@ -255,6 +263,7 @@
   window.addEventListener("message", function (event) {
     var message = event.data;
     if (event.source !== window.parent || !message || message.source !== APP) return;
+    if (channel && (event.origin !== parentOrigin || message.channel !== channel)) return;
 
     // "hello": the app draws the controls (touch); "observe": the player keeps its own, the app only
     // follows the position (resume, next episode) and may seek

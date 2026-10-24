@@ -1,0 +1,11 @@
+avs-helper-extension/
+frontend-vite/android/
+frontend-vite/release/
+frontend-vite/assets/
+**/node_modules/
+**/dist/
+**/.env*
+**/*.local
+**/*.jks
+**/*.keystore
+**/keystore.properties

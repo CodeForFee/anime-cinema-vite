@@ -1,16 +1,19 @@
 # Capynime (Vite)
 
-Client-side version of the site: no backend. Every request leaves the viewer's browser through the
-`avs-helper-extension` (sibling folder), the same way `anime-vsub/desktop-web` works.
+React/Vite frontend with same-project Vercel Functions. On the web, source HTML/JSON goes through
+`api/proxy.ts`; `api/player.ts` injects the bridge into an isolated player frame. The web transport
+does not require the sibling extension. Android keeps its native HTTP and bridge injection.
+
+This branch is experimental: upstream acceptance and real playback must pass the Preview gate in
+[`SERVERLESS.md`](SERVERLESS.md). API/build success alone does not prove extension-free playback.
 
 ## Run
 
 ```sh
-# 1. build the extension and load manifest-v3/extension as "unpacked" in Edge/Chrome
-cd ../avs-helper-extension && pnpm i && pnpm --filter ./manifest-v3 build
-
-# 2. start the web (must be localhost, or a host listed in the extension's allowlist.yaml)
-cd ../frontend-vite && pnpm i && pnpm dev      # http://localhost:4100
+pnpm install
+cd .. # Vercel project Root Directory remains frontend-vite
+npx vercel dev  # web + /api/*; requires a linked Vercel project
+# pnpm dev runs the Vite UI only; it does not serve the Functions.
 ```
 
 `pnpm test` runs the specs, `pnpm lint` (Biome, errors only), `pnpm build` type-checks and builds,
@@ -23,10 +26,11 @@ vite-plugin-pwa (web only; the Android app unregisters it).
 
 ## Deploy (Vercel)
 
-Root directory `frontend-vite`. `vercel.json` pins pnpm 11.15.1, rewrites routes to `index.html` (paths with a
-dot are left alone, so a stale chunk 404s instead of coming back as HTML), caches `/assets` immutable and
-revalidates `index.html`/`sw.js`. Node >= 22.12 (`engines`). The production host must be in the extension
-allowlist.
+Root directory `frontend-vite`. `api/` sits next to `src/`, not inside `dist/`. `vercel.json` pins pnpm
+11.15.1, bounds Functions to 30 seconds and excludes `/api/*` from the SPA rewrite. The PWA also excludes
+API navigation from its offline fallback. Assets remain immutable; `index.html`/`sw.js` revalidate.
+Node >= 22.12 (`engines`). Use a Preview deployment before merging; source-side 403/session restrictions
+may still prevent playback. No extension allowlist change or Android rebuild is needed.
 
 ## Icons
 

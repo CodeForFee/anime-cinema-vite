@@ -4,7 +4,8 @@
   "installCommand": "npx -y pnpm@11.15.1 install --frozen-lockfile",
   "buildCommand": "npx -y pnpm@11.15.1 run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/((?!assets/)[^.]*)", "destination": "/index.html" }],
+  "functions": { "api/*.ts": { "maxDuration": 30 } },
+  "rewrites": [{ "source": "/((?!api(?:/|$)|assets/)[^.]*)", "destination": "/index.html" }],
   "headers": [
     {
       "source": "/assets/(.*)",

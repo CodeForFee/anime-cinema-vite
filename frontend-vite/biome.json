@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["src/**", "vite.config.ts", "scripts/**", "!src/features/player/engines/hls/new-dha/pkg", "!src/features/player/engines/hls/dha"]
+    "includes": ["src/**", "api/**", "server/**", "vite.config.ts", "scripts/**", "!src/features/player/engines/hls/new-dha/pkg", "!src/features/player/engines/hls/dha"]
   },
   "formatter": { "enabled": false },
   "css": { "parser": { "tailwindDirectives": true } },

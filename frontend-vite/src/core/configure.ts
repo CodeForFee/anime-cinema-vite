@@ -19,9 +19,9 @@ export interface SourceResponse {
   headers: Record<string, string>;
 }
 
-/** How requests reach the source: from the viewer's own device (extension on the web, native HTTP in the app) */
+/** How requests reach the source: same-origin serverless API on web, native HTTP in the app. */
 export interface Transport {
-  /** Empty when nothing can reach the source (no extension): requests then fail with a clear message */
+  /** Empty when no transport was installed. */
   version?: string;
   get(request: SourceRequest): Promise<SourceResponse>;
   post(request: SourceRequest): Promise<SourceResponse>;

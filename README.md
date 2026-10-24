@@ -4,7 +4,7 @@
 
 # Capynime
 
-**A fast, clean client for watching Vietsub anime. No backend, no accounts.**
+**A fast, clean client for watching Vietsub anime. Vercel web app and native Android shell.**
 
 [Download for Android](https://github.com/CodeForFee/anime-cinema-vite/releases/latest)
 &nbsp;·&nbsp;
@@ -42,14 +42,16 @@
 
 ## Overview
 
-Capynime is a client-side anime site. There is no server of its own: every request to the source site is made from
-the viewer's own device, so the viewer's IP and cookies are used and nothing is proxied or stored remotely.
+Capynime uses AnimeVietsub as its source. On this experimental branch, the web app calls same-origin Vercel
+Functions for source HTML/JSON and an isolated player page; Android still requests the source from the viewer's
+device. No separately operated backend is required. Real extension-free playback remains subject to the
+[Preview verification gate](frontend-vite/SERVERLESS.md).
 
 It ships in two forms that share one code base:
 
 | Form | How requests are made | Install |
 |---|---|---|
-| Web app (PWA) | Through the **AVS Helper** browser extension | Open the site with the extension loaded |
+| Web app (PWA) | Same-project **Vercel Functions** | Open the Vercel deployment; no extension transport |
 | Android app | Through Capacitor's native HTTP stack | Install the APK from [Releases](https://github.com/CodeForFee/anime-cinema-vite/releases/latest) |
 
 ## Features
@@ -74,7 +76,7 @@ It ships in two forms that share one code base:
 | `↑` / `↓` | Volume | `T` | Cinema mode |
 
 **Other**
-- Ad blocking at the network layer and inside the player page.
+- Player-page ad cleanup; Android also blocks ad requests at the network layer.
 - Catalog answers are cached in IndexedDB, so returning viewers see pages immediately.
 
 ## Repository layout
@@ -82,12 +84,13 @@ It ships in two forms that share one code base:
 | Folder | Contents | License |
 |---|---|---|
 | [`frontend-vite/`](frontend-vite/) | Vite + React + TypeScript web app and the Capacitor Android project | GPL-3.0-only |
-| [`avs-helper-extension/`](avs-helper-extension/) | Chrome / Edge extension (Manifest V3) that the web build needs | MIT |
+| [`avs-helper-extension/`](avs-helper-extension/) | Legacy Chrome / Edge helper (unchanged on this branch) | MIT |
 
 ## Architecture
 
-The app only ever talks to the source site, and only from the viewer's device, through one of two transports that
-expose the same request API (`src/platform/transport.ts`, handed to the core by `configureCore` at start-up).
+The core uses one request API (`src/platform/transport.ts`, installed by `configureCore`). On web it calls
+`/api/proxy`; on Android it uses native HTTP. Functions only accept configured source/player destinations,
+validate redirects, bound responses and do not forward application cookies or relay video segments.
 
 ```mermaid
 flowchart LR
@@ -98,11 +101,11 @@ flowchart LR
     TR["platform/transport<br/>one request API"]
     UI --> CORE --> TR
     CORE --> W
-    TR -- "browser" --> EXT["AVS Helper extension<br/>background worker"]
+    TR -- "browser" --> WEB["fetch /api/proxy"]
     TR -- "Android app" --> NAT["Capacitor native HTTP"]
-    UI -- "iframe + postMessage" --> PL["Source player page<br/>+ player-bridge.js"]
+    UI -- "isolated iframe + postMessage" --> PL["Player page<br/>+ player-bridge.js"]
   end
-  EXT --> SRC[("Source site")]
+  WEB --> API["Vercel Functions"] --> SRC[("Source site")]
   NAT --> SRC
   PL --> CDN[("Player / stream CDN")]
 ```
@@ -140,16 +143,19 @@ State: TanStack Query caches catalog answers and persists them to IndexedDB; Zus
 
 ### Player pipeline
 
-1. `/watch` asks the core for the episode; the source answers with a link to its player page.
-2. `CinemaPlayer.tsx` embeds that page in an `<iframe>` whose URL carries the `#animevsub-vsub` tag, which makes the extension add the source Referer.
-3. `public/player-bridge.js` runs inside the frame. It removes the player's ads (a MutationObserver over added nodes), hides the player's own controls and exposes a `postMessage` remote control: play, pause, seek, rate, volume, resume and quality. It reports the position, the seconds buffered ahead and JW Player's quality levels.
-4. `engines/iframe-bridge.ts` talks to the bridge; `mobile/TouchControls` or `desktop/DesktopControls` draw the controls.
+1. `/watch` asks the core for the episode; on web, `/api/proxy` performs the source request.
+2. On web, `CinemaPlayer.tsx` loads `/api/player` in a sandbox without `allow-same-origin`. The Function fetches only an allowed player URL, fixes its asset base and injects an absolute bridge script. Android still embeds the original URL and injects natively.
+3. `public/player-bridge.js` runs inside the frame. It removes in-player overlays, hides the player's controls after the handshake and reports playback state and quality through `postMessage`.
+4. `engines/iframe-bridge.ts` checks the exact iframe window and per-load channel for an opaque web frame, or the original player origin for native playback. Mobile and desktop controls share the protocol.
 5. Quality follows "Tự động + gợi ý" (`core/player/pick-quality.ts`). The player's automatic choice is the default, and Data Saver caps it at 480p. Two stalls over a second within a minute bring up a one-tap "Mạng yếu · Chuyển 480p". The viewer's choice is applied to every episode. Cover lookups wait while the video is short of buffer.
 6. If the source ever answers with a plain stream instead of its iframe player, `engines/hls/HlsPlayer.ts` plays it with a patched hls.js. That path starts from the browser's bandwidth estimate, buffers a minute ahead, retries with backoff and resumes when the connection returns.
 
-The bridge script is injected by the extension (content script) on the web and by `MainActivity.java` in the Android app.
+The web Function injects the bridge; `MainActivity.java` injects it in Android. Injection does not make CDN
+playlist/segment requests same-origin, grant upstream sessions, or guarantee playback. See the Preview gate.
 
-### Extension (`avs-helper-extension`)
+### Legacy extension (`avs-helper-extension`)
+
+Preserved unchanged for existing builds; the web transport on this branch does not use it.
 
 | Path | Responsibility |
 |---|---|
@@ -171,22 +177,17 @@ rate (90/120 Hz, handed back to the system in full-screen video) and implements 
 
 ## Getting started
 
-**Requirements:** Node.js 22.12 or newer, pnpm 11, and Chrome or Edge for the web build.
+**Requirements:** Node.js 22.12 or newer, pnpm 11, a browser and a Vercel project for the full web runtime.
 
 ```sh
-# 1. Build the extension, then load avs-helper-extension/manifest-v3/extension via "Load unpacked"
-cd avs-helper-extension
+cd frontend-vite
 pnpm install
-pnpm build
-
-# 2. Start the web app
-cd ../frontend-vite
-pnpm install
-pnpm dev            # http://localhost:4100
+cd ..              # Vercel CLI uses repository root; Root Directory is frontend-vite
+npx vercel dev      # web + same-origin /api/*
 ```
 
-After rebuilding the extension, reload it on `chrome://extensions`. The extension only works on `localhost` and the
-hosts in its allowlist (see [Configuration](#configuration)).
+`pnpm dev` serves only the Vite UI; it does not run the Functions. Link the existing Vercel project before using
+`vercel dev`. Deployment and acceptance checks are in [`frontend-vite/SERVERLESS.md`](frontend-vite/SERVERLESS.md).
 
 **Scripts** (run in `frontend-vite`)
 
@@ -215,11 +216,10 @@ keep a backup of the keystore: without it, installed apps can no longer be updat
 
 ## Deployment
 
-The web app is a static site: `pnpm build` produces `frontend-vite/dist`. Serve it with every path rewritten to
-`index.html`; `vercel.json` already does this for Vercel. The server never contacts the source site, so its location
-and IP do not matter.
-
-Viewers need the extension build that lists your production host in `allowlist.yaml`.
+Deploy with Vercel Root Directory `frontend-vite`: `pnpm build` produces the SPA and Vercel discovers `api/`
+beside it. SPA and service-worker fallbacks exclude API paths. This web branch requires Functions, not just a
+static `dist/` host. Upstream sees Vercel's IP for source/player HTML, so Cloudflare and session checks must be
+verified on Preview. The browser still loads CDN media directly; no extension installation is required by the transport.
 
 ## Configuration
 
@@ -237,7 +237,7 @@ announcement channels and the exact switch steps are in [`docs/SOURCE-DOMAINS.md
 
 ## Disclaimer
 
-Capynime hosts no media and operates no servers. It is a client that loads content from a third-party site the user
+Capynime hosts no media and operates no persistent servers. Vercel Functions relay source HTML/JSON. It loads content from a third-party site the user
 chooses to visit. It is not affiliated with that site, and users are responsible for how they use it and for
 complying with the laws that apply to them.
 

@@ -1,5 +1,5 @@
 // The app's view of the source: turns its pages (core/source/endpoints) into the app's own types
-// (core/types/anime.ts). Every request leaves the viewer's own device through the platform transport.
+// (core/types/anime.ts). Requests use the installed web gateway or the native on-device transport.
 import { PhimDetail } from "@/core/source/endpoints/detail/fetch";
 import { PhimIdChap } from "@/core/source/endpoints/episodes/fetch";
 import { Index } from "@/core/source/endpoints/home/fetch";
@@ -252,8 +252,8 @@ export const animeApi = {
   ): Promise<{ success: boolean; data: StreamData }> => {
     const answer = await PlayerLink(id, play, hash);
 
-    // "iframe" is the CDN's own player page: embed it the way the source site does. The tag makes
-    // the extension send the source Referer with the frame request (create-rule.ts, SUB_FRAME).
+    // The platform decides how to embed the CDN player: isolated Vercel frame on web, direct in native.
+    // Keep the tag that activates player-bridge.js in both environments.
     if (answer.playTech === "iframe" && typeof answer.link === "string") {
       const page = safePlayerUrl(answer.link.split("#")[0]);
       return {
