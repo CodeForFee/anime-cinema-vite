@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Bell, Bookmark, History, LogIn, LogOut, UserRound, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { LoginForm, PRIMARY } from "@/features/account/components/LoginForm";
 import { useNotifications } from "@/features/account/hooks/use-account";
-import { syncSourceUser, useLoginDialog, useSourceUser } from "@/features/account/store";
+import { useSessionReturn } from "@/features/account/hooks/use-session-return";
+import { useLoginDialog, useSourceUser } from "@/features/account/store";
 import { cn } from "@/shared/lib/utils";
 import { Dialog } from "@/shared/ui/dialog";
 import {
@@ -43,11 +44,7 @@ export function AccountButton({ compact = false }: { compact?: boolean }) {
   const { user, logout } = useSourceUser();
   const { setOpen } = useLoginDialog();
   const [menu, setMenu] = useState(false);
-  // after first paint, so the check never delays the page itself
-  useEffect(() => {
-    const id = setTimeout(() => void syncSourceUser(), 1500);
-    return () => clearTimeout(id);
-  }, []);
+  useSessionReturn();
   const { unread } = useNotifications();
 
   if (!user)
@@ -92,6 +89,7 @@ export function AccountButton({ compact = false }: { compact?: boolean }) {
             <p className="min-w-0 truncate font-semibold text-white">{user.name}</p>
           </div>
           <div className="my-1 h-px bg-white/10" />
+          {logout.error && <p role="alert" className="px-3 py-2 text-xs text-red-400">{logout.error.message}</p>}
           <DropdownMenuGroup className="space-y-0.5">
             <DropdownMenuItem className={ITEM} onClick={() => setMenu(false)}>
               <Link to="/account" className={ROW}>

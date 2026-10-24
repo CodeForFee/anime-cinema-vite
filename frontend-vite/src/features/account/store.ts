@@ -7,7 +7,7 @@ import type { SourceUser } from "@/core/source/endpoints/comments/fetch";
 
 /**
  * Who signed in to AnimeVietsub from here. Remembered on the device instead of asked of the source on every
- * screen: that check is a whole page through the proxy. A failed write re-checks it (recheckSourceUser).
+ * screen: checking requires a source page. A failed write re-checks it (recheckSourceUser).
  */
 const useUserStore = create<{
   user: SourceUser | null;
@@ -40,44 +40,55 @@ export const patchSourceUser = (patch: Partial<SourceUser>) => {
   const { user, set } = useUserStore.getState();
   if (user) set({ ...user, ...patch });
 };
-export const setSourceUser = (user: SourceUser | null) => useUserStore.getState().set(user);
+let sessionRevision = 0;
+export const setSourceUser = (user: SourceUser | null) => {
+  sessionRevision++;
+  useUserStore.getState().set(user);
+};
 
 let synced = false;
-/**
- * Once per page load: the extension sends the browser's own AnimeVietsub cookies, so whoever is signed in on
- * the source site in this browser (Google included) is signed in here too, and signing out there signs out here.
- */
-export async function syncSourceUser() {
-  if (synced) return;
-  synced = true;
-  const { user, set } = useUserStore.getState();
+let checking: Promise<SourceUser | null> | undefined;
+/** Re-read identity on return from the source; overlapping header/focus checks share one request. */
+export async function syncSourceUser(force = false): Promise<SourceUser | null> {
+  if (checking) return checking;
+  if (synced && !force) return useUserStore.getState().user;
+  const revision = sessionRevision;
+  checking = (async () => {
+    const next = await animeApi.account.me();
+    // An older request must not undo a more recent password login/logout.
+    if (revision === sessionRevision) {
+      setSourceUser(next);
+      if (next) useUserStore.getState().openLogin(false);
+    }
+    synced = true;
+    return useUserStore.getState().user;
+  })();
   try {
-    if (!(await animeApi.account.signedIn())) set(null);
-    else if (!user) set(await animeApi.account.me());
-  } catch {
-    synced = false; // the source was unreachable: try again on the next mount
+    return await checking;
+  } finally {
+    checking = undefined;
   }
 }
 
 /** The source may have ended the session (expired, signed out elsewhere): ask it who we are */
 export async function recheckSourceUser() {
-  useUserStore.getState().set(await animeApi.account.me().catch(() => null));
+  // Network/challenge errors do not prove logout.
+  await syncSourceUser(true).catch(() => undefined);
 }
 
 export function useSourceUser() {
   const user = useUserStore((s) => s.user);
-  const setUser = useUserStore((s) => s.set);
   const login = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       animeApi.account.login(email, password),
     onSuccess: (next) => {
-      setUser(next);
+      setSourceUser(next);
       useUserStore.getState().openLogin(false);
     },
   });
   const logout = useMutation({
     mutationFn: () => animeApi.account.logout(),
-    onSettled: () => setUser(null),
+    onSuccess: () => setSourceUser(null),
   });
   return { user, login, logout };
 }
