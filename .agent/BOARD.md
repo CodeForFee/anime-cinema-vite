@@ -11,6 +11,7 @@ model. These rows are examples — replace them with the models this project act
 
 | model | tool | can | cost | use for |
 |---|---|---|---|---|
+| gpt-6 | frontend-vite/src/{features/account/**,platform/source-account*,core/source/endpoints/comments/fetch*}, frontend-vite/android/app/src/main/{AndroidManifest.xml,java/app/capynime/{MainActivity,SourceAccountPlugin,SourceAccountActivity}.java}, frontend-vite/docs/SOURCE-ACCOUNT.md, .agent/** | T-002 source account login/register and direct Google | 2026-10-24T12:06Z | released; independent session fixes verified, direct Google requires source owner; no opener/native Activity retained |
 | claude-opus-5 | claude-code | repo-wide, shell, plan | high | root cause, multi-file refactor, cutting seams |
 | claude-sonnet-5 | claude-code, cursor | repo-wide, shell | mid | scoped edits, tests, review passes |
 | codex-5.6-terra | codex | repo, shell | mid | mechanical passes, scripted repeats |
@@ -34,12 +35,15 @@ One owner per file. If your scope overlaps an open row, do not edit — see AGEN
 | id | title | owner | phase | file |
 |---|---|---|---|---|
 | T-001 | fix Android debug/release build | gpt-6 | done | tasks/T-001-android-build.md |
+| T-002 | source account authentication on web/Android | gpt-6 | blocked (needs-owner) | tasks/T-002-source-account.md |
 
 ## Bugs
 
 <!-- B-NNN monotonic, never reused. Fixed bugs stay listed with their root-cause location. -->
 - [x] B-001 debug build used JAVA_HOME17 despite PATH21; root package.json build:apk bypassed the release JDK selector. Fixed with shared scripts/java-home.mjs + scripts/build-apk.mjs (2026-10-24, gpt-6).
 - [x] B-002 MainActivity.java:92-93 contained a literal newline inside a Java string. Fixed to escaped newline; assembleDebug, assembleRelease and bundleRelease compile (2026-10-24, gpt-6).
+- [ ] B-003 pre-existing full-suite failures: home/parse.spec.ts and ranking/parse.spec.ts CRLF fixtures; architecture.spec.ts component size guard (6 existing files). T-002 adds no failures; fix separately (2026-10-24, gpt-6).
+- [ ] B-004 existing log/20261024T1110Z-claude-opus-5-5-9290e952.md lacks agent frontmatter; godkit verify reports no-identity. Original history preserved; new T-002 task/log have identity (2026-10-24, gpt-6).
 
 ## Decisions
 
@@ -49,4 +53,5 @@ One owner per file. If your scope overlaps an open row, do not edit — see AGEN
 ## Last 3 handoffs
 
 <!-- newest first, trimmed to three -->
+- 2026-10-24 gpt-6: T-002 partial; 16 auth/session/cache tests pass, typecheck/lint pass, debug APK built; 3 existing suite failures. User rejected source-tab login; direct Google + registration not done. Source OAuth/session handoff requires source owner; docs/SOURCE-ACCOUNT.md and log/20261024T1215Z-gpt-6-01a16bc1.md.
 - 2026-10-24 gpt-6: APK fix T-001 done; shared JDK21 selection, Java string corrected, release regenerates enhancement; 4 tests pass, debug and signed release/AAB build; version stays 2.0.20. Existing dirty index/user features preserved; see log/20261024T1137Z-gpt-6-android-build.md.

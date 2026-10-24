@@ -13,9 +13,9 @@
       "Capacitor",
       "Gradle"
     ],
-    "description": "godkit: focused map of the inspected Android build seam only; web features and legacy extension are not mapped here. Worktree contains ongoing feature changes; do not overwrite them.",
-    "generatedAt": "2026-10-24T11:45:34.618Z",
-    "sha": "6e7bbb7f96d839738d847b4c6aa70a3330635ec2"
+    "description": "Focused map of inspected Android build and source-account seams. Browser uses AVS Helper cookies; Android uses Capacitor HTTP/WebView cookies. Vercel gateway removed at user request; no demonstrated native Google session handoff.",
+    "generatedAt": "2026-10-24T12:14:46.380Z",
+    "sha": "e1e5955d1ec97188b73dc57ddbc5aa500f59a6de"
   },
   "nodes": [
     {
@@ -129,6 +129,156 @@
         "build"
       ],
       "complexity": "simple"
+    },
+    {
+      "id": "file:frontend-vite/src/features/account/components/AccountButton.tsx",
+      "type": "file",
+      "name": "AccountButton.tsx",
+      "filePath": "frontend-vite/src/features/account/components/AccountButton.tsx",
+      "lineRange": [
+        1,
+        127
+      ],
+      "summary": "Header entry and login dialog; schedules session checks.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/features/account/components/LoginForm.tsx",
+      "type": "file",
+      "name": "LoginForm.tsx",
+      "filePath": "frontend-vite/src/features/account/components/LoginForm.tsx",
+      "lineRange": [
+        1,
+        70
+      ],
+      "summary": "Normal source credentials form, validation and correct browser/native cookie-sharing explanation; no Google or registration completion claim.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/features/account/store.ts",
+      "type": "file",
+      "name": "store.ts",
+      "filePath": "frontend-vite/src/features/account/store.ts",
+      "lineRange": [
+        1,
+        95
+      ],
+      "summary": "Persisted source identity; session discovery, login and logout.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/features/account/hooks/use-account.ts",
+      "type": "file",
+      "name": "use-account.ts",
+      "filePath": "frontend-vite/src/features/account/hooks/use-account.ts",
+      "lineRange": [
+        1,
+        76
+      ],
+      "summary": "Private profile, notifications and comment queries.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/core/source/endpoints/comments/fetch.ts",
+      "type": "file",
+      "name": "fetch.ts",
+      "filePath": "frontend-vite/src/core/source/endpoints/comments/fetch.ts",
+      "lineRange": [
+        1,
+        160
+      ],
+      "summary": "CSRF/md5 source login and session user parsing.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/platform/transport.ts",
+      "type": "file",
+      "name": "transport.ts",
+      "filePath": "frontend-vite/src/platform/transport.ts",
+      "lineRange": [
+        1,
+        78
+      ],
+      "summary": "Web extension cookies; native HTTP shares Android WebView CookieManager.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/features/account/hooks/use-session-return.ts",
+      "type": "file",
+      "name": "use-session-return.ts",
+      "filePath": "frontend-vite/src/features/account/hooks/use-session-return.ts",
+      "lineRange": [
+        1,
+        38
+      ],
+      "summary": "Focus/native-resume source checks and disposal of previous-account private query caches.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/features/account/hooks/use-session-return.spec.tsx",
+      "type": "file",
+      "name": "use-session-return.spec.tsx",
+      "filePath": "frontend-vite/src/features/account/hooks/use-session-return.spec.tsx",
+      "lineRange": [
+        1,
+        85
+      ],
+      "summary": "Verifies focus/resume refresh, listener cleanup and private-cache isolation.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/features/account/store.spec.ts",
+      "type": "file",
+      "name": "store.spec.ts",
+      "filePath": "frontend-vite/src/features/account/store.spec.ts",
+      "lineRange": [
+        1,
+        54
+      ],
+      "summary": "Verifies identity refresh, network failure preservation, deduplication and logout races.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend-vite/src/core/source/endpoints/comments/fetch.spec.ts",
+      "type": "file",
+      "name": "fetch.spec.ts",
+      "filePath": "frontend-vite/src/core/source/endpoints/comments/fetch.spec.ts",
+      "lineRange": [
+        1,
+        66
+      ],
+      "summary": "Verifies fresh CSRF/hash login, source rejection/challenges and confirmed logout.",
+      "tags": [
+        "auth"
+      ],
+      "complexity": "moderate"
     }
   ],
   "edges": [
@@ -155,6 +305,24 @@
       "target": "file:frontend-vite/scripts/java-home.mjs",
       "type": "calls",
       "weight": 1
+    },
+    {
+      "source": "file:frontend-vite/src/features/account/components/AccountButton.tsx",
+      "target": "file:frontend-vite/src/features/account/hooks/use-session-return.ts",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "file:frontend-vite/src/features/account/hooks/use-session-return.ts",
+      "target": "file:frontend-vite/src/features/account/store.ts",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "file:frontend-vite/src/features/account/store.ts",
+      "target": "file:frontend-vite/src/core/source/endpoints/comments/fetch.ts",
+      "type": "calls",
+      "weight": 1
     }
   ],
   "layers": [
@@ -171,32 +339,68 @@
         "file:frontend-vite/scripts/java-home.mjs",
         "file:frontend-vite/scripts/build-apk.mjs"
       ]
+    },
+    {
+      "id": "auth",
+      "name": "Source account",
+      "description": "Inspected authentication seam; catalog and extension internals remain unmapped.",
+      "nodeIds": [
+        "file:frontend-vite/src/features/account/components/AccountButton.tsx",
+        "file:frontend-vite/src/features/account/components/LoginForm.tsx",
+        "file:frontend-vite/src/features/account/store.ts",
+        "file:frontend-vite/src/features/account/hooks/use-account.ts",
+        "file:frontend-vite/src/core/source/endpoints/comments/fetch.ts",
+        "file:frontend-vite/src/platform/transport.ts",
+        "file:frontend-vite/src/features/account/hooks/use-session-return.ts",
+        "file:frontend-vite/src/features/account/hooks/use-session-return.spec.tsx",
+        "file:frontend-vite/src/features/account/store.spec.ts",
+        "file:frontend-vite/src/core/source/endpoints/comments/fetch.spec.ts"
+      ]
     }
   ],
   "tour": [
     {
       "order": 1,
-      "title": "",
-      "description": "",
-      "nodeIds": []
+      "title": "Build entry",
+      "description": "package.json invokes the Android build wrapper.",
+      "nodeIds": [
+        "file:frontend-vite/package.json"
+      ]
     },
     {
       "order": 2,
-      "title": "",
-      "description": "",
-      "nodeIds": []
+      "title": "Native player",
+      "description": "MainActivity installs player-only scripts.",
+      "nodeIds": [
+        "file:frontend-vite/android/app/src/main/java/app/capynime/MainActivity.java"
+      ]
     },
     {
       "order": 3,
-      "title": "",
-      "description": "",
-      "nodeIds": []
+      "title": "Account entry",
+      "description": "Header opens the login dialog.",
+      "nodeIds": [
+        "file:frontend-vite/src/features/account/components/AccountButton.tsx",
+        "file:frontend-vite/src/features/account/components/LoginForm.tsx"
+      ]
     },
     {
       "order": 4,
-      "title": "",
-      "description": "",
-      "nodeIds": []
+      "title": "Session state",
+      "description": "Identity is remembered without passwords.",
+      "nodeIds": [
+        "file:frontend-vite/src/features/account/store.ts",
+        "file:frontend-vite/src/features/account/hooks/use-account.ts"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "Source requests",
+      "description": "CSRF/md5 login uses the platform cookie jar.",
+      "nodeIds": [
+        "file:frontend-vite/src/core/source/endpoints/comments/fetch.ts",
+        "file:frontend-vite/src/platform/transport.ts"
+      ]
     }
   ]
 }

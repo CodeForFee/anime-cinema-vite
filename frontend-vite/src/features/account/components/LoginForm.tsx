@@ -2,6 +2,7 @@ import { LogIn } from "lucide-react";
 import { type FormEvent, useState } from "react";
 
 import { useSourceUser } from "@/features/account/store";
+import { isNativeApp } from "@/platform/transport";
 
 export const FIELD =
   "glass-field w-full rounded-2xl px-4 py-2.5 text-sm text-white placeholder:text-gray-500 outline-none transition focus:ring-2 focus:ring-white/30";
@@ -24,6 +25,8 @@ export function LoginForm({ onCancel }: { onCancel?: () => void }) {
       <input
         className={FIELD}
         autoComplete="username"
+        required
+        disabled={login.isPending}
         placeholder="Email hoặc tên đăng nhập"
         aria-label="Email hoặc tên đăng nhập"
         value={email}
@@ -32,6 +35,8 @@ export function LoginForm({ onCancel }: { onCancel?: () => void }) {
       <input
         className={FIELD}
         type="password"
+        required
+        disabled={login.isPending}
         autoComplete="current-password"
         placeholder="Mật khẩu"
         aria-label="Mật khẩu"
@@ -45,7 +50,7 @@ export function LoginForm({ onCancel }: { onCancel?: () => void }) {
       )}
       <div className="flex justify-end gap-2 pt-1">
         {onCancel && (
-          <button type="button" onClick={onCancel} className="glass-pill h-10 rounded-full px-4 text-sm font-semibold text-gray-200">
+          <button type="button" disabled={login.isPending} onClick={onCancel} className="glass-pill h-10 rounded-full px-4 text-sm font-semibold text-gray-200">
             Huỷ
           </button>
         )}
@@ -55,8 +60,9 @@ export function LoginForm({ onCancel }: { onCancel?: () => void }) {
         </button>
       </div>
       <p className="text-xs leading-relaxed text-gray-500">
-        Đã đăng nhập AnimeVietsub (kể cả bằng Google) trên trình duyệt này? App tự nhận, không cần nhập lại. Tải lại
-        trang nếu chưa thấy.
+        {isNativeApp
+          ? "Dùng email hoặc tên đăng nhập và mật khẩu của AnimeVietsub. Phiên đăng nhập Chrome không tự chuyển vào APK."
+          : "Đã đăng nhập AnimeVietsub trong cùng trình duyệt? AVS Helper dùng phiên đó; ứng dụng kiểm tra lại khi bạn quay về."}
       </p>
     </form>
   );

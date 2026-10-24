@@ -9,7 +9,8 @@ const NOTIFICATIONS = ["source", "notifications"] as const;
 
 /** The account page of the source; signs the app out if the source no longer knows the viewer */
 export function useAccountInfo() {
-  const query = useQuery({ queryKey: INFO, queryFn: animeApi.account.AccountInfo, staleTime: 30 * 1000 });
+  const { user } = useSourceUser();
+  const query = useQuery({ queryKey: [...INFO, user?.id], queryFn: animeApi.account.AccountInfo, enabled: Boolean(user), staleTime: 30 * 1000 });
   useEffect(() => {
     if (query.isSuccess && query.data === null) setSourceUser(null);
     if (query.data) patchSourceUser({ name: query.data.name, avatar: query.data.avatar });
@@ -36,12 +37,13 @@ export const useChangePassword = () =>
 
 /** The viewer's own comments across the source, newest first, more as the list scrolls */
 export function useMyComments(enabled: boolean) {
+  const { user } = useSourceUser();
   return useInfiniteQuery({
-    queryKey: ["source", "my-comments"] as const,
+    queryKey: ["source", "my-comments", user?.id] as const,
     queryFn: ({ pageParam }) => animeApi.account.MyComments(pageParam),
     initialPageParam: 0,
     getNextPageParam: (last) => (last.hasMore ? last.offset : undefined),
-    enabled,
+    enabled: enabled && Boolean(user),
     staleTime: 60 * 1000,
   });
 }
@@ -50,7 +52,7 @@ export function useMyComments(enabled: boolean) {
 export function useNotifications() {
   const { user } = useSourceUser();
   const query = useQuery({
-    queryKey: NOTIFICATIONS,
+    queryKey: [...NOTIFICATIONS, user?.id],
     queryFn: animeApi.account.Notifications,
     enabled: Boolean(user),
     staleTime: 5 * 60 * 1000,
@@ -61,11 +63,12 @@ export function useNotifications() {
 
 /** Opening the list marks everything read, on the source too */
 export function useMarkNotificationsRead() {
+  const { user } = useSourceUser();
   const client = useQueryClient();
   return useMutation({
     mutationFn: animeApi.account.MarkNotificationsRead,
     onSuccess: () =>
-      client.setQueryData(NOTIFICATIONS, (list?: { is_read: number | string }[]) =>
+      client.setQueryData([...NOTIFICATIONS, user?.id], (list?: { is_read: number | string }[]) =>
         list?.map((n) => ({ ...n, is_read: 1 })),
       ),
   });

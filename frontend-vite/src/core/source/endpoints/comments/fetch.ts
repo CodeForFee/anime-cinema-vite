@@ -1,5 +1,6 @@
 // The source's comment thread (/ajax/comment, read by its comment.js) and the viewer's account on the source.
-// Requests carry the viewer's own source session: the web proxy keeps it per viewer, the app keeps native cookies.
+// Requests carry the viewer's source session: browser extension cookies or the app's native cookie jar.
+import { load } from "cheerio";
 import { md5 } from "@/core/source/md5";
 import { get, post } from "@/core/source/transport";
 
@@ -100,11 +101,12 @@ export function parseUser(html: string): SourceUser | null {
       return raw;
     }
   };
-  return {
+  const user = {
     id: Number(html.match(/userId:\s*(\d+)/)?.[1] ?? 0),
     name: field("userFullName") || field("userName"),
     avatar: field("userAvatar"),
   };
+  return user.id > 0 && user.name ? user : null;
 }
 
 // a light page that still sets up the comment box
@@ -117,22 +119,30 @@ export async function SignedIn(): Promise<boolean> {
 }
 
 export async function Me(): Promise<SourceUser | null> {
-  return parseUser((await get(ME_PAGE)).data);
+  const html = (await get(ME_PAGE)).data;
+  const user = parseUser(html);
+  if (user) return user;
+  // A challenge/error page is not proof that an existing session expired.
+  if (/isLogin:\s*false/.test(html) || load(html)("form#SignInForm input[name='password']").length)
+    return null;
+  throw new Error("Nguồn chưa xác nhận phiên đăng nhập. Hãy mở trang AnimeVietsub để kiểm tra.");
 }
 
 /** The source's own "Thoát" link: it expires the session cookies, which the viewer's jar then drops */
 export async function Logout() {
-  await get("/thoat").catch(() => undefined);
+  await get("/thoat");
+  if (await Me()) throw new Error("Nguồn chưa đăng xuất tài khoản. Vui lòng thử lại.");
 }
 
 /** The source's own sign-in form: a CSRF token from the form, then md5(password) like its login.js */
 export async function Login(email: string, password: string): Promise<SourceUser> {
+  if (!email.trim() || !password) throw new Error("Vui lòng nhập tài khoản và mật khẩu");
   const form = (await get("/account/login/")).data;
-  const csrf = form.match(/name="_csrf"\s+value="([^"]+)"/)?.[1];
+  const csrf = load(form)("input[name='_csrf']").attr("value");
   if (!csrf) {
-    const already = parseUser(form) ?? (await Me());
+    const already = parseUser(form);
     if (already) return already;
-    throw new Error("Không mở được trang đăng nhập của nguồn");
+    throw new Error("Nguồn yêu cầu xác minh hoặc không mở được biểu mẫu. Hãy mở trang đăng nhập AnimeVietsub.");
   }
   // signed in, the source redirects to _fxRef: a page that names the user, so no second request
   const res = await post(`/account/login/?_fxRef=${encodeURIComponent(ME_PAGE)}`, {
