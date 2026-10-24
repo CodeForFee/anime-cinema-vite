@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   DropdownMenu,
@@ -30,7 +29,7 @@ export const PickerDropdown: React.FC<{
         <span
           className={cn(
             "border-x-[6px] border-x-transparent border-t-[7px] border-t-white transition-transform",
-            open && "rotate-180"
+            open && "rotate-180",
           )}
         />
       </DropdownMenuTrigger>
@@ -48,11 +47,17 @@ export const PickerDropdown: React.FC<{
             }}
             className={cn(
               "cursor-pointer items-baseline gap-2 rounded-none px-5 py-2.5 hover:bg-[#424242]",
-              option.key === selectedKey && "bg-[#333]"
+              option.key === selectedKey && "bg-[#333]",
             )}
           >
-            <span className="whitespace-nowrap text-base sm:text-lg font-bold">{option.label}</span>
-            {option.hint && <span className="truncate text-sm text-[#d2d2d2]">{option.hint}</span>}
+            <span className="whitespace-nowrap text-base sm:text-lg font-bold">
+              {option.label}
+            </span>
+            {option.hint && (
+              <span className="truncate text-sm text-[#d2d2d2]">
+                {option.hint}
+              </span>
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

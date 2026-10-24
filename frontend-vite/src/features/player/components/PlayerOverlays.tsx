@@ -18,17 +18,32 @@ function useCountdown(seconds: number, running: boolean, onDone: () => void) {
 const RESUME_SECONDS = 8;
 
 /** "Tự động + gợi ý": after two long stalls the automatic choice is still above 480p; one tap drops to it */
-export function WeakNetworkHint({ onAccept, onDismiss }: { onAccept: () => void; onDismiss: () => void }) {
+export function WeakNetworkHint({
+  onAccept,
+  onDismiss,
+}: {
+  onAccept: () => void;
+  onDismiss: () => void;
+}) {
   return (
     <div
       role="status"
       className="cn-pop glass absolute left-1/2 top-[max(3.5rem,calc(var(--inset-top)+3rem))] z-30 flex -translate-x-1/2 items-center gap-1 rounded-full py-1 pl-4 pr-1 text-sm text-white"
     >
       <span className="whitespace-nowrap">Mạng yếu</span>
-      <button type="button" onClick={onAccept} className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 font-semibold text-black transition active:scale-95">
+      <button
+        type="button"
+        onClick={onAccept}
+        className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 font-semibold text-black transition active:scale-95"
+      >
         Chuyển 480p
       </button>
-      <button type="button" aria-label="Bỏ qua" onClick={onDismiss} className="flex h-8 w-8 items-center justify-center rounded-full transition active:scale-90">
+      <button
+        type="button"
+        aria-label="Bỏ qua"
+        onClick={onDismiss}
+        className="flex h-8 w-8 items-center justify-center rounded-full transition active:scale-90"
+      >
         <X aria-hidden className="h-4 w-4" />
       </button>
     </div>
@@ -36,14 +51,28 @@ export function WeakNetworkHint({ onAccept, onDismiss }: { onAccept: () => void;
 }
 
 /** The app's own "continue watching": the CDN player's prompt sits under our controls and cannot be tapped */
-export function ResumePrompt({ at, onResume, onRestart }: { at: number; onResume: () => void; onRestart: () => void }) {
+export function ResumePrompt({
+  at,
+  onResume,
+  onRestart,
+}: {
+  at: number;
+  onResume: () => void;
+  onRestart: () => void;
+}) {
   const left = useCountdown(RESUME_SECONDS, true, onResume);
 
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/55 p-4">
-      <div role="dialog" aria-label="Xem tiếp" className="cn-pop glass w-full max-w-sm rounded-3xl p-5 text-white">
+      <div
+        role="dialog"
+        aria-label="Xem tiếp"
+        className="cn-pop glass w-full max-w-sm rounded-3xl p-5 text-white"
+      >
         <p className="text-base font-bold">Bạn đang xem dở tập này</p>
-        <p className="mt-1 text-sm text-white/70">Tự xem tiếp sau {left} giây</p>
+        <p className="mt-1 text-sm text-white/70">
+          Tự xem tiếp sau {left} giây
+        </p>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
@@ -91,7 +120,9 @@ export function NextUpCard({
   return (
     <div className="cn-pop glass absolute bottom-20 right-3 z-20 flex items-center gap-2 rounded-2xl p-2 pl-3 text-white landscape:right-[max(0.75rem,var(--inset-right))]">
       <div className="min-w-0">
-        <p className="text-[11px] uppercase tracking-wide text-white/60">Tập tiếp theo</p>
+        <p className="text-[11px] uppercase tracking-wide text-white/60">
+          Tập tiếp theo
+        </p>
         <p className="truncate text-sm font-semibold">{label}</p>
       </div>
       <button
@@ -103,13 +134,22 @@ export function NextUpCard({
           <span
             aria-hidden
             className="absolute inset-0 origin-left bg-black/15 transition-transform duration-1000 ease-linear"
-            style={{ transform: `scaleX(${(NEXT_SECONDS - left) / NEXT_SECONDS})` }}
+            style={{
+              transform: `scaleX(${(NEXT_SECONDS - left) / NEXT_SECONDS})`,
+            }}
           />
         )}
         <Play aria-hidden className="relative h-4 w-4 fill-current" />
-        <span className="relative">{counting ? `Phát sau ${left}s` : "Xem ngay"}</span>
+        <span className="relative">
+          {counting ? `Phát sau ${left}s` : "Xem ngay"}
+        </span>
       </button>
-      <button type="button" aria-label="Ẩn" onClick={onDismiss} className="glass-button flex h-8 w-8 items-center justify-center rounded-full">
+      <button
+        type="button"
+        aria-label="Ẩn"
+        onClick={onDismiss}
+        className="glass-button flex h-8 w-8 items-center justify-center rounded-full"
+      >
         <X aria-hidden className="h-4 w-4" />
       </button>
     </div>

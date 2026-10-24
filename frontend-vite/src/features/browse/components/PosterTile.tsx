@@ -9,7 +9,9 @@ import { LazyImage } from "@/features/title";
  * over it, heart in the corner. Tapping opens the title's preview (InfoModal), like MovieCard.
  */
 export function PosterTile({ anime }: { anime: AnimeItem }) {
-  const isFavorite = useHistoryStore((state) => state.favorites.some((f) => f.slug === anime.slug));
+  const isFavorite = useHistoryStore((state) =>
+    state.favorites.some((f) => f.slug === anime.slug),
+  );
   const toggleFavorite = useHistoryStore((state) => state.toggleFavorite);
   const openInfoModal = useUIStore((state) => state.openInfoModal);
   const badge = anime.isUpcoming
@@ -41,13 +43,18 @@ export function PosterTile({ anime }: { anime: AnimeItem }) {
             </span>
           )}
           <span className="poster-caption absolute inset-x-2 bottom-2 rounded-xl px-2.5 py-2 ring-1 ring-white/15">
-            <span className="line-clamp-2 text-sm font-semibold leading-tight text-white">{anime.title}</span>
+            <span className="line-clamp-2 text-sm font-semibold leading-tight text-white">
+              {anime.title}
+            </span>
             {(anime.year || anime.rating) && (
               <span className="mt-1 flex items-center gap-2 text-xs text-gray-300">
                 {anime.year && <span>{anime.year}</span>}
                 {anime.rating && (
                   <span className="flex items-center gap-0.5">
-                    <Star aria-hidden className="h-3 w-3 fill-current text-amber-400" />
+                    <Star
+                      aria-hidden
+                      className="h-3 w-3 fill-current text-amber-400"
+                    />
                     {anime.rating}
                   </span>
                 )}
@@ -59,7 +66,9 @@ export function PosterTile({ anime }: { anime: AnimeItem }) {
       </button>
       <button
         type="button"
-        aria-label={isFavorite ? `Bỏ ${anime.title} khỏi danh sách` : `Lưu ${anime.title}`}
+        aria-label={
+          isFavorite ? `Bỏ ${anime.title} khỏi danh sách` : `Lưu ${anime.title}`
+        }
         aria-pressed={isFavorite}
         onClick={() =>
           toggleFavorite({
@@ -75,7 +84,10 @@ export function PosterTile({ anime }: { anime: AnimeItem }) {
           isFavorite ? "text-primaryRed" : "text-white"
         }`}
       >
-        <Heart aria-hidden className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+        <Heart
+          aria-hidden
+          className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`}
+        />
       </button>
     </div>
   );

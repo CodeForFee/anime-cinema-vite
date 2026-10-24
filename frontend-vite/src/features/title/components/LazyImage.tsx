@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
@@ -23,7 +22,9 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 }
 
 /** A plain <img> poster that switches to the title's sharp cover once it is known */
-export const PosterImg: React.FC<React.ImgHTMLAttributes<HTMLImageElement> & { art?: Titled }> = ({ art, src, ...props }) => {
+export const PosterImg: React.FC<
+  React.ImgHTMLAttributes<HTMLImageElement> & { art?: Titled }
+> = ({ art, src, ...props }) => {
   const hd = useHdArt(art)?.cover;
   return <img src={useSourceImage(hd || src)} {...props} />;
 };
@@ -32,7 +33,14 @@ export const PosterImg: React.FC<React.ImgHTMLAttributes<HTMLImageElement> & { a
  * Image that is only fetched when it nears the viewport, with a skeleton in its place until it has loaded.
  * The parent must be positioned (relative/absolute) and sized, since the skeleton fills it.
  */
-export const LazyImage: React.FC<LazyImageProps> = ({ src: sourceSrc, art, fallbackSrc: givenFallback, className, loading = "lazy", ...props }) => {
+export const LazyImage: React.FC<LazyImageProps> = ({
+  src: sourceSrc,
+  art,
+  fallbackSrc: givenFallback,
+  className,
+  loading = "lazy",
+  ...props
+}) => {
   sourceSrc = useSourceImage(sourceSrc);
   givenFallback = useSourceImage(givenFallback);
   const src = useHdArt(art)?.cover || sourceSrc;
@@ -47,12 +55,20 @@ export const LazyImage: React.FC<LazyImageProps> = ({ src: sourceSrc, art, fallb
   // A cached image can finish before React attaches onLoad, so ask the element itself
   useEffect(() => {
     setFailed(false);
-    setLoaded(Boolean(src && shown.has(src)) || Boolean(ref.current?.complete && ref.current.naturalWidth > 0));
+    setLoaded(
+      Boolean(src && shown.has(src)) ||
+        Boolean(ref.current?.complete && ref.current.naturalWidth > 0),
+    );
   }, [src]);
 
   return (
     <>
-      {!loaded && <Skeleton aria-hidden className="absolute inset-0 rounded-none bg-white/10" />}
+      {!loaded && (
+        <Skeleton
+          aria-hidden
+          className="absolute inset-0 rounded-none bg-white/10"
+        />
+      )}
       <img
         ref={ref}
         src={failed && fallbackSrc ? fallbackSrc : src}
@@ -66,7 +82,11 @@ export const LazyImage: React.FC<LazyImageProps> = ({ src: sourceSrc, art, fallb
           if (fallbackSrc && !failed) setFailed(true);
           else setLoaded(true);
         }}
-        className={cn(!seen && "transition-opacity duration-300", loaded ? "opacity-100" : "opacity-0", className)}
+        className={cn(
+          !seen && "transition-opacity duration-300",
+          loaded ? "opacity-100" : "opacity-0",
+          className,
+        )}
         {...props}
       />
     </>

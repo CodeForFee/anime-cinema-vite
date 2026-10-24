@@ -1,4 +1,4 @@
-import { isNativeApp } from "@/platform/transport"
+import { isNativeApp } from "@/platform/transport";
 
 /**
  * A short tick under the finger, as iOS gives on taps that change something; silent where unsupported.
@@ -7,12 +7,14 @@ import { isNativeApp } from "@/platform/transport"
 export function haptic() {
   if (isNativeApp) {
     void import("@capacitor/haptics")
-      .then(({ Haptics, ImpactStyle }) => Haptics.impact({ style: ImpactStyle.Light }))
-      .catch(() => {})
-    return
+      .then(({ Haptics, ImpactStyle }) =>
+        Haptics.impact({ style: ImpactStyle.Light }),
+      )
+      .catch(() => {});
+    return;
   }
   try {
-    navigator.vibrate?.(8)
+    navigator.vibrate?.(8);
   } catch {
     // vibration blocked by the browser: nothing to do
   }

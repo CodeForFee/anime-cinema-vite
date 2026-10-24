@@ -10,7 +10,6 @@ interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const DEFAULT_AVATAR = `https://robohash.org/${Math.random().toString(36).substring(7)}.png`;
 
-
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, src, alt, fallback, status, ...props }, ref) => {
     return (
@@ -19,12 +18,12 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         className={cn(
           "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
           "transition-transform duration-300 ease-in-out hover:scale-105",
-          className
+          className,
         )}
         {...props}
       />
     );
-  }
+  },
 );
 
 Avatar.displayName = "Avatar";
@@ -62,14 +61,14 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
           "relative z-10 aspect-square h-full w-full object-cover rounded-full",
           "transition-opacity duration-300 ease-in-out",
           isLoaded ? "opacity-100" : "opacity-0",
-          className
+          className,
         )}
         onError={handleError}
         onLoad={handleLoad}
         {...props}
       />
     );
-  }
+  },
 );
 AvatarImage.displayName = "AvatarImage";
 
@@ -82,11 +81,11 @@ const AvatarFallback = React.forwardRef<HTMLDivElement, AvatarFallbackProps>(
       className={cn(
         "absolute inset-0 flex h-full w-full items-center justify-center rounded-full bg-muted text-sm font-semibold",
         "animate-in fade-in-0 zoom-in-0 duration-300",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  ),
 );
 AvatarFallback.displayName = "AvatarFallback";
 

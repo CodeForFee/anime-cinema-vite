@@ -16,7 +16,12 @@
     "animevietsub.in",
     "animevietsub.us"
   ],
-  "unreachable": ["animevietsub.site", "animevietsub.tv", "animevietsub.app", "animevietsub.cc"],
+  "unreachable": [
+    "animevietsub.site",
+    "animevietsub.tv",
+    "animevietsub.app",
+    "animevietsub.cc"
+  ],
   "dead": ["animevietsub.nl"],
   "lookalikes": [
     "animevietsub.global",

@@ -22,9 +22,9 @@ const map: Record<string, number> = {
   五番目: 4,
   ろく番目: 5,
   第七: 6,
-  サンデー: 0
-}
+  サンデー: 0,
+};
 
 export function dayTextToNum(text: string) {
-  return map[text.toLowerCase()] ?? text
+  return map[text.toLowerCase()] ?? text;
 }

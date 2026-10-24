@@ -8,7 +8,10 @@ import { createPortal } from "react-dom";
 export function AmbientBackdrop({ src }: { src?: string }) {
   if (!src) return null;
   return createPortal(
-    <div aria-hidden className="ambient-backdrop pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div
+      aria-hidden
+      className="ambient-backdrop pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+    >
       <img
         src={src}
         alt=""
@@ -17,6 +20,6 @@ export function AmbientBackdrop({ src }: { src?: string }) {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#141414]/20 via-[#141414]/50 to-[#141414]/85" />
     </div>,
-    document.body
+    document.body,
   );
 }

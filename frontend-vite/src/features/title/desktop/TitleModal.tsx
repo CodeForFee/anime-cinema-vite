@@ -1,11 +1,11 @@
-import { TitleBody } from "@/features/title/components/TitleBody"
-import { useTitleDetail } from "@/features/title/hooks/use-title-detail"
-import { Dialog } from "@/shared/ui/dialog"
+import { TitleBody } from "@/features/title/components/TitleBody";
+import { useTitleDetail } from "@/features/title/hooks/use-title-detail";
+import { Dialog } from "@/shared/ui/dialog";
 
 /** Desktop: the title preview as a large dialog over the page, Netflix style */
 export default function TitleModal() {
-  const t = useTitleDetail()
-  if (!t.hasContent) return null
+  const t = useTitleDetail();
+  if (!t.hasContent) return null;
 
   return (
     <Dialog
@@ -16,5 +16,5 @@ export default function TitleModal() {
     >
       <TitleBody t={t} />
     </Dialog>
-  )
+  );
 }

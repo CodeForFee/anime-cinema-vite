@@ -40,7 +40,7 @@ export const SidebarDock: React.FC = () => {
               onClick={() => !isActive && haptic()}
               className={cn(
                 "relative flex h-11 flex-1 items-center justify-center rounded-full transition-colors duration-200",
-                isActive ? "text-[#1c1300]" : "text-white/85 active:text-white"
+                isActive ? "text-[#1c1300]" : "text-white/85 active:text-white",
               )}
             >
               {isActive && (
@@ -51,7 +51,11 @@ export const SidebarDock: React.FC = () => {
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}
-              <Icon aria-hidden className="relative h-[22px] w-[22px]" strokeWidth={isActive ? 2.25 : 1.75} />
+              <Icon
+                aria-hidden
+                className="relative h-[22px] w-[22px]"
+                strokeWidth={isActive ? 2.25 : 1.75}
+              />
             </Link>
           );
         })}

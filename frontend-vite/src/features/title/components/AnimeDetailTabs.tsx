@@ -1,11 +1,18 @@
-
 import React, { useState } from "react";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { AnimeDetail } from "@/core/types/anime";
-import { CalendarDays, Clock, Eye, ImageIcon, Star, Users, Video } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  Eye,
+  ImageIcon,
+  Star,
+  Users,
+  Video,
+} from "lucide-react";
 import { PosterImg } from "@/features/title/components/LazyImage";
 
 interface AnimeDetailTabsProps {
@@ -27,13 +34,19 @@ const INFO_FIELDS: [string, string][] = [
   ["Số người theo dõi", "Người theo dõi"],
 ];
 
-const META_BADGE = "gap-1.5 border-white/15 bg-white/5 px-3 py-1 font-medium text-gray-200";
-const TAB_TRIGGER = "flex-1 gap-1.5 px-1 py-1.5 text-xs sm:flex-none sm:gap-2 sm:px-4 sm:text-sm lg:text-sm";
+const META_BADGE =
+  "gap-1.5 border-white/15 bg-white/5 px-3 py-1 font-medium text-gray-200";
+const TAB_TRIGGER =
+  "flex-1 gap-1.5 px-1 py-1.5 text-xs sm:flex-none sm:gap-2 sm:px-4 sm:text-sm lg:text-sm";
 const TAB_ICON = "hidden h-4 w-4 sm:block";
-const EMPTY_STATE = "rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-14 text-center text-sm text-gray-400";
+const EMPTY_STATE =
+  "rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-14 text-center text-sm text-gray-400";
 
 // Source values often end with a dangling separator ("Nhật Bản ,")
-const cleanValue = (value: string) => String(value).replace(/[\s,]+$/, "").trim();
+const cleanValue = (value: string) =>
+  String(value)
+    .replace(/[\s,]+$/, "")
+    .trim();
 
 export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
   const [isDescExpanded, setIsDescExpanded] = useState(false);
@@ -41,13 +54,15 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
   const meta = anime.metadata || {};
   const trailerUrl = anime.trailerUrl;
   const characters = anime.characters || [];
-  const gallery = (anime.gallery && anime.gallery.length > 0 ? anime.gallery : [anime.backdrop]).filter(
-    (src): src is string => Boolean(src)
-  );
+  const gallery = (
+    anime.gallery && anime.gallery.length > 0 ? anime.gallery : [anime.backdrop]
+  ).filter((src): src is string => Boolean(src));
   const genres = (anime.genres || [])
     .map((g: any) => (typeof g === "object" ? g.name || g.slug : String(g)))
     .filter(Boolean);
-  const infoRows = INFO_FIELDS.filter(([key]) => meta[key] && cleanValue(meta[key]));
+  const infoRows = INFO_FIELDS.filter(
+    ([key]) => meta[key] && cleanValue(meta[key]),
+  );
 
   return (
     <Card className="glass-card space-y-6 rounded-3xl p-5 md:p-8">
@@ -65,15 +80,22 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
 
         <div className="min-w-0 space-y-3 md:space-y-4">
           <div>
-            <h1 className="text-xl md:text-3xl font-bold text-white leading-tight">{anime.title}</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-white leading-tight">
+              {anime.title}
+            </h1>
             {anime.subTitle && (
-              <p className="mt-1 text-sm md:text-base text-gray-400 line-clamp-2">{anime.subTitle}</p>
+              <p className="mt-1 text-sm md:text-base text-gray-400 line-clamp-2">
+                {anime.subTitle}
+              </p>
             )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {anime.ratingScore && (
-              <Badge variant="unstyled" className={`${META_BADGE} border-amber-400/30 bg-amber-400/10 text-amber-300`}>
+              <Badge
+                variant="unstyled"
+                className={`${META_BADGE} border-amber-400/30 bg-amber-400/10 text-amber-300`}
+              >
                 <Star className="fill-current h-3.5 w-3.5" />
                 {anime.ratingScore}/10
               </Badge>
@@ -102,7 +124,9 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
         <div className="col-span-2 min-w-0 space-y-4 md:col-span-1 md:col-start-2">
           {anime.synopsis && (
             <div>
-              <p className={`text-sm md:text-[15px] text-gray-200 leading-relaxed ${isDescExpanded ? "" : "line-clamp-3"}`}>
+              <p
+                className={`text-sm md:text-[15px] text-gray-200 leading-relaxed ${isDescExpanded ? "" : "line-clamp-3"}`}
+              >
                 {anime.synopsis}
               </p>
               {anime.synopsis.length > 220 && (
@@ -120,7 +144,12 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
           {genres.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {genres.map((genre: string) => (
-                <Badge key={genre} variant="unstyled" shape="rounded" className="border-transparent bg-white/10 font-medium text-white">
+                <Badge
+                  key={genre}
+                  variant="unstyled"
+                  shape="rounded"
+                  className="border-transparent bg-white/10 font-medium text-white"
+                >
                   {genre}
                 </Badge>
               ))}
@@ -160,14 +189,21 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
           {infoRows.length > 0 ? (
             <dl className="grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-10 lg:grid-cols-3">
               {infoRows.map(([key, label]) => (
-                <div key={key} className="min-w-0 border-l-2 border-white/10 pl-3 sm:pl-4">
+                <div
+                  key={key}
+                  className="min-w-0 border-l-2 border-white/10 pl-3 sm:pl-4"
+                >
                   <dt className="text-xs text-gray-500">{label}</dt>
-                  <dd className="mt-1 text-sm font-medium text-white">{cleanValue(meta[key])}</dd>
+                  <dd className="mt-1 text-sm font-medium text-white">
+                    {cleanValue(meta[key])}
+                  </dd>
                 </div>
               ))}
             </dl>
           ) : (
-            <p className={EMPTY_STATE}>Thông tin chi tiết đang được cập nhật.</p>
+            <p className={EMPTY_STATE}>
+              Thông tin chi tiết đang được cập nhật.
+            </p>
           )}
         </TabsContent>
 
@@ -196,18 +232,30 @@ export function AnimeDetailTabs({ anime }: AnimeDetailTabsProps) {
               {characters.map((c, idx) => (
                 <div key={idx} className="flex items-center gap-3">
                   <Avatar className="h-12 w-12 border border-white/10 hover:scale-100">
-                    <AvatarImage src={c.avatar} alt={c.name} className="opacity-100" />
-                    <AvatarFallback className="text-white">{c.name?.charAt(0) || "?"}</AvatarFallback>
+                    <AvatarImage
+                      src={c.avatar}
+                      alt={c.name}
+                      className="opacity-100"
+                    />
+                    <AvatarFallback className="text-white">
+                      {c.name?.charAt(0) || "?"}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-white">{c.name}</p>
-                    {c.role && <p className="truncate text-xs text-gray-400">{c.role}</p>}
+                    <p className="truncate text-sm font-semibold text-white">
+                      {c.name}
+                    </p>
+                    {c.role && (
+                      <p className="truncate text-xs text-gray-400">{c.role}</p>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className={EMPTY_STATE}>Thông tin nhân vật đang được cập nhật.</p>
+            <p className={EMPTY_STATE}>
+              Thông tin nhân vật đang được cập nhật.
+            </p>
           )}
         </TabsContent>
 

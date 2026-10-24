@@ -1,5 +1,5 @@
-import { parse } from "@/core/configure"
-import { cached, page as pageHtml } from "@/core/source/cached"
+import { parse } from "@/core/configure";
+import { cached, page as pageHtml } from "@/core/source/cached";
 
 export async function TypeNormalValue(
   type: string,
@@ -7,18 +7,18 @@ export async function TypeNormalValue(
   page = 1,
   onlyItems: boolean,
   options?: {
-    genres: string[]
-    seaser: string | null
-    sorter: string | null
-    typer: string | null
-    year: string | null
+    genres: string[];
+    seaser: string | null;
+    sorter: string | null;
+    typer: string | null;
+    year: string | null;
   },
   defaultsOptions: {
-    genres?: string
-    seaser?: string
-    typer?: string
-    year?: string
-  } = {}
+    genres?: string;
+    seaser?: string;
+    typer?: string;
+    year?: string;
+  } = {},
 ) {
   const isCustom =
     options &&
@@ -26,7 +26,7 @@ export async function TypeNormalValue(
       options.seaser ||
       options.typer ||
       options.year ||
-      /* exclude */ type === "danh-sach")
+      /* exclude */ type === "danh-sach");
 
   const url = isCustom
     ? [
@@ -36,16 +36,19 @@ export async function TypeNormalValue(
           .concat(
             defaultsOptions.typer && defaultsOptions.typer !== "all"
               ? [defaultsOptions.typer]
-              : []
+              : [],
           )
           .join("-") || "all",
         options.seaser ?? defaultsOptions.seaser ?? "all",
         options.year ?? defaultsOptions.year ?? "all",
-        `/trang-${page}.html`
+        `/trang-${page}.html`,
       ].join("/") + (options.sorter ? "?sort=" + options.sorter : "")
     : `/${type}/${
         Array.isArray(value) ? value.join("/") : value
-      }/trang-${page}.html` + (options?.sorter ? "?sort=" + options.sorter : "")
+      }/trang-${page}.html` +
+      (options?.sorter ? "?sort=" + options.sorter : "");
 
-  return cached(`list ${url} ${onlyItems}`, async () => parse("list", await pageHtml(url), Date.now(), onlyItems))
+  return cached(`list ${url} ${onlyItems}`, async () =>
+    parse("list", await pageHtml(url), Date.now(), onlyItems),
+  );
 }

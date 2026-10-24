@@ -1,9 +1,9 @@
-import { TitleAbout } from "@/features/title/components/TitleAbout"
-import { TitleEpisodes } from "@/features/title/components/TitleEpisodes"
-import { TitleFacts } from "@/features/title/components/TitleFacts"
-import { TitleHero } from "@/features/title/components/TitleHero"
-import { TitleRelated } from "@/features/title/components/TitleRelated"
-import type { TitleView } from "@/features/title/hooks/use-title-detail"
+import { TitleAbout } from "@/features/title/components/TitleAbout";
+import { TitleEpisodes } from "@/features/title/components/TitleEpisodes";
+import { TitleFacts } from "@/features/title/components/TitleFacts";
+import { TitleHero } from "@/features/title/components/TitleHero";
+import { TitleRelated } from "@/features/title/components/TitleRelated";
+import type { TitleView } from "@/features/title/hooks/use-title-detail";
 
 /** What the title preview shows, the same in the mobile sheet and the desktop dialog */
 export function TitleBody({ t }: { t: TitleView }) {
@@ -17,5 +17,5 @@ export function TitleBody({ t }: { t: TitleView }) {
         <TitleAbout t={t} />
       </div>
     </div>
-  )
+  );
 }

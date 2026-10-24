@@ -1,11 +1,11 @@
-import { TitleBody } from "@/features/title/components/TitleBody"
-import { useTitleDetail } from "@/features/title/hooks/use-title-detail"
-import { SHEET_EXIT_MS, Sheet } from "@/shared/ui/sheet"
+import { TitleBody } from "@/features/title/components/TitleBody";
+import { useTitleDetail } from "@/features/title/hooks/use-title-detail";
+import { SHEET_EXIT_MS, Sheet } from "@/shared/ui/sheet";
 
 /** Mobile: the title preview as a full-height sheet; pulling its picture down closes it */
 export default function TitleSheet() {
-  const t = useTitleDetail({ closeDelayMs: SHEET_EXIT_MS })
-  if (!t.hasContent) return null
+  const t = useTitleDetail({ closeDelayMs: SHEET_EXIT_MS });
+  if (!t.hasContent) return null;
 
   return (
     <Sheet
@@ -16,5 +16,5 @@ export default function TitleSheet() {
     >
       <TitleBody t={t} />
     </Sheet>
-  )
+  );
 }

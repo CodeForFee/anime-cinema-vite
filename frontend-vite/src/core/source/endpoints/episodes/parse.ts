@@ -1,14 +1,14 @@
-import { dayTextToNum } from "@/core/source/html/dayTextToNum"
+import { dayTextToNum } from "@/core/source/html/dayTextToNum";
 
-import { parserDom } from "@/core/source/html/parserDom"
+import { parserDom } from "@/core/source/html/parserDom";
 
 export default function PhimIdChap(html: string) {
-  const $ = parserDom(html)
+  const $ = parserDom(html);
 
   const chaps = $("#list-server .list-episode .episode")
     .find("a")
     .map((_i, item) => {
-      const $item = $(item)
+      const $item = $(item);
       return {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         id: $item.attr("data-id")!,
@@ -17,19 +17,19 @@ export default function PhimIdChap(html: string) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         hash: $item.attr("data-hash")!,
 
-        name: $item.text().trim()
-      } as const
+        name: $item.text().trim(),
+      } as const;
     })
-    .toArray()
+    .toArray();
   const [day, hour, minus] =
     $(".schedule-text > h4 > .highlight:last-of-type")
       .text()
       .match(/(Thứ [^\s]+|chủ nhật) vào lúc (\d+) giờ (\d+) phút/i)
-      ?.slice(1) ?? []
+      ?.slice(1) ?? [];
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const image = $(".Image img").attr("src")!
+  const image = $(".Image img").attr("src")!;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const poster = $(".TPostBg img").attr("src")!
+  const poster = $(".TPostBg img").attr("src")!;
 
   return {
     chaps: chaps as Readonly<typeof chaps>,
@@ -38,9 +38,9 @@ export default function PhimIdChap(html: string) {
       : ([dayTextToNum(day.toLowerCase()), +hour, +minus] as [
           number,
           number,
-          number
+          number,
         ]),
     image,
-    poster
-  }
+    poster,
+  };
 }

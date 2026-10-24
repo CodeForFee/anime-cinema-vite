@@ -5,19 +5,22 @@
 :root {
   /* motion tokens: the one curve every slide and settle uses (framer gets the same numbers in shared/ui/sheet.tsx) */
   --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
-  --background: #08090D;
-  --foreground: #ECEDEE;
+  --background: #08090d;
+  --foreground: #ecedee;
   /* Safe areas: the Android app gets them from Capacitor (--safe-area-inset-*, set on <html>), whose
      WebView may not report env(); browsers use env() */
   --inset-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --inset-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
-  --inset-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --inset-bottom: var(
+    --safe-area-inset-bottom,
+    env(safe-area-inset-bottom, 0px)
+  );
   --inset-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
 }
 
 body {
-  background-color: #08090D;
-  color: #ECEDEE;
+  background-color: #08090d;
+  color: #ecedee;
   font-family: "Be Vietnam Pro", system-ui, sans-serif;
   overflow-x: hidden;
 }
@@ -29,7 +32,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #08090D;
+  background: #08090d;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -85,8 +88,15 @@ body {
 }
 
 .img-mask-hero {
-  mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%),
-              linear-gradient(to bottom, black 60%, transparent 100%);
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      black 20%,
+      black 80%,
+      transparent 100%
+    ),
+    linear-gradient(to bottom, black 60%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
 
@@ -310,7 +320,12 @@ html {
 /* Floating tab bar (components/layout/SidebarDock.tsx) */
 .liquid-glass {
   /* dark tint first: icons must stay readable over bright posters and white text */
-  background: linear-gradient(135deg, rgba(46, 46, 52, 0.88), rgba(16, 16, 20, 0.92) 55%, rgba(34, 34, 40, 0.88));
+  background: linear-gradient(
+    135deg,
+    rgba(46, 46, 52, 0.88),
+    rgba(16, 16, 20, 0.92) 55%,
+    rgba(34, 34, 40, 0.88)
+  );
   -webkit-backdrop-filter: blur(22px) saturate(180%) brightness(0.8);
   backdrop-filter: blur(22px) saturate(180%) brightness(0.8);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -327,12 +342,21 @@ html {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(120% 90% at 16% -20%, rgba(255, 255, 255, 0.16), transparent 55%);
+  background: radial-gradient(
+    120% 90% at 16% -20%,
+    rgba(255, 255, 255, 0.16),
+    transparent 55%
+  );
   mix-blend-mode: screen;
 }
 /* the selected tab: amber that is solid in the middle and bleeds out toward the edge */
 .liquid-glass-lens {
-  background: radial-gradient(115% 130% at 50% 45%, rgba(255, 200, 48, 0.97) 0%, rgba(255, 184, 0, 0.82) 42%, rgba(255, 150, 0, 0.22) 100%);
+  background: radial-gradient(
+    115% 130% at 50% 45%,
+    rgba(255, 200, 48, 0.97) 0%,
+    rgba(255, 184, 0, 0.82) 42%,
+    rgba(255, 150, 0, 0.22) 100%
+  );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 0 20px rgba(255, 184, 0, 0.5),
@@ -367,7 +391,11 @@ html {
 .avs-range::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 9999px;
-  background: linear-gradient(to right, #e50914 var(--avs-progress, 0%), rgba(255, 255, 255, 0.3) var(--avs-progress, 0%));
+  background: linear-gradient(
+    to right,
+    #e50914 var(--avs-progress, 0%),
+    rgba(255, 255, 255, 0.3) var(--avs-progress, 0%)
+  );
 }
 .avs-range::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -398,7 +426,11 @@ html {
 
 /* Glass input and chips (pages/search.tsx) */
 .glass-field {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.04)
+  ) !important;
   -webkit-backdrop-filter: blur(18px) saturate(170%);
   backdrop-filter: blur(18px) saturate(170%);
   border: 1px solid rgba(255, 255, 255, 0.16) !important;
@@ -408,7 +440,11 @@ html {
     0 8px 28px rgba(0, 0, 0, 0.4);
 }
 .glass-chip {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05)) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.13),
+    rgba(255, 255, 255, 0.05)
+  ) !important;
   -webkit-backdrop-filter: blur(12px) saturate(160%);
   backdrop-filter: blur(12px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -417,7 +453,12 @@ html {
 
 /* ---------- Liquid glass (player, sheets, nav) ---------- */
 .glass {
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 45%, rgba(255, 255, 255, 0.08));
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.04) 45%,
+    rgba(255, 255, 255, 0.08)
+  );
   -webkit-backdrop-filter: blur(22px) saturate(180%);
   backdrop-filter: blur(22px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -428,11 +469,17 @@ html {
     0 12px 40px rgba(0, 0, 0, 0.45);
 }
 .glass-button {
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.06)
+  );
   -webkit-backdrop-filter: blur(14px) saturate(170%);
   backdrop-filter: blur(14px) saturate(170%);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 4px 14px rgba(0, 0, 0, 0.35);
 }
 /* Chromium bends the backdrop through the SVG filter in index.html; other engines keep the plain blur.
    Desktop only: on a phone, re-filtering the video under it every frame drops frames */
@@ -445,11 +492,17 @@ html {
 }
 /* Sheets over the playing video: denser tint, lighter blur, own layer, so sliding stays at 60 fps */
 .glass-sheet {
-  background: linear-gradient(160deg, rgba(40, 40, 52, 0.78), rgba(14, 14, 20, 0.86));
+  background: linear-gradient(
+    160deg,
+    rgba(40, 40, 52, 0.78),
+    rgba(14, 14, 20, 0.86)
+  );
   -webkit-backdrop-filter: blur(14px) saturate(160%);
   backdrop-filter: blur(14px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 -10px 40px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 -10px 40px rgba(0, 0, 0, 0.45);
   will-change: transform;
   contain: layout paint;
 }
@@ -463,61 +516,125 @@ html {
 }
 /* transform/opacity only: composited, no layout per frame */
 @keyframes cn-sheet-up {
-  from { transform: translate3d(0, calc(100% + 1rem), 0); }
-  to { transform: translate3d(0, 0, 0); }
+  from {
+    transform: translate3d(0, calc(100% + 1rem), 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
 }
 @keyframes cn-sheet-left {
-  from { transform: translate3d(calc(100% + 1rem), 0, 0); }
-  to { transform: translate3d(0, 0, 0); }
+  from {
+    transform: translate3d(calc(100% + 1rem), 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
 }
 @keyframes cn-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 /* exits need their own keyframes: re-using the entry one with "reverse" does not restart it */
 @keyframes cn-sheet-down {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(0, calc(100% + 1rem), 0); }
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, calc(100% + 1rem), 0);
+  }
 }
 @keyframes cn-sheet-right {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(calc(100% + 1rem), 0, 0); }
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(calc(100% + 1rem), 0, 0);
+  }
 }
 @keyframes cn-fade-away {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 @keyframes cn-pop {
-  from { opacity: 0; transform: scale(0.94); }
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
 }
-.cn-sheet { animation: cn-sheet-up 320ms var(--ease-ios) both; }
-.cn-sheet-out { animation: cn-sheet-down 220ms cubic-bezier(0.4, 0, 1, 1) both; }
+.cn-sheet {
+  animation: cn-sheet-up 320ms var(--ease-ios) both;
+}
+.cn-sheet-out {
+  animation: cn-sheet-down 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
 @media (orientation: landscape) {
-  .cn-sheet { animation-name: cn-sheet-left; }
-  .cn-sheet-out { animation-name: cn-sheet-right; }
+  .cn-sheet {
+    animation-name: cn-sheet-left;
+  }
+  .cn-sheet-out {
+    animation-name: cn-sheet-right;
+  }
 }
 /* desktop: the speed / episode menu pops up out of the control bar instead of sliding in */
 @keyframes cn-dropup-in {
-  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
 }
 @keyframes cn-dropup-out {
-  to { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
 }
 @media (min-width: 1024px) {
-  .cn-sheet { animation: cn-dropup-in 160ms var(--ease-ios) both; transform-origin: bottom center; }
-  .cn-sheet-out { animation: cn-dropup-out 120ms ease-in both; transform-origin: bottom center; }
+  .cn-sheet {
+    animation: cn-dropup-in 160ms var(--ease-ios) both;
+    transform-origin: bottom center;
+  }
+  .cn-sheet-out {
+    animation: cn-dropup-out 120ms ease-in both;
+    transform-origin: bottom center;
+  }
 }
-.cn-fade { animation: cn-fade 260ms ease-out both; }
-.cn-fade-out { animation: cn-fade-away 220ms ease-in both; }
-.cn-pop { animation: cn-pop 200ms var(--ease-ios) both; }
+.cn-fade {
+  animation: cn-fade 260ms ease-out both;
+}
+.cn-fade-out {
+  animation: cn-fade-away 220ms ease-in both;
+}
+.cn-pop {
+  animation: cn-pop 200ms var(--ease-ios) both;
+}
 @media (prefers-reduced-motion: reduce) {
-  .cn-sheet, .cn-sheet-out, .cn-fade, .cn-fade-out, .cn-pop { animation-duration: 1ms; }
+  .cn-sheet,
+  .cn-sheet-out,
+  .cn-fade,
+  .cn-fade-out,
+  .cn-pop {
+    animation-duration: 1ms;
+  }
 }
 
 /* Page cards over the blurred ambient backdrop (pages/watch.tsx): the backdrop is already blurred, so a
    translucent tint + light edges reads as glass with no backdrop-filter to recompute while scrolling */
 .glass-card {
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.025) 55%, rgba(255, 255, 255, 0.05)) !important;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.025) 55%,
+    rgba(255, 255, 255, 0.05)
+  ) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -527,9 +644,15 @@ html {
   backdrop-filter: none !important;
 }
 .glass-pill {
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.04)
+  );
   border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 18px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 /* Mobile search popup (app/layout/mobile/MobileHeader.tsx). While it is open <html data-search> hides the dock and
@@ -539,14 +662,24 @@ html {
   border-radius: 0.625rem !important;
   padding-left: 2.75rem !important;
   font-size: 1rem !important;
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)) !important;
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.05)
+  ) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 12px 40px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 12px 40px rgba(0, 0, 0, 0.45);
 }
 /* results scroll over the page: a dense tint, no backdrop blur to redo on every frame */
 .search-popup .search-results {
   border-radius: 0.75rem !important;
-  background: linear-gradient(160deg, rgba(40, 40, 52, 0.97), rgba(14, 14, 20, 0.98)) !important;
+  background: linear-gradient(
+    160deg,
+    rgba(40, 40, 52, 0.97),
+    rgba(14, 14, 20, 0.98)
+  ) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 html[data-search] .app-dock {
@@ -579,8 +712,17 @@ html[data-search] body {
   border-radius: inherit;
   transition: opacity 420ms;
   background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 18%, transparent 34%),
-    radial-gradient(130% 55% at 50% -12%, rgba(255, 255, 255, 0.16), transparent 62%);
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.08) 18%,
+      transparent 34%
+    ),
+    radial-gradient(
+      130% 55% at 50% -12%,
+      rgba(255, 255, 255, 0.16),
+      transparent 62%
+    );
   box-shadow:
     inset 0 0 0 1.5px rgba(255, 255, 255, 0.32),
     inset 0 2px 0 rgba(255, 255, 255, 0.55),
@@ -588,7 +730,11 @@ html[data-search] body {
 }
 
 .poster-caption {
-  background: linear-gradient(180deg, rgba(20, 20, 26, 0.45), rgba(10, 10, 14, 0.78));
+  background: linear-gradient(
+    180deg,
+    rgba(20, 20, 26, 0.45),
+    rgba(10, 10, 14, 0.78)
+  );
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 /* The dock is fixed over a page that scrolls under it, so its blur is redone every frame; its tint is
@@ -597,7 +743,12 @@ html[data-search] body {
   .liquid-glass {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background: linear-gradient(135deg, rgba(42, 42, 48, 0.96), rgba(16, 16, 20, 0.97) 55%, rgba(32, 32, 38, 0.96));
+    background: linear-gradient(
+      135deg,
+      rgba(42, 42, 48, 0.96),
+      rgba(16, 16, 20, 0.97) 55%,
+      rgba(32, 32, 38, 0.96)
+    );
   }
 }
 @media (pointer: coarse) {
@@ -617,18 +768,30 @@ html[data-search] body {
   .glass {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background: linear-gradient(140deg, rgba(58, 58, 66, 0.9), rgba(28, 28, 34, 0.92));
+    background: linear-gradient(
+      140deg,
+      rgba(58, 58, 66, 0.9),
+      rgba(28, 28, 34, 0.92)
+    );
   }
   .glass-button {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background: linear-gradient(140deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
+    background: linear-gradient(
+      140deg,
+      rgba(255, 255, 255, 0.24),
+      rgba(255, 255, 255, 0.1)
+    );
   }
   /* the player sheets slide over a playing video: no blur to recompute per frame, a denser tint instead */
   .glass-sheet {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background: linear-gradient(160deg, rgba(44, 44, 56, 0.96), rgba(18, 18, 24, 0.97));
+    background: linear-gradient(
+      160deg,
+      rgba(44, 44, 56, 0.96),
+      rgba(18, 18, 24, 0.97)
+    );
   }
 }
 
@@ -652,6 +815,18 @@ html[data-search] body {
 
 /* A horizontal row fades out at both ends instead of being cut off (shelves, the ranked row on desktop) */
 .scroll-fade-x {
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent);
-  mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 40px,
+    #000 calc(100% - 40px),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 40px,
+    #000 calc(100% - 40px),
+    transparent
+  );
 }

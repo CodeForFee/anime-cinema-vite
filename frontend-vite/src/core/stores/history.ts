@@ -46,7 +46,10 @@ export const useHistoryStore = create<HistoryStoreState>()(
         set((state) => {
           const filtered = state.history.filter((h) => h.slug !== item.slug);
           return {
-            history: [{ ...item, updatedAt: Date.now() }, ...filtered].slice(0, 60),
+            history: [{ ...item, updatedAt: Date.now() }, ...filtered].slice(
+              0,
+              60,
+            ),
           };
         });
       },
@@ -88,6 +91,6 @@ export const useHistoryStore = create<HistoryStoreState>()(
     {
       name: "movion-history-storage",
       storage: createJSONStorage(() => safeStorage),
-    }
-  )
+    },
+  ),
 );

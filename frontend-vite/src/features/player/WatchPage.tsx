@@ -1,22 +1,27 @@
-import { Sparkles } from "lucide-react"
+import { Sparkles } from "lucide-react";
 
-import { MovieShelf } from "@/features/browse"
-import { CinemaPlayer } from "@/features/player/components/CinemaPlayer"
-import { EpisodeGrid } from "@/features/player/components/EpisodeGrid"
-import { NowPlaying, WatchError, WatchSkeleton, WatchTopBar } from "@/features/player/components/WatchPanels"
-import { useWatchSession } from "@/features/player/hooks/use-watch-session"
-import { usePlayerStore } from "@/features/player/store"
-import { AnimeDetailTabs, InfoModal } from "@/features/title"
-import { AmbientBackdrop } from "@/shared/ui/AmbientBackdrop"
+import { MovieShelf } from "@/features/browse";
+import { CinemaPlayer } from "@/features/player/components/CinemaPlayer";
+import { EpisodeGrid } from "@/features/player/components/EpisodeGrid";
+import {
+  NowPlaying,
+  WatchError,
+  WatchSkeleton,
+  WatchTopBar,
+} from "@/features/player/components/WatchPanels";
+import { useWatchSession } from "@/features/player/hooks/use-watch-session";
+import { usePlayerStore } from "@/features/player/store";
+import { AnimeDetailTabs, InfoModal } from "@/features/title";
+import { AmbientBackdrop } from "@/shared/ui/AmbientBackdrop";
 
 /** /watch?slug=&ep=: the player, what is playing, the episodes, the details and related titles */
 export default function WatchPage() {
-  const watch = useWatchSession()
-  const isTheaterMode = usePlayerStore((s) => s.isTheaterMode)
-  const { anime, episode, streamData } = watch
+  const watch = useWatchSession();
+  const isTheaterMode = usePlayerStore((s) => s.isTheaterMode);
+  const { anime, episode, streamData } = watch;
 
-  if (watch.isLoading) return <WatchSkeleton />
-  if (watch.error || !anime) return <WatchError />
+  if (watch.isLoading) return <WatchSkeleton />;
+  if (watch.error || !anime) return <WatchError />;
 
   return (
     <div
@@ -53,7 +58,14 @@ export default function WatchPage() {
 
       <NowPlaying watch={watch} />
 
-      <div aria-busy={watch.switchingPart} className={watch.switchingPart ? "pointer-events-none animate-pulse opacity-50 transition-opacity" : "transition-opacity"}>
+      <div
+        aria-busy={watch.switchingPart}
+        className={
+          watch.switchingPart
+            ? "pointer-events-none animate-pulse opacity-50 transition-opacity"
+            : "transition-opacity"
+        }
+      >
         <EpisodeGrid
           episodes={anime.episodes || []}
           currentEpisodeSlug={episode?.name || ""}
@@ -66,9 +78,15 @@ export default function WatchPage() {
 
       <AnimeDetailTabs anime={anime} />
 
-      {anime.related && anime.related.length > 0 && <MovieShelf title="Phim Liên Quan" icon={Sparkles} items={anime.related} />}
+      {anime.related && anime.related.length > 0 && (
+        <MovieShelf
+          title="Phim Liên Quan"
+          icon={Sparkles}
+          items={anime.related}
+        />
+      )}
 
       <InfoModal />
     </div>
-  )
+  );
 }

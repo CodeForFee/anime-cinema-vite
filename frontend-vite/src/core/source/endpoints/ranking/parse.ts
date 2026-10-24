@@ -1,12 +1,12 @@
-import { getPathName } from "@/core/source/html/getPathName"
-import { parserDom } from "@/core/source/html/parserDom"
+import { getPathName } from "@/core/source/html/getPathName";
+import { parserDom } from "@/core/source/html/parserDom";
 
 export default function BangXepHangType(html: string) {
-  const $ = parserDom(html)
+  const $ = parserDom(html);
 
   return $(".bxh-movie-phimletv > .group")
     .map((_i, item) => {
-      const $item = $(item)
+      const $item = $(item);
       const image =
         $item.find("img").attr("src") ??
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -19,14 +19,14 @@ export default function BangXepHangType(html: string) {
           .join(":")
           .trim()
           .replace(/^url\((?:'|")?/, "")
-          .replace(/(?:'|")?\)$/, "")
+          .replace(/(?:'|")?\)$/, "");
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const path = getPathName($item.find("a").attr("href")!)
-      const name = $item.find("a").text()
-      const othername = $item.find(".txt-info").text()
-      const process = $item.find(".score").text()
+      const path = getPathName($item.find("a").attr("href")!);
+      const name = $item.find("a").text();
+      const othername = $item.find(".txt-info").text();
+      const process = $item.find(".score").text();
 
-      return { image, path, name, othername, process }
+      return { image, path, name, othername, process };
     })
-    .toArray()
+    .toArray();
 }

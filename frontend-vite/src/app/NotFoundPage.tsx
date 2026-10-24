@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router"
-import { Film } from "lucide-react"
+import { Link } from "@tanstack/react-router";
+import { Film } from "lucide-react";
 
 export function NotFoundPage() {
   return (
@@ -9,15 +9,21 @@ export function NotFoundPage() {
       </div>
 
       <div className="space-y-2 max-w-md">
-        <h2 className="text-3xl font-black text-white">404 - Không tìm thấy trang</h2>
+        <h2 className="text-3xl font-black text-white">
+          404 - Không tìm thấy trang
+        </h2>
         <p className="text-sm text-gray-400">
-          Nội dung hoặc bộ phim bạn đang tìm kiếm không tồn tại hoặc đã được thay đổi đường dẫn.
+          Nội dung hoặc bộ phim bạn đang tìm kiếm không tồn tại hoặc đã được
+          thay đổi đường dẫn.
         </p>
       </div>
 
-      <Link to="/" className="inline-flex h-10 items-center rounded-full bg-primaryRed px-6 font-bold text-white">
+      <Link
+        to="/"
+        className="inline-flex h-10 items-center rounded-full bg-primaryRed px-6 font-bold text-white"
+      >
         Về Trang Chủ
       </Link>
     </div>
-  )
+  );
 }

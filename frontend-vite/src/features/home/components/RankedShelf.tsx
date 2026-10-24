@@ -1,15 +1,25 @@
-import { Link } from "@tanstack/react-router"
-import { ChevronRight } from "lucide-react"
-import type React from "react"
+import { Link } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
+import type React from "react";
 
-import type { ExploreSearch } from "@/features/browse"
+import type { ExploreSearch } from "@/features/browse";
 
 /** The ranked shelf's frame, the same on both forms: its title, "Xem tất cả", then the cards */
-export function RankedShelf({ title, seeMore, children }: { title: string; seeMore?: ExploreSearch; children: React.ReactNode }) {
+export function RankedShelf({
+  title,
+  seeMore,
+  children,
+}: {
+  title: string;
+  seeMore?: ExploreSearch;
+  children: React.ReactNode;
+}) {
   return (
     <section className="my-8 relative group/top10 select-none">
       <div className="flex items-center justify-between mb-4 px-4 md:px-12">
-        <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">{title}</h3>
+        <h3 className="font-display text-lg font-bold tracking-tight text-white md:text-2xl">
+          {title}
+        </h3>
         {seeMore && (
           <Link
             to="/explore"
@@ -23,5 +33,5 @@ export function RankedShelf({ title, seeMore, children }: { title: string; seeMo
       </div>
       {children}
     </section>
-  )
+  );
 }

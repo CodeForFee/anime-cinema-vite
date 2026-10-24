@@ -3,7 +3,13 @@ import { Check, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { formatEpisodeName } from "@/core/format";
-import { heightOf, isAutoLevel, type QualityLevel, type QualityPref, sizedLevels } from "@/core/player/pick-quality";
+import {
+  heightOf,
+  isAutoLevel,
+  type QualityLevel,
+  type QualityPref,
+  sizedLevels,
+} from "@/core/player/pick-quality";
 import { cn } from "@/shared/lib/utils";
 import { onBack } from "@/platform/back";
 import type { Episode } from "@/core/types/anime";
@@ -47,18 +53,27 @@ function Sheet({
   useEffect(() => onBack(() => setClosing(true)), []);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setClosing(true);
+    const onKey = (event: KeyboardEvent) =>
+      event.key === "Escape" && setClosing(true);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   return (
-    <div className={cn("absolute inset-0 z-30", closing && "pointer-events-none")} role="dialog" aria-modal="true" aria-label={title}>
+    <div
+      className={cn("absolute inset-0 z-30", closing && "pointer-events-none")}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
       <button
         type="button"
         aria-label="Đóng"
         onClick={close}
-        className={cn("absolute inset-0 bg-black/45 lg:bg-transparent", closing ? "cn-fade-out" : "cn-fade")}
+        className={cn(
+          "absolute inset-0 bg-black/45 lg:bg-transparent",
+          closing ? "cn-fade-out" : "cn-fade",
+        )}
       />
       <div
         className={cn(
@@ -67,13 +82,18 @@ function Sheet({
           "landscape:inset-y-2 landscape:left-auto landscape:right-[max(0.5rem,var(--inset-right))] landscape:w-[min(380px,46%)]",
           // desktop: a drop-up popover above the control bar, like Netflix, not a side panel
           "lg:!inset-y-auto lg:!bottom-[5.5rem] lg:!left-[clamp(0.5rem,calc(var(--ax)_-_var(--w)/2),calc(100%_-_var(--w)_-_0.5rem))] lg:!right-auto lg:!w-[var(--w)] lg:!max-h-[min(70%,420px)] lg:rounded-2xl",
-          closing ? "cn-sheet-out" : "cn-sheet"
+          closing ? "cn-sheet-out" : "cn-sheet",
         )}
         style={{ "--w": width, "--ax": `${anchorX}px` } as React.CSSProperties}
       >
         <div className="flex shrink-0 items-center justify-between px-4 pb-1 pt-3 landscape:pr-[max(1rem,var(--inset-right))]">
           <h3 className="text-sm font-bold">{title}</h3>
-          <button type="button" aria-label="Đóng" onClick={close} className="glass-button flex h-8 w-8 items-center justify-center rounded-full">
+          <button
+            type="button"
+            aria-label="Đóng"
+            onClick={close}
+            className="glass-button flex h-8 w-8 items-center justify-center rounded-full"
+          >
             <X aria-hidden className="h-4 w-4" />
           </button>
         </div>
@@ -97,28 +117,35 @@ export function SpeedSheet({
   anchorX?: number;
 }) {
   return (
-    <Sheet title="Tốc độ phát" onClose={onClose} anchorX={anchorX} width="min(260px,60%)">
+    <Sheet
+      title="Tốc độ phát"
+      onClose={onClose}
+      anchorX={anchorX}
+      width="min(260px,60%)"
+    >
       {(close) => (
-      <div className="grid grid-cols-4 gap-2 overflow-y-auto px-4 pb-[max(1rem,var(--inset-bottom))] pt-1 landscape:grid-cols-2">
-        {RATES.map((value) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={value === rate}
-            onClick={() => {
-              onSelect(value);
-              close();
-            }}
-            className={cn(
-              "flex h-10 items-center justify-center gap-1 rounded-xl text-sm font-semibold transition active:scale-95",
-              value === rate ? "bg-white text-black" : "glass-button text-white"
-            )}
-          >
-            {value === rate && <Check aria-hidden className="h-4 w-4" />}
-            {value === 1 ? "Chuẩn" : `${value}x`}
-          </button>
-        ))}
-      </div>
+        <div className="grid grid-cols-4 gap-2 overflow-y-auto px-4 pb-[max(1rem,var(--inset-bottom))] pt-1 landscape:grid-cols-2">
+          {RATES.map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={value === rate}
+              onClick={() => {
+                onSelect(value);
+                close();
+              }}
+              className={cn(
+                "flex h-10 items-center justify-center gap-1 rounded-xl text-sm font-semibold transition active:scale-95",
+                value === rate
+                  ? "bg-white text-black"
+                  : "glass-button text-white",
+              )}
+            >
+              {value === rate && <Check aria-hidden className="h-4 w-4" />}
+              {value === 1 ? "Chuẩn" : `${value}x`}
+            </button>
+          ))}
+        </div>
       )}
     </Sheet>
   );
@@ -139,11 +166,21 @@ export function QualitySheet({
   anchorX?: number;
 }) {
   const options: { value: QualityPref; label: string }[] = [
-    ...(levels.some(isAutoLevel) ? [{ value: "auto" as const, label: "Tự động" }] : []),
-    ...sizedLevels(levels).map((level) => ({ value: heightOf(level), label: `${heightOf(level)}p` })),
+    ...(levels.some(isAutoLevel)
+      ? [{ value: "auto" as const, label: "Tự động" }]
+      : []),
+    ...sizedLevels(levels).map((level) => ({
+      value: heightOf(level),
+      label: `${heightOf(level)}p`,
+    })),
   ];
   return (
-    <Sheet title="Chất lượng" onClose={onClose} anchorX={anchorX} width="min(240px,60%)">
+    <Sheet
+      title="Chất lượng"
+      onClose={onClose}
+      anchorX={anchorX}
+      width="min(240px,60%)"
+    >
       {(close) => (
         <div className="flex flex-col gap-2 overflow-y-auto px-4 pb-[max(1rem,var(--inset-bottom))] pt-1">
           {options.map(({ value, label }) => (
@@ -157,7 +194,9 @@ export function QualitySheet({
               }}
               className={cn(
                 "flex h-10 shrink-0 items-center justify-center gap-1 rounded-xl text-sm font-semibold transition active:scale-95",
-                value === pref ? "bg-white text-black" : "glass-button text-white"
+                value === pref
+                  ? "bg-white text-black"
+                  : "glass-button text-white",
               )}
             >
               {value === pref && <Check aria-hidden className="h-4 w-4" />}
@@ -199,45 +238,67 @@ export function EpisodeSheet({
   const currentIndex = episodes.findIndex((ep) => ep.id === currentId);
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll to the current episode on open only
   useEffect(() => {
-    if (currentIndex >= 0) virtualizer.scrollToIndex(Math.floor(currentIndex / COLUMNS), { align: "center" });
+    if (currentIndex >= 0)
+      virtualizer.scrollToIndex(Math.floor(currentIndex / COLUMNS), {
+        align: "center",
+      });
   }, []);
 
   return (
-    <Sheet title={`Danh sách tập · ${episodes.length}`} onClose={onClose} anchorX={anchorX} width="min(380px,60%)">
+    <Sheet
+      title={`Danh sách tập · ${episodes.length}`}
+      onClose={onClose}
+      anchorX={anchorX}
+      width="min(380px,60%)"
+    >
       {(close) => (
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,var(--inset-bottom))]">
-        <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
-          {virtualizer.getVirtualItems().map((row) => (
-            <div
-              key={row.key}
-              className="absolute inset-x-0 grid gap-2"
-              style={{ top: row.start, height: ROW_HEIGHT, gridTemplateColumns: `repeat(${COLUMNS}, minmax(0, 1fr))` }}
-            >
-              {episodes.slice(row.index * COLUMNS, row.index * COLUMNS + COLUMNS).map((ep) => {
-                const current = ep.id === currentId;
-                return (
-                  <button
-                    key={ep.id}
-                    type="button"
-                    aria-current={current || undefined}
-                    title={formatEpisodeName(ep.name)}
-                    onClick={() => {
-                      onSelect(ep);
-                      close();
-                    }}
-                    className={cn(
-                      "my-1 truncate rounded-xl px-1 text-sm font-semibold transition active:scale-95",
-                      current ? "bg-primaryRed text-white shadow-[0_0_18px_rgba(229,9,20,0.55)]" : "glass-button text-white/90"
-                    )}
-                  >
-                    {ep.name}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,var(--inset-bottom))]"
+        >
+          <div
+            className="relative w-full"
+            style={{ height: virtualizer.getTotalSize() }}
+          >
+            {virtualizer.getVirtualItems().map((row) => (
+              <div
+                key={row.key}
+                className="absolute inset-x-0 grid gap-2"
+                style={{
+                  top: row.start,
+                  height: ROW_HEIGHT,
+                  gridTemplateColumns: `repeat(${COLUMNS}, minmax(0, 1fr))`,
+                }}
+              >
+                {episodes
+                  .slice(row.index * COLUMNS, row.index * COLUMNS + COLUMNS)
+                  .map((ep) => {
+                    const current = ep.id === currentId;
+                    return (
+                      <button
+                        key={ep.id}
+                        type="button"
+                        aria-current={current || undefined}
+                        title={formatEpisodeName(ep.name)}
+                        onClick={() => {
+                          onSelect(ep);
+                          close();
+                        }}
+                        className={cn(
+                          "my-1 truncate rounded-xl px-1 text-sm font-semibold transition active:scale-95",
+                          current
+                            ? "bg-primaryRed text-white shadow-[0_0_18px_rgba(229,9,20,0.55)]"
+                            : "glass-button text-white/90",
+                        )}
+                      >
+                        {ep.name}
+                      </button>
+                    );
+                  })}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
       )}
     </Sheet>
   );

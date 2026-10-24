@@ -36,8 +36,14 @@ export default function HistoryPage() {
   }, [confirmClear]);
 
   const watched = (item: HistoryItem) => {
-    const entry = item.episodeId && progress[progressKey(item.slug, item.episodeId)];
-    return entry && entry.d > 0 ? { percent: Math.min(100, (entry.t / entry.d) * 100), left: Math.max(0, entry.d - entry.t) } : null;
+    const entry =
+      item.episodeId && progress[progressKey(item.slug, item.episodeId)];
+    return entry && entry.d > 0
+      ? {
+          percent: Math.min(100, (entry.t / entry.d) * 100),
+          left: Math.max(0, entry.d - entry.t),
+        }
+      : null;
   };
 
   const groups: [string, HistoryItem[]][] = [];
@@ -54,15 +60,27 @@ export default function HistoryPage() {
 
       <header className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">Đang xem</h1>
-          {history.length > 0 && <p className="mt-1 text-sm text-gray-400">{history.length} phim, mới nhất ở trên</p>}
+          <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl">
+            Đang xem
+          </h1>
+          {history.length > 0 && (
+            <p className="mt-1 text-sm text-gray-400">
+              {history.length} phim, mới nhất ở trên
+            </p>
+          )}
         </div>
         {history.length > 0 && (
           <button
             type="button"
-            onClick={() => (confirmClear ? (clearHistory(), setConfirmClear(false)) : setConfirmClear(true))}
+            onClick={() =>
+              confirmClear
+                ? (clearHistory(), setConfirmClear(false))
+                : setConfirmClear(true)
+            }
             className={`h-9 shrink-0 rounded-full px-4 text-sm font-medium transition ${
-              confirmClear ? "bg-primaryRed text-white" : "glass-pill text-gray-300 hover:text-white"
+              confirmClear
+                ? "bg-primaryRed text-white"
+                : "glass-pill text-gray-300 hover:text-white"
             }`}
           >
             {confirmClear ? "Bấm lần nữa để xoá" : "Xoá hết"}
@@ -71,7 +89,10 @@ export default function HistoryPage() {
       </header>
 
       {history.length === 0 ? (
-        <EmptyShelf line="Chưa xem phim nào." hint="Tập bạn xem sẽ nằm ở đây, kèm chỗ đang dừng." />
+        <EmptyShelf
+          line="Chưa xem phim nào."
+          hint="Tập bạn xem sẽ nằm ở đây, kèm chỗ đang dừng."
+        />
       ) : (
         groups.map(([label, items]) => (
           <section key={label} className="space-y-3">
@@ -81,26 +102,52 @@ export default function HistoryPage() {
                 const progressInfo = watched(item);
                 const watch = { slug: item.slug, ep: item.episodeSlug };
                 return (
-                  <li key={item.slug} className="glass-card group relative flex items-center gap-4 rounded-3xl p-3 pr-4">
-                    <Link to="/watch" search={watch} className="relative block h-[92px] w-16 shrink-0 overflow-hidden rounded-2xl bg-white/5">
+                  <li
+                    key={item.slug}
+                    className="glass-card group relative flex items-center gap-4 rounded-3xl p-3 pr-4"
+                  >
+                    <Link
+                      to="/watch"
+                      search={watch}
+                      className="relative block h-[92px] w-16 shrink-0 overflow-hidden rounded-2xl bg-white/5"
+                    >
                       {item.poster && (
-                        <PosterImg art={item} src={item.poster} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                        <PosterImg
+                          art={item}
+                          src={item.poster}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover"
+                        />
                       )}
-                      <span aria-hidden className="glass-rim absolute inset-0" />
+                      <span
+                        aria-hidden
+                        className="glass-rim absolute inset-0"
+                      />
                       {progressInfo && (
                         <span className="absolute inset-x-0 bottom-0 h-1 bg-black/50">
-                          <span className="block h-full bg-primaryRed" style={{ width: `${progressInfo.percent}%` }} />
+                          <span
+                            className="block h-full bg-primaryRed"
+                            style={{ width: `${progressInfo.percent}%` }}
+                          />
                         </span>
                       )}
                     </Link>
 
                     <Link to="/watch" search={watch} className="min-w-0 flex-1">
-                      <p className="line-clamp-2 font-semibold leading-snug text-white">{item.title}</p>
+                      <p className="line-clamp-2 font-semibold leading-snug text-white">
+                        {item.title}
+                      </p>
                       <p className="mt-1 text-sm text-gray-400">
                         {item.episodeName || item.episodeSlug}
-                        {progressInfo && progressInfo.left > 60 && ` · còn ${Math.round(progressInfo.left / 60)} phút`}
+                        {progressInfo &&
+                          progressInfo.left > 60 &&
+                          ` · còn ${Math.round(progressInfo.left / 60)} phút`}
                       </p>
-                      <p className="mt-0.5 text-xs text-gray-500">{formatTimeAgo(item.updatedAt)}</p>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        {formatTimeAgo(item.updatedAt)}
+                      </p>
                     </Link>
 
                     <Link
