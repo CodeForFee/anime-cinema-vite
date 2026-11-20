@@ -59,7 +59,14 @@ object Source {
                 // the source and its CDN serve only requests that come from its own pages
                 if (SourceHosts.isSourceFamily(request.url.host) && request.header("Referer") == null)
                     builder.header("Referer", "${SourceHosts.origin}/")
-                chain.proceed(builder.build())
+                val next = builder.build()
+                val response = chain.proceed(next)
+                // Cookie gate: the source answers 403 + Set-Cookie + a JS reload to every client without its hourly
+                // cookie. A browser reloads; the jar has just stored the cookie, so asking once more passes the gate.
+                if (response.code == 403 && SourceHosts.isSourceFamily(request.url.host) && response.headers("Set-Cookie").isNotEmpty()) {
+                    response.close()
+                    chain.proceed(next)
+                } else response
             })
             .build()
     }

@@ -85,6 +85,7 @@ class PlayerController(private val context: Context) {
     @Volatile private var generation = 0
     @Volatile private var allowNativeCapture = false
     private var restoreInBrowser: PlayerState? = null
+    private val watchdog = android.os.Handler(android.os.Looper.getMainLooper())
 
     // Direct streams never allocate a WebView; browsing allocates neither video engine.
     private val browser = lazy { createBrowser() }
@@ -100,6 +101,9 @@ class PlayerController(private val context: Context) {
         settings.mediaPlaybackRequiresUserGesture = false
         settings.setSupportMultipleWindows(false) // the player's pop-ups open nowhere
         settings.javaScriptCanOpenWindowsAutomatically = false
+        // The player frame (googleapiscdn) is third-party to the host page: WebView blocks its cookies by default,
+        // and the source player's session/Cloudflare cookies then never stick, so some episodes never start.
+        android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
         // the frame's console in logcat (tag CapyPlayer): what the bridge and the enhancers report
         webChromeClient = object : android.webkit.WebChromeClient() {
             override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
@@ -139,7 +143,8 @@ class PlayerController(private val context: Context) {
             val bridge = read("player-bridge.js")
             val enhance = read("player-enhance.js")
             if (bridge != null)
-                WebViewCompat.addDocumentStartJavaScript(this, (enhance?.let { "$it\n;" } ?: "") + bridge + "\n;" + NativeMediaProbe.script, setOf(PLAYER_ORIGIN))
+                WebViewCompat.addDocumentStartJavaScript(this, (enhance?.let { "$it\n;" } ?: "") + bridge +
+                    (if (NATIVE_PROMOTION) "\n;" + NativeMediaProbe.script else ""), setOf(PLAYER_ORIGIN))
         }
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             WebViewCompat.addWebMessageListener(this, "CapyHost", setOf(SourceHosts.origin)) { _, message, _, mainFrame, _ ->
@@ -172,7 +177,7 @@ class PlayerController(private val context: Context) {
         playbackError = null
         compatibilityReason = null
         restoreInBrowser = null
-        allowNativeCapture = stream is Stream.Embed && !sourceEffectsRequested()
+        allowNativeCapture = NATIVE_PROMOTION && stream is Stream.Embed && !sourceEffectsRequested()
         when (stream) {
             is Stream.File -> startNative(stream.url, PlaybackPolicy.mediaHeaders(SourceHosts.origin), null)
             is Stream.Embed -> loadBrowser(stream)
@@ -197,6 +202,12 @@ class PlayerController(private val context: Context) {
             webView.onPause()
         }
         native?.release()
+        // Watchdog: a captured stream that neither plays nor errors (a stalled CDN, a segment the source player
+        // transforms itself) must not leave a spinner forever: hand the episode back to the source player.
+        watchdog.removeCallbacksAndMessages(null)
+        watchdog.postDelayed({
+            if (!destroyed && nativePlayback && generation == at && !ready && foreground) native?.fail()
+        }, NATIVE_START_TIMEOUT_MS)
         native = NativePlayback(context,
             onState = { snapshot, prepared, label ->
                 if (!destroyed && nativePlayback && generation == at) {
@@ -394,6 +405,7 @@ window.__send = function (type, value) { f.contentWindow.postMessage({ source: '
     fun destroy() {
         if (destroyed) return
         destroyed = true
+        watchdog.removeCallbacksAndMessages(null)
         allowNativeCapture = false
         native?.release()
         native = null
@@ -407,6 +419,12 @@ window.__send = function (type, value) { f.contentWindow.postMessage({ source: '
     companion object {
         /** The only frames the bridge goes into (MainActivity.java PLAYER_ORIGIN) */
         const val PLAYER_ORIGIN = "https://*.googleapiscdn.com"
+        private const val NATIVE_START_TIMEOUT_MS = 15_000L
+        // ponytail: off. On the emulator (2026-11-20) the HLS the source player loads never reached READY in Media3
+        // (no error, 15 s stall), then the episode reloaded in the source player: every episode started ~16 s late.
+        // The source player plays the same stream at once, as the Capacitor app does. Turn on again only after a
+        // captured stream is proven to reach READY on device.
+        private const val NATIVE_PROMOTION = false
 
         /** Ad requests answered empty (MainActivity.java AD_URL_PARTS, the extension's ad-rules.ts) */
         val AD_URL_PARTS = listOf("adqc.net", "popads.net", "adsterra.com", "propellerads.com", "/static/jwplayer/vast.js", "/admin/api/ads/active")

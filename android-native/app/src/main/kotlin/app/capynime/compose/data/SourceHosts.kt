@@ -12,9 +12,9 @@ import java.net.URI
 object SourceHosts {
     const val OFFICIAL_LINK = "https://bit.ly/animevietsubtv"
 
-    // hosts.json (checked 2026-10-23)
+    // hosts.json (checked 2026-10-23) + .bid, where the alternates redirect since 2026-11 (curl 2026-11-20)
     val INVENTORY: List<String> = listOf(
-        "animevietsub.sale",
+        "animevietsub.bid", "animevietsub.sale",
         "animevietsub.link", "animevietsub.fan", "animevietsub.vip", "animevietsub.bio", "animevietsub.me",
         "animevietsub.moe", "animevietsub.now", "animevietsub.cam", "animevietsub.xyz", "animevietsub.info",
         "animevietsub.in", "animevietsub.us",

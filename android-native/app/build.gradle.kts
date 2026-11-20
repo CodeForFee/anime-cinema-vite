@@ -1,9 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
+// Release key, same as the Capacitor app: frontend-vite/android/keystore.properties (git-ignored; format in
+// keystore.properties.example). -PcapynimeKeystoreProperties=<file> points elsewhere (another checkout);
+// CI passes CAPYNIME_KEYSTORE + passwords as environment variables instead.
+val keystoreProps = Properties()
+val keystorePropsFile = providers.gradleProperty("capynimeKeystoreProperties").orNull?.let(::File)
+    ?: rootProject.file("../frontend-vite/android/keystore.properties")
+if (keystorePropsFile.isFile) keystorePropsFile.inputStream().use(keystoreProps::load)
 val releaseStorePath = providers.environmentVariable("CAPYNIME_KEYSTORE").orNull
+    ?: keystoreProps.getProperty("storeFile")?.let { File(keystorePropsFile.parentFile, it).path }
+fun secret(env: String, key: String): String =
+    providers.environmentVariable(env).orNull ?: keystoreProps.getProperty(key) ?: error("Missing $env / $key for release signing")
 
 android {
     namespace = "app.capynime.compose"
@@ -14,8 +26,8 @@ android {
         applicationId = "app.capynime.compose"
         minSdk = 26
         targetSdk = 36
-        versionCode = providers.gradleProperty("nativeVersionCode").orNull?.toInt() ?: 2
-        versionName = providers.gradleProperty("nativeVersionName").orNull ?: "1.1.0"
+        versionCode = providers.gradleProperty("nativeVersionCode").orNull?.toInt() ?: 3
+        versionName = providers.gradleProperty("nativeVersionName").orNull ?: "1.2.0"
         buildConfigField("String", "GITHUB_REPO", "\"CodeForFee/anime-cinema-vite\"")
         buildConfigField("String", "GITHUB_APK_ASSET", "\"Capynime-native-release.apk\"")
     }
@@ -23,9 +35,9 @@ android {
     signingConfigs {
         if (releaseStorePath != null) create("nativeRelease") {
             storeFile = file(releaseStorePath)
-            storePassword = providers.environmentVariable("CAPYNIME_STORE_PASSWORD").get()
-            keyAlias = providers.environmentVariable("CAPYNIME_KEY_ALIAS").get()
-            keyPassword = providers.environmentVariable("CAPYNIME_KEY_PASSWORD").get()
+            storePassword = secret("CAPYNIME_STORE_PASSWORD", "storePassword")
+            keyAlias = secret("CAPYNIME_KEY_ALIAS", "keyAlias")
+            keyPassword = secret("CAPYNIME_KEY_PASSWORD", "keyPassword")
         }
     }
 
@@ -34,7 +46,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Local sideloads preserve the existing test app's signer; CI must supply the same release key.
+            // No key configured: a debug-signed build still works locally, but the updater and Android refuse to
+            // install it over a release-signed app, so never publish one.
             signingConfig = signingConfigs.getByName(if (releaseStorePath != null) "nativeRelease" else "debug")
         }
     }

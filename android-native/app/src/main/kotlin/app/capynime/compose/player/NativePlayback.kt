@@ -128,6 +128,9 @@ internal class NativePlayback(
         )
     }
 
+    /** Gives up on this stream as if Media3 had failed (the controller's start watchdog) */
+    fun fail() { if (!released) onFailure() }
+
     fun play() = player.play()
     fun pause() = player.pause()
     fun seek(seconds: Double) = player.seekTo(PlaybackPolicy.seekMillis(seconds, player.duration))

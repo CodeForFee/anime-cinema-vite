@@ -22,7 +22,7 @@ env.DEBUG = "";
 const sdk = env.ANDROID_HOME || env.ANDROID_SDK_ROOT ||
   (env.LOCALAPPDATA ? join(env.LOCALAPPDATA, "Android", "Sdk") : "");
 if (sdk && existsSync(sdk)) env.ANDROID_HOME = sdk;
-const args = [...modes[mode], "--console=plain"];
+const args = [...modes[mode], ...process.argv.slice(3), "--console=plain"]; // extra args go to Gradle (-P...)
 const child = process.platform === "win32"
   ? spawn(env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `""${join(root, "gradlew.bat")}" ${args.join(" ")}"`], { cwd: root, env, stdio: "inherit", windowsVerbatimArguments: true })
   : spawn("./gradlew", args, { cwd: root, env, stdio: "inherit" });
