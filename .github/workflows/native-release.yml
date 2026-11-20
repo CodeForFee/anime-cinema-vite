@@ -1,8 +1,13 @@
 name: Native Android release
 
+# Every push to main that changes the native app publishes the next version (1.2.<run>), so the in-app updater
+# always finds it; a native-vX.Y.Z tag still publishes exactly that version.
 on:
   push:
+    branches: [main]
+    paths: ['android-native/**', '.github/workflows/native-release.yml']
     tags: ['native-v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -35,8 +40,13 @@ jobs:
           test -n "$KEYSTORE_BASE64" || { echo 'Configure Android signing secrets before releasing.'; exit 1; }
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/native-release.jks"
           echo "CAPYNIME_KEYSTORE=$RUNNER_TEMP/native-release.jks" >> "$GITHUB_ENV"
-          version="${GITHUB_REF_NAME#native-v}"
-          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Use native-vMAJOR.MINOR.PATCH tags.'; exit 1; }
+          if [[ "$GITHUB_REF" == refs/tags/native-v* ]]; then
+            version="${GITHUB_REF_NAME#native-v}"
+            [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Use native-vMAJOR.MINOR.PATCH tags.'; exit 1; }
+          else
+            version="1.2.$GITHUB_RUN_NUMBER" # ponytail: bump the 1.2 here when a big release deserves a new minor
+          fi
+          echo "NATIVE_TAG=native-v$version" >> "$GITHUB_ENV"
           echo "ORG_GRADLE_PROJECT_nativeVersionName=$version" >> "$GITHUB_ENV"
           echo "ORG_GRADLE_PROJECT_nativeVersionCode=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
       - name: Verify and build signed APK
@@ -53,7 +63,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
+          gh release create "$NATIVE_TAG" \
             android-native/artifacts/Capynime-native-release.apk \
             android-native/artifacts/Capynime-native-release.apk.sha256 \
-            --verify-tag --title "Capynime Native ${GITHUB_REF_NAME#native-v}" --generate-notes
+            --target "$GITHUB_SHA" --title "Capynime Native ${NATIVE_TAG#native-v}" --generate-notes
