@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Edge to edge on the app's own dark background; Compose draws everything else -->
+    <style name="Theme.Capynime" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/capy_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <color name="capy_background">#141414</color>
+</resources>
