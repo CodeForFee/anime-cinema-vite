@@ -1,5 +1,11 @@
 package app.capynime.compose.ui
 
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.foundation.border
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -165,7 +171,7 @@ private val TABS = listOf(
 
 /** Room the pages leave under their content for the floating dock (AppShell pb-24) */
 @Composable
-fun dockPadding() = 72.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+fun dockPadding() = 88.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
 @Composable
 fun AppRoot() {
@@ -269,40 +275,79 @@ private fun HeaderAction(icon: Int, label: String, onClick: () -> Unit, dot: Boo
 private val UPDATE_WAITING = setOf(UpdatePhase.Available, UpdatePhase.Downloading, UpdatePhase.Ready, UpdatePhase.Permission)
 
 /**
- * Bottom bar: solid ink, edge to edge, icon over a short label; the picked tab turns red and a small bar slides
- * over it. Anchored (not floating), so no page content is drawn under it twice.
+ * Bottom bar: a glass strip (tint + sheen + lit top edge, no live blur) with a curved notch; the picked tab rises
+ * out of it as a red disc and the notch slides under it. Position is read only while drawing, so the slide is a
+ * redraw of this bar, never a recomposition.
  */
 @Composable
 private fun Dock(selected: Int, onSelect: (Int) -> Unit) {
+    val inset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-        Column(
-            Modifier.fillMaxWidth().background(Ink.Card)
-                .drawBehind { drawLine(Ink.Line, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx()) }
-                .navigationBarsPadding(),
-        ) {
-            BoxWithConstraints(Modifier.fillMaxWidth().height(64.dp)) {
-                val cell = maxWidth / TABS.size
-                if (selected >= 0) {
-                    val x by animateDpAsState(cell * selected, spring(dampingRatio = 0.9f, stiffness = 500f), label = "tab")
-                    Box(Modifier.offset(x = x + (cell - 28.dp) / 2).width(28.dp).height(3.dp).clip(Capsule()).background(Capy.Red))
+        BoxWithConstraints(Modifier.fillMaxWidth().height(DOCK_LIFT + DOCK_BAR + inset)) {
+            val cell = maxWidth / TABS.size
+            val target = cell * selected.coerceAtLeast(0) + cell / 2
+            val cx = animateDpAsState(target, spring(dampingRatio = 0.78f, stiffness = 380f), label = "notch")
+            // the glass strip with its notch
+            Box(Modifier.fillMaxSize().drawWithCache {
+                val top = DOCK_LIFT.toPx()
+                val sheen = Brush.verticalGradient(
+                    0f to Color.White.copy(alpha = 0.10f), 0.5f to Color.White.copy(alpha = 0.03f), 1f to Color.Transparent,
+                    startY = top, endY = size.height,
+                )
+                val tint = Color(0xE613131A)
+                val edge = Color.White.copy(alpha = 0.16f)
+                onDrawBehind {
+                    val path = notchPath(cx.value.toPx(), top, size.width, size.height, density)
+                    drawPath(path, tint)
+                    drawPath(path, sheen)
+                    drawPath(path, edge, style = Stroke(1.dp.toPx()))
                 }
-                Row(Modifier.fillMaxSize()) {
-                    TABS.forEachIndexed { i, t ->
-                        val active = i == selected
-                        Column(
-                            Modifier.weight(1f).fillMaxHeight().clickable(remember { MutableInteractionSource() }, indication = null) { if (!active) onSelect(i) },
-                            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-                        ) {
-                            LIcon(t.icon, size = 22.dp, tint = if (active) Capy.Red else Capy.TextDim, label = t.label)
-                            Text(
-                                t.short, color = if (active) Color.White else Capy.TextDim, fontSize = 10.sp, lineHeight = 12.sp,
-                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium, maxLines = 1, modifier = Modifier.padding(top = 4.dp),
-                            )
-                        }
+            })
+            // the tabs; the picked one leaves its place empty for the disc
+            Row(Modifier.fillMaxWidth().padding(top = DOCK_LIFT).height(DOCK_BAR)) {
+                TABS.forEachIndexed { i, t ->
+                    val active = i == selected
+                    Box(
+                        Modifier.weight(1f).fillMaxHeight().clickable(remember { MutableInteractionSource() }, indication = null) { if (!active) onSelect(i) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (active) Text(
+                            t.short, color = Color.White, fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
+                        )
+                        else LIcon(t.icon, size = 22.dp, tint = Color.White.copy(alpha = 0.72f), label = t.label)
                     }
                 }
             }
+            if (selected >= 0) Box(
+                Modifier.offset { IntOffset((cx.value - DOCK_DISC / 2).roundToPx(), (DOCK_LIFT - DOCK_DISC / 2 + 6.dp).roundToPx()) }
+                    .size(DOCK_DISC).clip(Capsule())
+                    .background(Brush.verticalGradient(listOf(Color(0xFFFF3B47), Capy.Red)))
+                    .border(1.dp, Color.White.copy(alpha = 0.28f), Capsule()),
+                contentAlignment = Alignment.Center,
+            ) { LIcon(TABS[selected].icon, size = 22.dp, tint = Color.White, label = TABS[selected].label) }
         }
+    }
+}
+
+private val DOCK_BAR = 60.dp
+private val DOCK_LIFT = 22.dp
+private val DOCK_DISC = 50.dp
+
+/** The bar outline: flat top with a smooth U dip centred at [cx] that cradles the disc */
+private fun notchPath(cx: Float, top: Float, width: Float, height: Float, density: Float): Path {
+    val r = 31f * density // half the dip's width at its floor
+    val depth = 30f * density
+    val shoulder = 22f * density // how far the curve eases in on each side
+    return Path().apply {
+        moveTo(0f, top)
+        lineTo(cx - r - shoulder, top)
+        cubicTo(cx - r, top, cx - r, top + depth, cx, top + depth)
+        cubicTo(cx + r, top + depth, cx + r, top, cx + r + shoulder, top)
+        lineTo(width, top)
+        lineTo(width, height)
+        lineTo(0f, height)
+        close()
     }
 }
 

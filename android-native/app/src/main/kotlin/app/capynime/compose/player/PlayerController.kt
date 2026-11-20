@@ -107,6 +107,10 @@ class PlayerController(private val context: Context) {
         android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
         // the frame's console in logcat (tag CapyPlayer): what the bridge and the enhancers report
         webChromeClient = object : android.webkit.WebChromeClient() {
+            // WebView's own grey "play" poster sat over the frame until the first picture: draw nothing instead
+            override fun getDefaultVideoPoster(): android.graphics.Bitmap =
+                android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888)
+
             override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
                 // the source player logs every second: only errors are worth keeping
                 if (m.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) android.util.Log.d("CapyPlayer", m.message().take(300))

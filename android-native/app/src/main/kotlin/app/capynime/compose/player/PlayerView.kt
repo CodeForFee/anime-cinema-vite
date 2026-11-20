@@ -220,17 +220,17 @@ fun PlayerSurface(
                 Column(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     SeekBar(state, onSeek = { controller.seek(it); touch() }, onScrubbing = { scrubbing = it; touch() })
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                             PlayerChip(Lu.Gauge, "${state.rate.toString().removeSuffix(".0")}x") { panel = Panel.Speed; touch() }
-                            if (controller.levels.isNotEmpty()) PlayerChip(Lu.Settings, controller.visualLabel.ifBlank { "Tự động" }) { panel = Panel.Quality; touch() }
+                            // no quality chip: the source player picks the level itself (user asked to keep the bar short)
                             // lit while one of the choices is on (EnhanceChip: the viewer's choices, not what the engine reports)
                             val prefs by app.capynime.compose.data.Library.player.collectAsState()
                             val active = !controller.nativePlayback && (prefs.upscale != "off" || prefs.color || prefs.surround)
                             // CapyCinema is off on the web too: the chip stays only for someone who still has an effect on, to turn it off
                             if (active) PlayerChip(Lu.Sparkles, "CapyCinema", active = true) { panel = Panel.Cinema; touch() }
-                            PlayerChip(Lu.Lock, "Khoá") { locked = true; touch() }
-                            if (episodes != null && fullscreen) PlayerChip(Lu.ListVideo, "Tập") { panel = Panel.Episodes; touch() }
-                            if (hasNext) PlayerChip(Lu.SkipForward, "Tập tiếp") { onNext(); touch() }
+                            PlayerChip(Lu.Lock, null, label = "Khoá") { locked = true; touch() }
+                            if (episodes != null && fullscreen) PlayerChip(Lu.ListVideo, null, label = "Danh sách tập") { panel = Panel.Episodes; touch() }
+                            if (hasNext) PlayerChip(Lu.SkipForward, null, label = "Tập tiếp") { onNext(); touch() }
                         }
                         // always on screen, whatever the chips scroll to
                         Box(Modifier.padding(start = 4.dp).size(36.dp).clip(Capsule()).clickable { onToggleFullscreen(); touch() }, contentAlignment = Alignment.Center) {
@@ -280,16 +280,17 @@ private fun SeekRound(icon: Int, label: String, onClick: () -> Unit) {
 
 /** CHIP: glass-button h-9 rounded-full px-3.5 text-xs font-semibold; lit white when [active] */
 @Composable
-private fun PlayerChip(icon: Int, text: String, active: Boolean = false, onClick: () -> Unit) {
+private fun PlayerChip(icon: Int, text: String?, active: Boolean = false, label: String? = text, onClick: () -> Unit) {
+    // compact: the row must fit a phone's width beside the fullscreen button, so actions without a value are icons
     Row(
-        Modifier.height(36.dp).pressable(pressedScale = 0.95f, onClick = onClick)
+        Modifier.height(32.dp).then(if (text == null) Modifier.width(32.dp) else Modifier).pressable(pressedScale = 0.95f, onClick = onClick)
             .then(if (active) Modifier.clip(Capsule()).background(Color.White) else Modifier.glassButton())
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = if (text == null) 0.dp else 11.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
     ) {
         val fg = if (active) Color.Black else Color.White
-        LIcon(icon, size = 16.dp, tint = fg)
-        Text(text, color = fg, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.padding(start = 6.dp))
+        LIcon(icon, size = 15.dp, tint = fg, label = if (text == null) label else null)
+        if (text != null) Text(text, color = fg, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.padding(start = 5.dp))
     }
 }
 
