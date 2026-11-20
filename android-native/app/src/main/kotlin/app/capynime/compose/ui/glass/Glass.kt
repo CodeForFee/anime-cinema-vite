@@ -5,7 +5,10 @@ import android.os.Build
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import app.capynime.compose.ui.theme.Capy
+import app.capynime.compose.ui.theme.Ink
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -55,13 +58,13 @@ import kotlin.math.sin
 /** The page under the dock, recorded for the dock's lens; null below Android 12 */
 val LocalScreenBackdrop = staticCompositionLocalOf<Backdrop?> { null }
 
-val glassSupported: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !Device.lite
+val glassSupported: Boolean get() = false // the live lens re-rendered the page under the dock every frame
 
 /**
  * Draws this subtree once into a GPU texture and reuses it while nothing in it changes: a scrolling poster costs
  * one textured quad per frame instead of its ~15 fills (gradients, rims, captions, badges).
  */
-fun Modifier.cached() = graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+fun Modifier.cached() = this // flat cards need no offscreen texture per card
 
 /** Tailwind `rounded-*` with the app's overrides (xl = 2xl = 8 px, 3xl = 12 px) */
 fun rounded(corner: Dp): Shape = RoundedCornerShape(corner)
@@ -96,11 +99,7 @@ fun DrawScope.cssEllipse(rx: Float, ry: Float, center: Offset, color: Color, end
  * blurred per frame (Compose's blurred dropShadow made the render thread the bottleneck while scrolling).
  * The light falls from above, so the offset of the CSS shadow comes by itself.
  */
-fun Modifier.dropShadow(shape: Shape, shadow: Shadow): Modifier {
-    if (Device.lite) return this
-    val c = shadow.color
-    return this.shadow((shadow.radius / 2).coerceAtMost(24.dp), shape, clip = false, ambientColor = c.copy(alpha = c.alpha * 0.6f), spotColor = c)
-}
+fun Modifier.dropShadow(shape: Shape, shadow: Shadow): Modifier = this // flat: no elevation shadows
 
 /**
  * inset 0 1px 0 rgba(255,255,255,a): a hairline of light inside the top edge, drawn as a line (no blurred inner
@@ -118,137 +117,53 @@ private fun Modifier.bottomLight(alpha: Float) = drawBehind {
     drawLine(Color.White.copy(alpha = alpha), Offset(inset, size.height - 0.5.dp.toPx()), Offset(size.width - inset, size.height - 0.5.dp.toPx()), 1.dp.toPx())
 }
 
-/** .glass-pill: "Xem tất cả", the heart on a poster */
+/*
+ * "Cinema ink" (2026-11 redesign): flat surfaces with one hairline, no gradients, sheens, shadows or blur. Every
+ * card is one fill and one stroke, so a scrolling list costs the GPU almost nothing on any phone.
+ */
+
+/** Small round controls and chips over the page ("Xem tất cả", the heart on a poster) */
 fun Modifier.glassPill(shape: Shape = Capsule()) = this
     .clip(shape)
-    .drawWithCache {
-        val b = cssLinear(150f, 0f to Color.White.copy(alpha = 0.14f), 1f to Color.White.copy(alpha = 0.04f), size = size)
-        onDrawBehind { drawRect(b) }
-    }
-    .topLight(shape, 0.25f)
-    .border(1.dp, Color.White.copy(alpha = 0.16f), shape)
+    .background(Ink.Raised)
+    .border(1.dp, Ink.Line, shape)
 
-/** .glass-button: round controls over pictures (carousel arrows, close) */
+/** Round controls over pictures (carousel arrows, close): a dark disc that reads on any image */
 fun Modifier.glassButton(shape: Shape = Capsule()) = this
     .clip(shape)
-    .drawWithCache {
-        val b = cssLinear(140f, 0f to Color.White.copy(alpha = 0.2f), 1f to Color.White.copy(alpha = 0.06f), size = size)
-        onDrawBehind { drawRect(b) }
-    }
-    .topLight(shape, 0.35f)
-    .border(1.dp, Color.White.copy(alpha = 0.2f), shape)
+    .background(Color.Black.copy(alpha = 0.55f))
+    .border(1.dp, Color.White.copy(alpha = 0.14f), shape)
 
-/** .glass-card: page panels (watch page, schedule rows) */
-fun Modifier.glassCard(shape: Shape = rounded(12.dp)) = this
+/** Page panels (watch page, schedule rows) */
+fun Modifier.glassCard(shape: Shape = rounded(16.dp)) = this
     .clip(shape)
-    .drawWithCache {
-        val b = cssLinear(
-            150f,
-            0f to Color.White.copy(alpha = 0.1f), 0.55f to Color.White.copy(alpha = 0.025f), 1f to Color.White.copy(alpha = 0.05f),
-            size = size,
-        )
-        onDrawBehind { drawRect(b) }
-    }
-    .topLight(shape, 0.2f)
-    .border(1.dp, Color.White.copy(alpha = 0.12f), shape)
+    .background(Ink.Card)
+    .border(1.dp, Ink.Line, shape)
 
-/** .glass-chip / .glass-field: inputs and filter chips */
+/** Inputs and filter chips */
 fun Modifier.glassField(shape: Shape) = this
     .clip(shape)
-    .drawWithCache {
-        val b = cssLinear(135f, 0f to Color.White.copy(alpha = 0.12f), 1f to Color.White.copy(alpha = 0.04f), size = size)
-        onDrawBehind { drawRect(b) }
-    }
-    .topLight(shape, 0.28f)
-    .border(1.dp, Color.White.copy(alpha = 0.16f), shape)
+    .background(Ink.Raised)
+    .border(1.dp, Ink.Line, shape)
 
-/** .card-lift: posters float on a small shadow with a faint ring */
-fun Modifier.cardLift(shape: Shape) = this
-    .border(1.dp, Color.White.copy(alpha = 0.12f), shape)
+/** Posters: a hairline ring only */
+fun Modifier.cardLift(shape: Shape) = this.border(1.dp, Ink.Line, shape)
 
-/** .glass-rim: the lit edge and sheen over a poster (an overlay: put it on a box over the picture) */
+/** Over a poster: a short dark fade at the bottom so a caption on it stays readable (one fill) */
 fun Modifier.glassRim(shape: Shape) = this
     .clip(shape)
     .drawWithCache {
-        // each gradient filled only where it is not transparent: three full-poster fills per card made scrolling GPU-bound
-        val sheenH = size.height * 0.45f
-        val sheen = cssLinear(
-            160f,
-            0f to Color.White.copy(alpha = 0.3f), 0.18f to Color.White.copy(alpha = 0.08f), 0.34f to Color.Transparent,
-            size = size,
-        )
-        val bottomH = 40.dp.toPx()
-        val bottom = Brush.verticalGradient(
-            0f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.5f),
-            startY = size.height - bottomH, endY = size.height,
-        )
-        val rx = size.width * 1.3f
-        val ry = size.height * 0.55f
-        val c = Offset(size.width / 2, -size.height * 0.12f)
-        val glow = Brush.radialGradient(0f to Color.White.copy(alpha = 0.16f), 0.62f to Color.Transparent, center = c, radius = rx)
-        val k = ry / rx
-        val glowH = (c.y + ry * 0.62f).coerceAtLeast(0f)
-        onDrawBehind {
-            drawRect(sheen, size = Size(size.width, sheenH))
-            if (glowH > 0f) scale(1f, k, pivot = c) {
-                drawRect(glow, topLeft = Offset(0f, c.y - c.y / k), size = Size(size.width, (glowH - c.y) / k + c.y / k))
-            }
-            drawRect(bottom, topLeft = Offset(0f, size.height - bottomH), size = Size(size.width, bottomH))
-        }
+        val h = size.height * 0.4f
+        val fade = Brush.verticalGradient(0f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.75f), startY = size.height - h, endY = size.height)
+        onDrawBehind { drawRect(fade, topLeft = Offset(0f, size.height - h), size = Size(size.width, h)) }
     }
-    .topLight(shape, 0.55f, 2.dp)
-    .border(1.5.dp, Color.White.copy(alpha = 0.32f), shape)
 
-/**
- * .liquid-glass, the floating tab bar: a dark tint so icons stay readable, a top light, and (Android 12+) the
- * page under it blurred and bent at the rim like a drop of glass.
- */
+/** The bottom bar: solid, so nothing behind it is drawn again for it */
 @Composable
-fun Modifier.liquidGlass(shape: Shape = Capsule()): Modifier {
-    val backdrop = LocalScreenBackdrop.current
-    val lifted = dropShadow(shape, Shadow(radius = 40.dp, color = Color.Black.copy(alpha = 0.6f), offset = DpOffset(0.dp, 12.dp)))
-    val glass = if (backdrop != null && glassSupported) lifted.drawBackdrop(
-        backdrop = backdrop,
-        shape = { shape },
-        effects = {
-            vibrancy()
-            blur(22.dp.toPx())
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) lens(12.dp.toPx(), 24.dp.toPx())
-        },
-        onDrawSurface = { drawLiquidTint(0.8f) },
-    ) else lifted.clip(shape).drawWithCache { onDrawBehind { drawLiquidTint(0.96f) } }
-    return glass
-        .topLight(shape, 0.26f)
-        .bottomLight(0.06f)
-        .border(1.dp, Color.White.copy(alpha = 0.16f), shape)
-}
+fun Modifier.liquidGlass(shape: Shape = Capsule()): Modifier = this.clip(shape).background(Ink.Card).border(1.dp, Ink.Line, shape)
 
-private fun DrawScope.drawLiquidTint(alpha: Float) {
-    drawRect(
-        cssLinear(
-            135f,
-            0f to Color(46, 46, 52).copy(alpha = alpha), 0.55f to Color(16, 16, 20).copy(alpha = (alpha + 0.04f).coerceAtMost(1f)),
-            1f to Color(34, 34, 40).copy(alpha = alpha),
-            size = size,
-        ),
-    )
-    // ::before: the highlight a curved pane catches from above
-    cssEllipse(size.width * 1.2f, size.height * 0.9f, Offset(size.width * 0.16f, -size.height * 0.2f), Color.White.copy(alpha = 0.16f), 0.55f)
-}
-
-/** .liquid-glass-lens: the picked tab, amber solid in the middle bleeding out to the edge */
-fun Modifier.goldLens(shape: Shape = Capsule()) = this
-    .dropShadow(shape, Shadow(radius = 20.dp, color = Color(0x80FFB800)))
-    .clip(shape)
-    .drawWithCache {
-        val r = maxOf(size.width * 1.15f, size.height * 1.3f) / 2
-        val b = Brush.radialGradient(
-            0f to Color(255, 200, 48).copy(alpha = 0.97f), 0.42f to Color(255, 184, 0).copy(alpha = 0.82f), 1f to Color(255, 150, 0).copy(alpha = 0.22f),
-            center = Offset(size.width / 2, size.height * 0.45f), radius = r,
-        )
-        onDrawBehind { drawRect(b) }
-    }
-    .topLight(shape, 0.5f)
+/** The picked tab's mark */
+fun Modifier.goldLens(shape: Shape = Capsule()) = this.clip(shape).background(Capy.Red.copy(alpha = 0.16f))
 
 /** Press feedback: the web's `active:scale-[0.97]` (haptic tick where the web calls haptic()) */
 @Composable
@@ -264,9 +179,5 @@ fun Modifier.pressable(enabled: Boolean = true, role: Role = Role.Button, haptic
     }
 }
 
-/** Sheets over the page or the playing video (.glass-sheet): denser tint, no blur */
-fun Modifier.glassSheet(corner: Dp = 16.dp) = clip(RoundedCornerShape(topStart = corner, topEnd = corner))
-    .drawWithCache {
-        val b = cssLinear(160f, 0f to Color(40, 40, 52).copy(alpha = 0.97f), 1f to Color(14, 14, 20).copy(alpha = 0.98f), size = size)
-        onDrawBehind { drawRect(b) }
-    }
+/** Sheets over the page or the playing video: solid, rounded top */
+fun Modifier.glassSheet(corner: Dp = 20.dp) = clip(RoundedCornerShape(topStart = corner, topEnd = corner)).background(Ink.Card)

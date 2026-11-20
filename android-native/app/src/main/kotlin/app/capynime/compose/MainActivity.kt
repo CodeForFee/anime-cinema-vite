@@ -17,6 +17,12 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         setContent { CapyTheme { AppRoot() } }
+        // The first WebView of a process loads Chromium (hundreds of ms, more on weak phones). Paid once here, when
+        // the home screen is idle, so the first episode starts as fast as in the Capacitor app.
+        android.os.Looper.myQueue().addIdleHandler {
+            runCatching { android.webkit.WebView(applicationContext).destroy() }
+            false
+        }
         // no content capture of the Compose tree: walking its semantics on every scroll frame cost the main thread
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.decorView.importantForContentCapture = android.view.View.IMPORTANT_FOR_CONTENT_CAPTURE_NO_EXCLUDE_DESCENDANTS

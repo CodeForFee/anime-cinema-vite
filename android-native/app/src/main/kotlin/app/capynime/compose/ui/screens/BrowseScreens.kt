@@ -162,14 +162,14 @@ fun ExploreScreen(path: String) {
     }
 
     LazyVerticalGrid(
-        GridCells.Fixed(2),
+        GridCells.Fixed(3),
         state = grid,
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = dockPadding() + 24.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        item(span = { GridItemSpan(2) }, key = "title") { PageTitle(title, Modifier.padding(bottom = 4.dp)) }
-        item(span = { GridItemSpan(2) }, key = "pills") {
+        item(span = { GridItemSpan(maxLineSpan) }, key = "title") { PageTitle(title, Modifier.padding(bottom = 4.dp)) }
+        item(span = { GridItemSpan(maxLineSpan) }, key = "pills") {
             LazyRow(
                 contentPadding = PaddingValues(top = 4.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -179,8 +179,8 @@ fun ExploreScreen(path: String) {
             }
         }
         when {
-            loading -> item(span = { GridItemSpan(2) }, key = "skeleton") { PosterGridSkeleton(18) }
-            items.isEmpty() -> item(span = { GridItemSpan(2) }, key = "empty") {
+            loading -> item(span = { GridItemSpan(maxLineSpan) }, key = "skeleton") { PosterGridSkeleton(18) }
+            items.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }, key = "empty") {
                 Column(Modifier.fillMaxWidth().glassCard(rounded(12.dp)).padding(horizontal = 24.dp, vertical = 48.dp)) {
                     Text(if (pager.error != null) "Không tải được danh sách này." else "Chưa có phim nào trong mục này.", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Text("Thử chọn mục khác ở trên hoặc trong menu.", color = Capy.TextDim, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
@@ -188,7 +188,7 @@ fun ExploreScreen(path: String) {
             }
             else -> items(items, key = { it.slug.ifEmpty { it.title } }) { anime -> PosterTile(anime) { nav.openTitle(anime) } }
         }
-        if (path.isNotEmpty() && pager.page > 0 && pager.hasNext) item(span = { GridItemSpan(2) }, key = "more") {
+        if (path.isNotEmpty() && pager.page > 0 && pager.hasNext) item(span = { GridItemSpan(maxLineSpan) }, key = "more") {
             Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
                 if (pager.loading) CircularProgressIndicator(Modifier.size(28.dp), color = Color.White, strokeWidth = 2.dp, trackColor = Color.White.copy(alpha = 0.2f))
                 else FilterPill("Tải thêm", false) { scope.launch { pager.next() } }
@@ -224,13 +224,13 @@ fun SearchScreen(initial: String) {
     val results = rememberLoad("searchlist:$debounced") { if (debounced.isEmpty()) emptyList() else AnimeRepository.search(debounced, 1).items }
 
     LazyVerticalGrid(
-        GridCells.Fixed(2),
+        GridCells.Fixed(3),
         state = smoothGridState(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 32.dp, bottom = dockPadding() + 32.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
-        verticalArrangement = Arrangement.spacedBy(32.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        item(span = { GridItemSpan(2) }, key = "head") {
+        item(span = { GridItemSpan(maxLineSpan) }, key = "head") {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     LIcon(Lu.Search, size = 14.dp, tint = Capy.Red)
@@ -262,7 +262,7 @@ fun SearchScreen(initial: String) {
                 }
             }
         }
-        item(span = { GridItemSpan(2) }, key = "suggest") {
+        item(span = { GridItemSpan(maxLineSpan) }, key = "suggest") {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                 Text("Gợi ý tìm kiếm:", color = Capy.TextDim, fontSize = 12.sp, lineHeight = 16.sp)
                 SUGGESTIONS.forEach { kw ->
@@ -274,10 +274,10 @@ fun SearchScreen(initial: String) {
         }
         if (debounced.isNotEmpty()) {
             when (val s = results.value) {
-                is Load.Loading -> item(span = { GridItemSpan(2) }, key = "loading") { PosterGridSkeleton(6) }
-                is Load.Failed -> item(span = { GridItemSpan(2) }, key = "failed") { NoResults(debounced) }
-                is Load.Ok -> if (s.value.isEmpty()) item(span = { GridItemSpan(2) }, key = "none") { NoResults(debounced) } else {
-                    item(span = { GridItemSpan(2) }, key = "count") {
+                is Load.Loading -> item(span = { GridItemSpan(maxLineSpan) }, key = "loading") { PosterGridSkeleton(6) }
+                is Load.Failed -> item(span = { GridItemSpan(maxLineSpan) }, key = "failed") { NoResults(debounced) }
+                is Load.Ok -> if (s.value.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }, key = "none") { NoResults(debounced) } else {
+                    item(span = { GridItemSpan(maxLineSpan) }, key = "count") {
                         Text("Kết quả tìm kiếm cho “$debounced” (${s.value.size} anime)", color = Color.White, fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
                     }
                     items(s.value, key = { it.slug.ifEmpty { it.title } }) { anime -> MovieCard(anime) { nav.openTitle(anime) } }
@@ -310,7 +310,7 @@ fun MovieCard(anime: AnimeItem, onClick: () -> Unit) {
     val shape = rounded(8.dp)
     Column(Modifier.pressable(onClick = onClick).cached().cardLift(shape).clip(shape).background(Capy.Surface.copy(alpha = 0.9f))) {
         Box(Modifier.fillMaxWidth().aspectRatio(2f / 3f).background(Color.Black.copy(alpha = 0.4f))) {
-            LazyImage(anime.poster, Modifier.fillMaxSize(), art = anime)
+            LazyImage(anime.poster, Modifier.fillMaxSize())
             Box(Modifier.fillMaxSize().glassRim(androidx.compose.foundation.shape.RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)))
             Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 val (chip, bg, border, fg) = when {

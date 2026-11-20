@@ -226,7 +226,8 @@ fun PlayerSurface(
                             // lit while one of the choices is on (EnhanceChip: the viewer's choices, not what the engine reports)
                             val prefs by app.capynime.compose.data.Library.player.collectAsState()
                             val active = !controller.nativePlayback && (prefs.upscale != "off" || prefs.color || prefs.surround)
-                            PlayerChip(Lu.Sparkles, "CapyCinema", active = active) { panel = Panel.Cinema; touch() }
+                            // CapyCinema is off on the web too: the chip stays only for someone who still has an effect on, to turn it off
+                            if (active) PlayerChip(Lu.Sparkles, "CapyCinema", active = true) { panel = Panel.Cinema; touch() }
                             PlayerChip(Lu.Lock, "Khoá") { locked = true; touch() }
                             if (episodes != null && fullscreen) PlayerChip(Lu.ListVideo, "Tập") { panel = Panel.Episodes; touch() }
                             if (hasNext) PlayerChip(Lu.SkipForward, "Tập tiếp") { onNext(); touch() }

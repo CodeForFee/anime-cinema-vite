@@ -18,10 +18,10 @@ import app.capynime.compose.R
 /** The web app's tokens (tailwind.config.ts, globals.css) plus the Tailwind palette steps the pages use */
 object Capy {
     /** The page (html/body behind every route on the phone) */
-    val Page = Color(0xFF141414)
+    val Page = Color(0xFF0D0D11)
     val Background = Color(0xFF08090D)
     /** bg-[#1c1c1f]: hero card, carousel cards */
-    val Card = Color(0xFF1C1C1F)
+    val Card = Color(0xFF17171D)
     val Surface = Color(0xFF10121A)
     val SurfaceLight = Color(0xFF181B26)
     val Red = Color(0xFFE50914)
@@ -38,7 +38,14 @@ object Capy {
     val Gray300 = Color(0xFFD1D5DB)
     val TextDim = Color(0xFF9CA3AF) // gray-400
     val TextFaint = Color(0xFF6B7280) // gray-500
-    val Stroke = Color.White.copy(alpha = 0.12f)
+    val Stroke = Color.White.copy(alpha = 0.08f)
+}
+
+/** "Cinema ink" surfaces (2026-11 redesign): near-black page, two raised steps, one hairline */
+object Ink {
+    val Card = Color(0xFF17171D)
+    val Raised = Color(0xFF212129)
+    val Line = Color.White.copy(alpha = 0.08f)
 }
 
 /** "Be Vietnam Pro", the web's one typeface (@fontsource/be-vietnam-pro 400-900) */

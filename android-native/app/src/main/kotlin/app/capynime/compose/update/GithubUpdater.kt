@@ -1,7 +1,9 @@
 package app.capynime.compose.update
 
 import android.content.Context
+import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -10,7 +12,6 @@ import android.provider.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.content.FileProvider
 import app.capynime.compose.BuildConfig
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -107,21 +108,24 @@ class GithubUpdater(private val context: Context, private val scope: CoroutineSc
                 val release = withContext(Dispatchers.Default) { UpdatePolicy.selectRelease(raw, BuildConfig.GITHUB_REPO, BuildConfig.GITHUB_APK_ASSET) }
                 val installedVersion = UpdatePolicy.version(BuildConfig.VERSION_NAME)
                     ?: throw IOException("Không đọc được phiên bản đang cài")
-                state = if (release != null && release.version > installedVersion)
-                    UpdateState(UpdatePhase.Available, visible = true, release = release)
+                val newer = release != null && release.version > installedVersion
+                state = if (newer)
+                    UpdateState(UpdatePhase.Available, visible = manual, release = release)
                 else UpdateState(UpdatePhase.Current, visible = state.visible, release = release,
                     message = if (release == null) "Chưa có bản Android native được phát hành trên GitHub." else "Bạn đang dùng phiên bản Android native mới nhất.")
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
                 state = if (state.visible) UpdateState(UpdatePhase.Error, visible = true, message = safeMessage(e)) else UpdateState()
             }
+            // a newer version downloads by itself; the dialog shows once it is verified and ready to install
+            if (state.phase == UpdatePhase.Available) { job = null; download() } // this check job is ending: let download start its own
         }
     }
 
     fun download() {
         val release = state.release ?: return
         if (job?.isCompleted == false) return
-        state = state.copy(phase = UpdatePhase.Downloading, visible = true, received = 0, message = "")
+        state = state.copy(phase = UpdatePhase.Downloading, received = 0, message = "")
         job = scope.launch {
             var keep = false
             val part = File(folder, "native-${java.util.UUID.randomUUID()}.part")
@@ -170,7 +174,7 @@ class GithubUpdater(private val context: Context, private val scope: CoroutineSc
                     if (!part.renameTo(apk)) throw IOException("Không lưu được bản cập nhật")
                 }
                 verifiedApk = apk; keep = true
-                state = state.copy(phase = UpdatePhase.Ready, received = release.size,
+                state = state.copy(phase = UpdatePhase.Ready, visible = true, received = release.size,
                     message = "Đã xác minh ứng dụng, phiên bản và chữ ký. Android sẽ hỏi trước khi cài đặt.")
             } catch (e: CancellationException) {
                 state = UpdateState(UpdatePhase.Available, visible = false, release = release)
@@ -201,13 +205,41 @@ class GithubUpdater(private val context: Context, private val scope: CoroutineSc
                     context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${BuildConfig.APPLICATION_ID}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 } else {
                     awaitingPermission = false
-                    val uri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.updates", apk)
-                    context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive")
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK))
+                    withContext(Dispatchers.IO) { commitSession(apk) }
                     state = state.copy(phase = UpdatePhase.Ready, visible = false)
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) { state = state.copy(phase = UpdatePhase.Error, visible = true, message = safeMessage(e)) }
+        }
+    }
+
+    /**
+     * PackageInstaller session instead of the ACTION_VIEW installer screen: once Capynime has installed itself,
+     * Android 12+ applies later updates without asking again (USER_ACTION_NOT_REQUIRED); otherwise [UpdateReceiver]
+     * shows Android's own confirmation.
+     */
+    private fun commitSession(apk: File) {
+        val installer = context.packageManager.packageInstaller
+        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
+            setAppPackageName(BuildConfig.APPLICATION_ID)
+            setSize(apk.length())
+            if (Build.VERSION.SDK_INT >= 31) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+            if (Build.VERSION.SDK_INT >= 34) setRequestUpdateOwnership(true)
+        }
+        val id = installer.createSession(params)
+        try {
+            installer.openSession(id).use { session ->
+                session.openWrite("capynime.apk", 0, apk.length()).use { out ->
+                    apk.inputStream().use { it.copyTo(out) }
+                    session.fsync(out)
+                }
+                val flags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0)
+                val callback = PendingIntent.getBroadcast(context, id, Intent(context, UpdateReceiver::class.java).setPackage(context.packageName), flags)
+                session.commit(callback.intentSender)
+            }
+        } catch (e: Exception) {
+            runCatching { installer.abandonSession(id) }
+            throw IOException("Không mở được trình cài đặt: ${e.message?.take(120)}")
         }
     }
 

@@ -1,5 +1,7 @@
 # Cập nhật ứng dụng qua GitHub
 
+**Từ 1.2.0:** khi mở app, nếu GitHub có bản mới, app **tự tải nền** và kiểm tra, xong mới hiện hộp "Cài đặt"; cài qua `PackageInstaller`. Lần đầu Android vẫn hỏi xác nhận; từ khi Capynime đã tự cài mình một lần, Android 12+ cập nhật không cần hỏi lại. APK release ký bằng khóa của app Capacitor (`frontend-vite/android/keystore.properties`, git-ignore); build từ worktree khác: `node build.mjs release -PcapynimeKeystoreProperties=<đường dẫn>`. Bản cũ ký bằng khóa debug phải gỡ một lần.
+
 Ứng dụng đọc release công khai của [`CodeForFee/anime-cinema-vite`](https://github.com/CodeForFee/anime-cinema-vite/releases). Tự kiểm tra khi mở app theo thời gian chờ của updater; nút tải xuống trên header cho kiểm tra thủ công bất kỳ lúc nào. Không cần đăng nhập tài khoản phim hoặc GitHub.
 
 Updater chỉ nhận asset **`Capynime-native-release.apk`** ở release ổn định. Các APK web/Capacitor hiện có tên `Capynime-2.0.20.apk` thuộc ứng dụng khác, nên không được đề nghị cài đè vào app native.

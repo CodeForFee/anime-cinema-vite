@@ -37,6 +37,11 @@ adb -d install -r artifacts/Capynime-native-release.apk
 | Tài khoản | Đăng nhập bằng tài khoản nguồn; hồ sơ, mạng xã hội, thể loại yêu thích, riêng tư, đổi username/email/mật khẩu, bình luận của tôi, thông báo |
 | Cập nhật ứng dụng | Tự kiểm tra GitHub Releases khi mở app, kiểm tra thủ công từ header, tải APK native và xác nhận cài qua Android |
 
+### Thay đổi 1.2.0 (2026-11-20)
+
+- Giao diện mới "cinema ink": mặt phẳng đặc, không blur/kính/bóng, thanh điều hướng đáy cố định, banner lướt ngang, hàng Top số lớn, poster 3 cột có chú thích dưới ảnh, chuyển cảnh ngắn (fade 180 ms, trang xem trượt 1/10 màn).
+- Video: nguồn có "cookie gate" (403 + Set-Cookie mỗi giờ) — app thử lại một lần; luồng HLS của player nguồn là ảnh PNG giả trên Google Photos do service worker giải, Media3 không phát được nên tắt chuyển sang Media3 (trước đây mất ~16 s mỗi tập); player nguồn tự phát khi sẵn sàng; WebView được làm ấm khi mở app; không tiêm `player-enhance.js` khi CapyCinema tắt.
+
 ### Giới hạn cần biết
 
 - Trang và giao diện app là Compose. Player nhúng vẫn được dùng khi CDN không cung cấp luồng tương thích với Media3; không quảng cáo mọi nguồn video là native.

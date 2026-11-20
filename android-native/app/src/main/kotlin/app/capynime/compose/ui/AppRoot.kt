@@ -1,5 +1,11 @@
 package app.capynime.compose.ui
 
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.foundation.layout.fillMaxHeight
+import app.capynime.compose.ui.theme.Ink
+import app.capynime.compose.update.UpdatePhase
 import androidx.compose.foundation.LocalOverscrollFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -146,20 +152,20 @@ class Nav(private val controller: NavHostController, val chrome: Chrome) {
 
 val LocalNav = staticCompositionLocalOf<Nav> { error("no Nav") }
 
-private data class Tab(val route: String, val label: String, val icon: Int)
+private data class Tab(val route: String, val label: String, val icon: Int, val short: String = label)
 
 private val TABS = listOf(
     Tab("home", "Trang chủ", Lu.House),
     Tab("explore", "Khám phá", Lu.Compass),
-    Tab("schedule", "Lịch chiếu", Lu.CalendarDays),
-    Tab("search", "Tìm kiếm", Lu.Search),
-    Tab("favorites", "Danh sách", Lu.Bookmark),
+    Tab("schedule", "Lịch chiếu", Lu.CalendarDays, "Lịch"),
+    Tab("search", "Tìm kiếm", Lu.Search, "Tìm"),
+    Tab("favorites", "Danh sách", Lu.Bookmark, "Đã lưu"),
     Tab("history", "Lịch sử", Lu.History),
 )
 
 /** Room the pages leave under their content for the floating dock (AppShell pb-24) */
 @Composable
-fun dockPadding() = 96.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+fun dockPadding() = 72.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
 @Composable
 fun AppRoot() {
@@ -167,24 +173,24 @@ fun AppRoot() {
     val controller = rememberNavController()
     val chrome = remember { Chrome() }
     val nav = remember(controller) { Nav(controller, chrome) }
-    val screen = rememberLayerBackdrop()
     val entry by controller.currentBackStackEntryAsState()
     val route = entry?.destination?.route.orEmpty().substringBefore('?')
 
     // no stretch at the ends of a list: it redraws the whole list into a full-screen layer while it pulls
-    CompositionLocalProvider(LocalNav provides nav, LocalScreenBackdrop provides screen.takeIf { glassSupported }, LocalOverscrollFactory provides null) {
+    CompositionLocalProvider(LocalNav provides nav, LocalOverscrollFactory provides null) {
         // the window background is the page colour (themes.xml): no full-screen fill drawn again here
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize()) {
-                if (!chrome.immersive) Header(onCheckUpdates = { updater.check(manual = true) })
-                Box(Modifier.weight(1f).fillMaxWidth().then(if (glassSupported) Modifier.layerBackdrop(screen) else Modifier)) {
+                if (!chrome.immersive) Header(updater.state.phase in UPDATE_WAITING, onCheckUpdates = { updater.check(manual = true) })
+                Box(Modifier.weight(1f).fillMaxWidth()) {
                     NavHost(
                         controller,
                         startDestination = "home",
-                        enterTransition = { fadeIn(tween(200)) + scaleIn(tween(260), initialScale = 0.985f) },
-                        exitTransition = { fadeOut(tween(140)) },
-                        popEnterTransition = { fadeIn(tween(200)) },
-                        popExitTransition = { fadeOut(tween(160)) },
+                        // tabs cross-fade quickly; nothing scales, so no full-page layer is resampled per frame
+                        enterTransition = { fadeIn(tween(180, delayMillis = 40, easing = LinearOutSlowInEasing)) },
+                        exitTransition = { fadeOut(tween(90, easing = FastOutLinearInEasing)) },
+                        popEnterTransition = { fadeIn(tween(180, delayMillis = 40, easing = LinearOutSlowInEasing)) },
+                        popExitTransition = { fadeOut(tween(90, easing = FastOutLinearInEasing)) },
                     ) {
                         composable("home") { HomeScreen() }
                         composable("explore?path={path}", arguments = listOf(navArgument("path") { type = NavType.StringType; defaultValue = "" })) {
@@ -199,8 +205,9 @@ fun AppRoot() {
                         composable(
                             "watch?slug={slug}&ep={ep}",
                             arguments = listOf(navArgument("slug") { type = NavType.StringType }, navArgument("ep") { type = NavType.StringType; defaultValue = "" }),
-                            enterTransition = { slideInHorizontally(tween(320)) { it / 4 } + fadeIn(tween(220)) },
-                            popExitTransition = { slideOutHorizontally(tween(260)) { it / 4 } + fadeOut(tween(200)) },
+                            // shared axis X: the player page comes in from a short way right and leaves the same way
+                            enterTransition = { slideInHorizontally(tween(240, easing = FastOutSlowInEasing)) { it / 10 } + fadeIn(tween(200)) },
+                            popExitTransition = { slideOutHorizontally(tween(200, easing = FastOutSlowInEasing)) { it / 10 } + fadeOut(tween(160)) },
                         ) { e ->
                             WatchScreen(e.arguments?.getString("slug").orEmpty(), e.arguments?.getString("ep").orEmpty().ifEmpty { null })
                         }
@@ -220,80 +227,78 @@ fun AppRoot() {
     }
 }
 
-/** HeaderBar + Brand + MobileHeader: the name, a search icon and the account button on the page colour */
+/** Top bar: the name and three actions; the update action carries a red dot while a new version waits */
 @Composable
-private fun Header(onCheckUpdates: () -> Unit) {
+private fun Header(updateWaiting: Boolean, onCheckUpdates: () -> Unit) {
     val nav = LocalNav.current
     val user by Library.user.collectAsState()
     Row(
-        Modifier.fillMaxWidth().background(Capy.Page)
-            .drawBehind { drawLine(Color.White.copy(alpha = 0.1f), Offset(0f, size.height - 0.5f), Offset(size.width, size.height - 0.5f), 1.dp.toPx()) }
-            .statusBarsPadding().height(64.dp).padding(horizontal = 16.dp),
+        Modifier.fillMaxWidth().background(Capy.Page).statusBarsPadding().height(56.dp).padding(start = 16.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(Modifier.pressable(pressedScale = 1f) { nav.tab("home") }, verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painterResource(R.drawable.app_icon), null,
-                Modifier.size(32.dp).dropRedGlow().clip(rounded(8.dp)),
-            )
+        Row(Modifier.clip(Capsule()).clickable { nav.tab("home") }.padding(end = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Image(painterResource(R.drawable.app_icon), null, Modifier.size(28.dp).clip(rounded(8.dp)))
             Text(
                 buildAnnotatedString {
                     withStyle(SpanStyle(color = Color.White)) { append("Capy") }
                     withStyle(SpanStyle(color = Capy.Red)) { append("nime") }
                 },
-                fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp,
-                modifier = Modifier.padding(start = 8.dp),
+                fontSize = 19.sp, lineHeight = 24.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp,
+                modifier = Modifier.padding(start = 10.dp),
             )
         }
         Box(Modifier.weight(1f))
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(36.dp).clip(Capsule()).clickable(onClick = onCheckUpdates), contentAlignment = Alignment.Center) {
-                LIcon(Lu.Download, size = 20.dp, tint = Capy.Gray300, label = "C?p nh?t ?ng d?ng")
-            }
-            Box(Modifier.size(36.dp).clip(Capsule()).clickable { nav.chrome.search = true }, contentAlignment = Alignment.Center) {
-                LIcon(Lu.Search, size = 20.dp, tint = Capy.Gray300, label = "Tìm kiếm")
-            }
-            val u = user
-            if (u == null) Box(Modifier.size(36.dp).clip(Capsule()).clickable { nav.login() }, contentAlignment = Alignment.Center) {
-                LIcon(Lu.User, size = 20.dp, tint = Capy.Gray300, label = "Đăng nhập")
-            } else LazyImage(
-                u.avatar,
-                Modifier.size(36.dp).clip(Capsule()).border(2.dp, Color.White.copy(alpha = 0.2f), Capsule()).background(Color.White.copy(alpha = 0.1f))
-                    .clickable { nav.account() },
-            )
+        HeaderAction(Lu.Download, "Cập nhật ứng dụng", onCheckUpdates, dot = updateWaiting)
+        HeaderAction(Lu.Search, "Tìm kiếm", { nav.chrome.search = true })
+        val u = user
+        if (u == null) HeaderAction(Lu.User, "Đăng nhập", { nav.login() })
+        else Box(Modifier.size(44.dp).clip(Capsule()).clickable { nav.account() }, contentAlignment = Alignment.Center) {
+            LazyImage(u.avatar, Modifier.size(30.dp).clip(Capsule()).background(Ink.Raised))
         }
     }
 }
 
-/** shadow-lg shadow-red-900/40 under the app icon */
-private fun Modifier.dropRedGlow() = this.then(
-    Modifier.drawBehind {
-        drawCircle(Color(0x667F1D1D), radius = size.minDimension * 0.62f, center = center + Offset(0f, 3.dp.toPx()))
-    },
-)
+@Composable
+private fun HeaderAction(icon: Int, label: String, onClick: () -> Unit, dot: Boolean = false) {
+    Box(Modifier.size(44.dp).clip(Capsule()).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        LIcon(icon, size = 21.dp, tint = Capy.Gray200, label = label)
+        if (dot) Box(Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp).size(8.dp).clip(Capsule()).background(Capy.Red))
+    }
+}
 
-/** SidebarDock: a floating liquid-glass pill of icons; the lit lens springs from the old tab to the new one */
+private val UPDATE_WAITING = setOf(UpdatePhase.Available, UpdatePhase.Downloading, UpdatePhase.Ready, UpdatePhase.Permission)
+
+/**
+ * Bottom bar: solid ink, edge to edge, icon over a short label; the picked tab turns red and a small bar slides
+ * over it. Anchored (not floating), so no page content is drawn under it twice.
+ */
 @Composable
 private fun Dock(selected: Int, onSelect: (Int) -> Unit) {
-    Box(Modifier.fillMaxSize().navigationBarsPadding().padding(bottom = 12.dp), contentAlignment = Alignment.BottomCenter) {
-        BoxWithConstraints(
-            Modifier.padding(horizontal = 20.dp).widthIn(max = 384.dp).fillMaxWidth().liquidGlass().padding(6.dp),
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+        Column(
+            Modifier.fillMaxWidth().background(Ink.Card)
+                .drawBehind { drawLine(Ink.Line, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx()) }
+                .navigationBarsPadding(),
         ) {
-            val gap = 4.dp
-            val cell = (maxWidth - gap * (TABS.size - 1)) / TABS.size
-            if (selected >= 0) {
-                val x by animateDpAsState((cell + gap) * selected, spring(dampingRatio = 0.83f, stiffness = 420f), label = "lens")
-                Box(Modifier.offset(x = x).width(cell).height(44.dp).goldLens())
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                TABS.forEachIndexed { i, t ->
-                    val active = i == selected
-                    Box(
-                        Modifier.weight(1f).height(44.dp).clip(Capsule())
-                            .clickable(remember { MutableInteractionSource() }, indication = null) { if (!active) onSelect(i) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        LIcon(t.icon, size = 22.dp, tint = if (active) Color(0xFF1C1300) else Color.White.copy(alpha = 0.85f), label = t.label)
+            BoxWithConstraints(Modifier.fillMaxWidth().height(64.dp)) {
+                val cell = maxWidth / TABS.size
+                if (selected >= 0) {
+                    val x by animateDpAsState(cell * selected, spring(dampingRatio = 0.9f, stiffness = 500f), label = "tab")
+                    Box(Modifier.offset(x = x + (cell - 28.dp) / 2).width(28.dp).height(3.dp).clip(Capsule()).background(Capy.Red))
+                }
+                Row(Modifier.fillMaxSize()) {
+                    TABS.forEachIndexed { i, t ->
+                        val active = i == selected
+                        Column(
+                            Modifier.weight(1f).fillMaxHeight().clickable(remember { MutableInteractionSource() }, indication = null) { if (!active) onSelect(i) },
+                            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                        ) {
+                            LIcon(t.icon, size = 22.dp, tint = if (active) Capy.Red else Capy.TextDim, label = t.label)
+                            Text(
+                                t.short, color = if (active) Color.White else Capy.TextDim, fontSize = 10.sp, lineHeight = 12.sp,
+                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium, maxLines = 1, modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
                     }
                 }
             }

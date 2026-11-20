@@ -416,7 +416,7 @@ private fun Related(related: List<AnimeItem>, fallback: String, modifier: Modifi
                 row.forEach { r ->
                     Column(Modifier.weight(1f).pressable { onOpen(r) }.clip(rounded(4.dp)).background(Color(0xFF2F2F2F))) {
                         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black.copy(alpha = 0.4f))) {
-                            LazyImage(r.poster.ifEmpty { fallback }, Modifier.fillMaxSize(), art = r)
+                            LazyImage(r.poster.ifEmpty { fallback }, Modifier.fillMaxSize())
                             Text(
                                 r.episode.ifBlank { "HD" }, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold,
                                 modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).clip(rounded(2.dp)).background(Color.Black.copy(alpha = 0.75f)).padding(horizontal = 6.dp, vertical = 2.dp),

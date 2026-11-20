@@ -1,5 +1,7 @@
 package app.capynime.compose.ui.common
 
+import app.capynime.compose.ui.theme.Ink
+import androidx.compose.foundation.clickable
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -69,7 +71,7 @@ import app.capynime.compose.ui.glass.Capsule
 @Composable
 fun Skeleton(modifier: Modifier = Modifier, corner: Dp = 6.dp) {
     // a weak phone keeps the block still: a sweep is a redraw every frame for as long as pictures load
-    if (Device.lite) return Box(modifier.clip(rounded(corner)).background(Color.White.copy(alpha = 0.1f)))
+    if (true) return Box(modifier.clip(rounded(corner)).background(Ink.Raised)) // ponytail: shimmer below kept unused; drop it if no one misses it
     val t = rememberInfiniteTransition(label = "shimmer")
     val x by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart), label = "x")
     Box(
@@ -145,38 +147,39 @@ fun tileBadge(item: AnimeItem): String? = when {
 fun PosterTile(item: AnimeItem, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val favorites by Library.favorites.collectAsState()
     val isFavorite = favorites.any { it.slug == item.slug }
-    val shape = rounded(8.dp)
-    Box(modifier.aspectRatio(2f / 3f).cached()) {
-        Box(Modifier.matchParentSize().pressable(onClick = onClick).cardLift(shape).clip(shape)) {
-            LazyImage(item.poster, Modifier.matchParentSize(), art = item)
+    val shape = rounded(12.dp)
+    Column(modifier.pressable(onClick = onClick)) {
+        Box(Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(shape).background(Ink.Raised)) {
+            LazyImage(item.poster, Modifier.matchParentSize()) // list cards: one picture each (no second HD fetch while scrolling)
             tileBadge(item)?.let { badge ->
                 Text(
-                    badge, color = Color.White, fontSize = 11.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
-                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp).clip(rounded(8.dp)).background(Color.Black.copy(alpha = 0.6f))
-                        .border(1.dp, Color.White.copy(alpha = 0.15f), rounded(8.dp)).padding(horizontal = 8.dp, vertical = 2.dp),
+                    badge, color = Color.White, fontSize = 10.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                    modifier = Modifier.align(Alignment.TopStart).padding(6.dp).clip(rounded(6.dp)).background(Capy.Red).padding(horizontal = 6.dp, vertical = 1.dp),
                 )
             }
-            Column(
-                Modifier.align(Alignment.BottomCenter).padding(8.dp).fillMaxWidth().posterCaption().padding(horizontal = 10.dp, vertical = 8.dp),
+            Box(
+                Modifier.align(Alignment.TopEnd).padding(4.dp).size(32.dp).clip(Capsule())
+                    .clickable { Library.toggleFavorite(item) },
+                contentAlignment = Alignment.Center,
             ) {
-                Text(item.title, color = Color.White, fontSize = 14.sp, lineHeight = 17.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                val rating = fmtRating(item.rating)
-                if (item.year != null || rating != null) Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item.year?.let { Text("$it", color = Capy.Gray300, fontSize = 12.sp, lineHeight = 16.sp) }
-                    if (rating != null) Row(verticalAlignment = Alignment.CenterVertically) {
-                        FIcon(LuFilled.Star, size = 12.dp, tint = Capy.Amber400)
-                        Text(rating, color = Capy.Gray300, fontSize = 12.sp, lineHeight = 16.sp, modifier = Modifier.padding(start = 2.dp))
-                    }
+                Box(Modifier.size(26.dp).clip(Capsule()).background(Color.Black.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
+                    if (isFavorite) FIcon(LuFilled.Heart, size = 14.dp, tint = Capy.Red, label = "Bỏ khỏi danh sách")
+                    else LIcon(Lu.Heart, size = 14.dp, label = "Lưu")
                 }
             }
-            Box(Modifier.matchParentSize().glassRim(shape))
         }
-        Box(
-            Modifier.align(Alignment.TopEnd).padding(8.dp).size(36.dp).pressable(pressedScale = 0.9f) { Library.toggleFavorite(item) }.glassPill(),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (isFavorite) FIcon(LuFilled.Heart, size = 16.dp, tint = Capy.Red, label = "Bỏ khỏi danh sách")
-            else LIcon(Lu.Heart, size = 16.dp, label = "Lưu")
+        Text(
+            item.title, color = Color.White, fontSize = 13.sp, lineHeight = 17.sp, fontWeight = FontWeight.SemiBold, maxLines = 2,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp),
+        )
+        val rating = fmtRating(item.rating)
+        if (item.year != null || rating != null) Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            item.year?.let { Text("$it", color = Capy.TextDim, fontSize = 11.sp, lineHeight = 15.sp) }
+            if (item.year != null && rating != null) Text("  ·  ", color = Capy.TextFaint, fontSize = 11.sp, lineHeight = 15.sp)
+            if (rating != null) {
+                FIcon(LuFilled.Star, size = 11.dp, tint = Capy.Gold)
+                Text(rating, color = Capy.TextDim, fontSize = 11.sp, lineHeight = 15.sp, modifier = Modifier.padding(start = 3.dp))
+            }
         }
     }
 }
@@ -192,23 +195,26 @@ fun Modifier.posterCaption() = clip(rounded(8.dp))
     }
     .border(1.dp, Color.White.copy(alpha = 0.15f), rounded(8.dp))
 
-/** "Xem tất cả ›" (.glass-pill h-8 pl-3.5 pr-2.5 text-xs) */
+/** "Tất cả ›": a quiet text action in the accent colour */
 @Composable
 fun SeeAllPill(onClick: () -> Unit) {
     Row(
-        Modifier.height(32.dp).pressable(onClick = onClick).glassPill().padding(start = 14.dp, end = 10.dp),
+        Modifier.clip(Capsule()).clickable(onClick = onClick).padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Xem tất cả", color = Capy.Gray200, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold)
-        LIcon(Lu.ChevronRight, Modifier.padding(start = 4.dp), size = 14.dp, tint = Capy.Gray200)
+        Text("Tất cả", color = Capy.Red, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
+        LIcon(Lu.ChevronRight, size = 16.dp, tint = Capy.Red)
     }
 }
 
-/** A shelf heading: the title and, when the list continues on the explore page, "Xem tất cả" */
 @Composable
 fun ShelfHeader(title: String, modifier: Modifier = Modifier, onSeeAll: (() -> Unit)? = null) {
-    Row(modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(title, color = Color.White, fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.45).sp, modifier = Modifier.weight(1f))
+    Row(modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(3.dp).height(18.dp).clip(Capsule()).background(Capy.Red))
+        Text(
+            title, color = Color.White, fontSize = 17.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp,
+            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 10.dp).weight(1f),
+        )
         if (onSeeAll != null) SeeAllPill(onSeeAll)
     }
 }
@@ -217,10 +223,10 @@ fun ShelfHeader(title: String, modifier: Modifier = Modifier, onSeeAll: (() -> U
 @Composable
 fun MovieShelf(title: String, items: List<AnimeItem>, onOpen: (AnimeItem) -> Unit, onSeeAll: (() -> Unit)? = null) {
     if (items.isEmpty()) return
-    Column(Modifier.row().padding(vertical = 20.dp)) {
-        ShelfHeader(title, Modifier.padding(bottom = 12.dp), onSeeAll)
+    Column(Modifier.row().padding(vertical = 14.dp)) {
+        ShelfHeader(title, Modifier.padding(bottom = 8.dp), onSeeAll)
         LazyRow(state = smoothListState(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(items, key = { it.slug + it.episode }) { item -> PosterTile(item, Modifier.width(176.dp)) { onOpen(item) } }
+            items(items, key = { it.slug + it.episode }) { item -> PosterTile(item, Modifier.width(128.dp)) { onOpen(item) } }
         }
     }
 }
@@ -231,7 +237,7 @@ fun ShelfSkeleton(modifier: Modifier = Modifier) {
     Column(modifier.padding(horizontal = 16.dp, vertical = 20.dp)) {
         Skeleton(Modifier.width(224.dp).height(28.dp))
         Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            repeat(3) { Skeleton(Modifier.width(176.dp).aspectRatio(2f / 3f), 8.dp) }
+            repeat(3) { Skeleton(Modifier.width(128.dp).aspectRatio(2f / 3f), 12.dp) }
         }
     }
 }
@@ -239,10 +245,10 @@ fun ShelfSkeleton(modifier: Modifier = Modifier) {
 /** A grid of poster placeholders (explore, search) */
 @Composable
 fun PosterGridSkeleton(count: Int = 6, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(32.dp)) {
-        repeat((count + 1) / 2) {
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                repeat(2) { Skeleton(Modifier.weight(1f).aspectRatio(2f / 3f), 8.dp) }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        repeat((count + 2) / 3) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                repeat(3) { Skeleton(Modifier.weight(1f).aspectRatio(2f / 3f), 12.dp) }
             }
         }
     }

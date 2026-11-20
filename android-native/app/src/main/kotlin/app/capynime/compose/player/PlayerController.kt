@@ -86,6 +86,7 @@ class PlayerController(private val context: Context) {
     @Volatile private var allowNativeCapture = false
     private var restoreInBrowser: PlayerState? = null
     private val watchdog = android.os.Handler(android.os.Looper.getMainLooper())
+    private var autoplayFor = -1
 
     // Direct streams never allocate a WebView; browsing allocates neither video engine.
     private val browser = lazy { createBrowser() }
@@ -141,7 +142,9 @@ class PlayerController(private val context: Context) {
         fun read(name: String) = runCatching { assets.open(name).bufferedReader().use { it.readText() } }.getOrNull()
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             val bridge = read("player-bridge.js")
-            val enhance = read("player-enhance.js")
+            // the 122 KB enhancer probes WebGL/WebGPU in every frame it enters; only worth it with an effect on
+            val effects = app.capynime.compose.data.Library.player.value.let { it.upscale != "off" || it.color || it.surround }
+            val enhance = if (effects) read("player-enhance.js") else null
             if (bridge != null)
                 WebViewCompat.addDocumentStartJavaScript(this, (enhance?.let { "$it\n;" } ?: "") + bridge +
                     (if (NATIVE_PROMOTION) "\n;" + NativeMediaProbe.script else ""), setOf(PLAYER_ORIGIN))
@@ -294,8 +297,11 @@ window.__send = function (type, value) { f.contentWindow.postMessage({ source: '
             "ready" -> {
                 ready = true
                 // the player page reloads itself now and then, and a new frame starts without the choices: send them again
-                lastEnhance?.let { send("enhance", it) }
+                // only real effects are worth re-sending: an all-off message still restarts the frame's enhancer
+                lastEnhance?.takeIf { sourceEffectsRequested() }?.let { send("enhance", it) }
                 if (restoreInBrowser != null) send("pause")
+                // the source player waits for a tap on its poster; the user already chose this episode
+                else if (autoplayFor != generation) { autoplayFor = generation; send("play") }
             }
             "state" -> {
                 state = PlayerState(
@@ -386,7 +392,10 @@ window.__send = function (type, value) { f.contentWindow.postMessage({ source: '
     fun enhance(prefs: PlayerPrefs, lite: Boolean) {
         val value = JSONObject().put("surround", prefs.surround).put("surroundMode", prefs.surroundMode).put("upscale", prefs.upscale)
             .put("color", prefs.color).put("lite", lite).put("mobile", true)
+        if (value.toString() == lastEnhance?.toString()) return // same choices: the frame already has them
+        val first = lastEnhance == null
         lastEnhance = value
+        if (first && !sourceEffectsRequested()) return // the frame starts with every effect off
         if (nativePlayback && sourceEffectsRequested() && hasSourcePlayer) useSourcePlayer()
         if (!nativePlayback) send("enhance", value)
     }

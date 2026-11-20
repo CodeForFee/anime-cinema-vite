@@ -229,7 +229,7 @@ private fun ScheduleRow(anime: AnimeItem, now: Long, modifier: Modifier) {
 private fun SmallPoster(src: String, art: AnimeItem?, progress: Float? = null, modifier: Modifier = Modifier) {
     val shape = rounded(8.dp)
     Box(modifier.width(64.dp).height(92.dp).cardLift(shape).clip(shape).background(Color.White.copy(alpha = 0.05f))) {
-        if (src.isNotEmpty()) LazyImage(src, Modifier.fillMaxSize(), art = art)
+        if (src.isNotEmpty()) LazyImage(src, Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().glassRim(shape))
         if (progress != null) Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color.Black.copy(alpha = 0.5f))) {
             Box(Modifier.fillMaxWidth(progress).fillMaxHeight().background(Capy.Red))
@@ -262,19 +262,19 @@ fun FavoritesScreen() {
     val nav = LocalNav.current
     val favorites by Library.favorites.collectAsState()
     LazyVerticalGrid(
-        GridCells.Fixed(2),
+        GridCells.Fixed(3),
         state = smoothGridState(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = dockPadding() + 24.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        item(span = { GridItemSpan(2) }, key = "head") {
+        item(span = { GridItemSpan(maxLineSpan) }, key = "head") {
             Column(Modifier.padding(bottom = 8.dp)) {
                 PageTitle("Danh sách của tôi")
                 if (favorites.isNotEmpty()) Text("${favorites.size} phim đã lưu", color = Capy.TextDim, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
             }
         }
-        if (favorites.isEmpty()) item(span = { GridItemSpan(2) }, key = "empty") {
+        if (favorites.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }, key = "empty") {
             EmptyShelf("Danh sách còn trống.", "Nhấn trái tim trên poster để để dành phim xem sau.")
         } else items(favorites, key = { it.slug }) { fav -> PosterTile(fav) { nav.openTitle(fav) } }
     }
