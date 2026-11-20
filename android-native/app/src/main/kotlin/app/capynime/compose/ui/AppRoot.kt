@@ -171,7 +171,7 @@ private val TABS = listOf(
 
 /** Room the pages leave under their content for the floating dock (AppShell pb-24) */
 @Composable
-fun dockPadding() = 88.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+fun dockPadding() = 84.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
 @Composable
 fun AppRoot() {
@@ -275,81 +275,68 @@ private fun HeaderAction(icon: Int, label: String, onClick: () -> Unit, dot: Boo
 private val UPDATE_WAITING = setOf(UpdatePhase.Available, UpdatePhase.Downloading, UpdatePhase.Ready, UpdatePhase.Permission)
 
 /**
- * Bottom bar: a glass strip (tint + sheen + lit top edge, no live blur) with a curved notch; the picked tab rises
- * out of it as a red disc and the notch slides under it. Position is read only while drawing, so the slide is a
- * redraw of this bar, never a recomposition.
+ * Bottom bar: a floating glass capsule of tabs (icon over label) with the picked one lit by an inner pill that
+ * slides, and search on its own glass disc beside it. Glass = a tint, a sheen and a lit rim (no live blur); the
+ * pill's slide is read only while placing it, so a tab change never recomposes the bar.
  */
 @Composable
 private fun Dock(selected: Int, onSelect: (Int) -> Unit) {
-    val inset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-        BoxWithConstraints(Modifier.fillMaxWidth().height(DOCK_LIFT + DOCK_BAR + inset)) {
-            val cell = maxWidth / TABS.size
-            val target = cell * selected.coerceAtLeast(0) + cell / 2
-            val cx = animateDpAsState(target, spring(dampingRatio = 0.78f, stiffness = 380f), label = "notch")
-            // the glass strip with its notch
-            Box(Modifier.fillMaxSize().drawWithCache {
-                val top = DOCK_LIFT.toPx()
-                val sheen = Brush.verticalGradient(
-                    0f to Color.White.copy(alpha = 0.10f), 0.5f to Color.White.copy(alpha = 0.03f), 1f to Color.Transparent,
-                    startY = top, endY = size.height,
-                )
-                val tint = Color(0xE613131A)
-                val edge = Color.White.copy(alpha = 0.16f)
-                onDrawBehind {
-                    val path = notchPath(cx.value.toPx(), top, size.width, size.height, density)
-                    drawPath(path, tint)
-                    drawPath(path, sheen)
-                    drawPath(path, edge, style = Stroke(1.dp.toPx()))
-                }
-            })
-            // the tabs; the picked one leaves its place empty for the disc
-            Row(Modifier.fillMaxWidth().padding(top = DOCK_LIFT).height(DOCK_BAR)) {
-                TABS.forEachIndexed { i, t ->
-                    val active = i == selected
+    val tabs = DOCK_TABS
+    val picked = tabs.indexOfFirst { TABS.indexOf(it) == selected }
+    Box(Modifier.fillMaxSize().navigationBarsPadding().padding(start = 12.dp, end = 12.dp, bottom = 10.dp), contentAlignment = Alignment.BottomCenter) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            BoxWithConstraints(Modifier.weight(1f).height(DOCK_H).glassDock(Capsule()).padding(4.dp)) {
+                val cell = maxWidth / tabs.size
+                if (picked >= 0) {
+                    val x = animateDpAsState(cell * picked, spring(dampingRatio = 0.8f, stiffness = 420f), label = "pill")
                     Box(
-                        Modifier.weight(1f).fillMaxHeight().clickable(remember { MutableInteractionSource() }, indication = null) { if (!active) onSelect(i) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (active) Text(
-                            t.short, color = Color.White, fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
-                        )
-                        else LIcon(t.icon, size = 22.dp, tint = Color.White.copy(alpha = 0.72f), label = t.label)
+                        Modifier.offset { IntOffset(x.value.roundToPx(), 0) }.width(cell).fillMaxHeight()
+                            .clip(Capsule()).background(Color.White.copy(alpha = 0.13f)).border(1.dp, Color.White.copy(alpha = 0.2f), Capsule()),
+                    )
+                }
+                Row(Modifier.fillMaxSize()) {
+                    tabs.forEachIndexed { i, t ->
+                        val active = i == picked
+                        Column(
+                            Modifier.weight(1f).fillMaxHeight().clip(Capsule())
+                                .clickable(remember { MutableInteractionSource() }, indication = null) { if (!active) onSelect(TABS.indexOf(t)) },
+                            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                        ) {
+                            val tint = if (active) Color.White else Color.White.copy(alpha = 0.7f)
+                            LIcon(t.icon, size = 21.dp, tint = tint, label = t.label)
+                            Text(
+                                t.short, color = tint, fontSize = 10.sp, lineHeight = 12.sp, maxLines = 1,
+                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium, modifier = Modifier.padding(top = 3.dp),
+                            )
+                        }
                     }
                 }
             }
-            if (selected >= 0) Box(
-                Modifier.offset { IntOffset((cx.value - DOCK_DISC / 2).roundToPx(), (DOCK_LIFT - DOCK_DISC / 2 + 6.dp).roundToPx()) }
-                    .size(DOCK_DISC).clip(Capsule())
-                    .background(Brush.verticalGradient(listOf(Color(0xFFFF3B47), Capy.Red)))
-                    .border(1.dp, Color.White.copy(alpha = 0.28f), Capsule()),
+            val search = TABS.indexOfFirst { it.route == "search" }
+            Box(
+                Modifier.size(DOCK_H).glassDock(Capsule())
+                    .then(if (selected == search) Modifier.background(Color.White.copy(alpha = 0.13f)) else Modifier)
+                    .clickable(remember { MutableInteractionSource() }, indication = null) { if (selected != search) onSelect(search) },
                 contentAlignment = Alignment.Center,
-            ) { LIcon(TABS[selected].icon, size = 22.dp, tint = Color.White, label = TABS[selected].label) }
+            ) { LIcon(Lu.Search, size = 23.dp, tint = Color.White, label = "Tìm kiếm") }
         }
     }
 }
 
-private val DOCK_BAR = 60.dp
-private val DOCK_LIFT = 22.dp
-private val DOCK_DISC = 50.dp
+private val DOCK_H = 60.dp
+private val DOCK_TABS = TABS.filter { it.route != "search" }
 
-/** The bar outline: flat top with a smooth U dip centred at [cx] that cradles the disc */
-private fun notchPath(cx: Float, top: Float, width: Float, height: Float, density: Float): Path {
-    val r = 31f * density // half the dip's width at its floor
-    val depth = 30f * density
-    val shoulder = 22f * density // how far the curve eases in on each side
-    return Path().apply {
-        moveTo(0f, top)
-        lineTo(cx - r - shoulder, top)
-        cubicTo(cx - r, top, cx - r, top + depth, cx, top + depth)
-        cubicTo(cx + r, top + depth, cx + r, top, cx + r + shoulder, top)
-        lineTo(width, top)
-        lineTo(width, height)
-        lineTo(0f, height)
-        close()
+/** The dock's glass: dark tint, a soft sheen from the top and a lit rim, all in one cached draw */
+private fun Modifier.glassDock(shape: androidx.compose.ui.graphics.Shape) = this
+    .clip(shape)
+    .drawWithCache {
+        val sheen = Brush.verticalGradient(0f to Color.White.copy(alpha = 0.16f), 0.55f to Color.White.copy(alpha = 0.04f), 1f to Color.White.copy(alpha = 0.07f))
+        onDrawBehind {
+            drawRect(Color(0xD91A1A22))
+            drawRect(sheen)
+        }
     }
-}
+    .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.34f), Color.White.copy(alpha = 0.08f))), shape)
 
 /**
  * MobileHeader's spotlight search: a field near the top over a dimmed page (a dense tint, no blur), live results
