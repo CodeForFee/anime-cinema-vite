@@ -62,6 +62,7 @@ object Lu {
     val Alert = L.drawable.lucide_ic_circle_alert
     val Refresh = L.drawable.lucide_ic_refresh_cw
     val Volume = L.drawable.lucide_ic_volume_2
+    val Sun = L.drawable.lucide_ic_sun
     val VolumeX = L.drawable.lucide_ic_volume_x
     val Plus = L.drawable.lucide_ic_plus
     val Check = L.drawable.lucide_ic_check

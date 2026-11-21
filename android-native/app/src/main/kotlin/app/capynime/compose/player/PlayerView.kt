@@ -112,6 +112,7 @@ fun PlayerSurface(
     var scrubbing by remember { mutableStateOf(false) }
     var jump by remember { mutableStateOf<Pair<Int, Int>?>(null) } // direction, key
     val touch = { touched = System.currentTimeMillis() }
+    val adjust = rememberSwipeAdjust()
 
     // useAutoHide: the controls leave 3 s after the last touch while playing
     LaunchedEffect(visible, touched, state?.paused, panel, scrubbing) {
@@ -146,9 +147,10 @@ fun PlayerSurface(
         }
         if (state == null) return@Box
 
-        // the gesture layer over the frame: the page under it only gets what the bridge sends
+        // the gesture layer over the frame: the page under it only gets what the bridge sends.
+        // Swipe up/down: left half brightness, right half volume (not while the screen is locked)
         Box(
-            Modifier.fillMaxSize().pointerInput(state.duration, locked) {
+            Modifier.fillMaxSize().swipeAdjust(adjust, enabled = !locked).pointerInput(state.duration, locked) {
                 detectTapGestures(
                     onTap = { visible = !visible; touch() },
                     onDoubleTap = { offset ->
@@ -162,6 +164,8 @@ fun PlayerSurface(
                 )
             },
         )
+
+        SwipeAdjustIndicator(adjust, Modifier.align(Alignment.TopCenter))
 
         jump?.let { (dir, _) ->
             Text(
