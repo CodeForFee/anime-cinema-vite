@@ -10,6 +10,8 @@ Người dùng chọn tải/cập nhật, app kiểm tra APK rồi mở trình c
 
 ## Phát hành bản native mới
 
+**Tự động:** mỗi lần code trong `android-native/` được đẩy lên `main`, workflow tự build, ký và tạo release `native-v1.2.<số lần chạy>` có APK — app nào đang cài sẽ thấy bản mới ở lần mở kế tiếp. Có thể chạy tay ở tab Actions (workflow_dispatch). Cần 4 secret bên dưới, nếu không workflow dừng ở bước ký.
+
 Workflow [native-release.yml](../.github/workflows/native-release.yml) chạy khi có tag `native-vMAJOR.MINOR.PATCH` được push. Chỉ tạo tag sau khi các thay đổi đã được commit/push vào GitHub và kiểm tra xong.
 
 Thiết lập bốn repository secrets:
