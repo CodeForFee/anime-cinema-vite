@@ -1,0 +1,60 @@
+name: AVS Helper extension release
+
+# A version bump in avs-helper-extension/package.json publishes ext-v<version> with the packed extension, so the
+# web's "update the extension" banner (frontend-vite/src/app/layout/ExtensionGate.tsx) has a download to link to.
+# Pushes that keep the version skip publishing; the player scripts it bundles live in frontend-vite/public.
+# Not marked Latest: the APK stays the repo's latest release (the native updater reads only native-v* tags anyway).
+on:
+  push:
+    branches: [main]
+    paths: ['avs-helper-extension/**', 'frontend-vite/public/player-*.js', '.github/workflows/extension-release.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: extension-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: avs-helper-extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          echo "EXT_TAG=ext-v$version" >> "$GITHUB_ENV"
+          if gh release view "ext-v$version" > /dev/null 2>&1; then
+            echo "ext-v$version is already published; bump avs-helper-extension/package.json to release."
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+      - name: Test and build
+        if: env.SKIP != '1'
+        run: |
+          npx -y pnpm@11.15.1 install --frozen-lockfile
+          npx -y pnpm@11.15.1 test
+          npx -y pnpm@11.15.1 --filter ./manifest-v3 build
+          (cd manifest-v3/extension && zip -qr "$GITHUB_WORKSPACE/avs-helper-extension.zip" .)
+          sha256sum "$GITHUB_WORKSPACE/avs-helper-extension.zip" > "$GITHUB_WORKSPACE/avs-helper-extension.zip.sha256"
+      - name: Publish
+        if: env.SKIP != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$EXT_TAG" \
+            "$GITHUB_WORKSPACE/avs-helper-extension.zip" \
+            "$GITHUB_WORKSPACE/avs-helper-extension.zip.sha256" \
+            --target "$GITHUB_SHA" --title "AVS Helper ${EXT_TAG#ext-v}" --generate-notes --latest=false \
+            --notes "Giải nén, mở chrome://extensions, bật Developer mode, bấm Load unpacked và chọn thư mục vừa giải nén."

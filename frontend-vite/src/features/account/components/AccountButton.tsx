@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Bell, Bookmark, History, LogIn, LogOut, UserRound, X } from "lucide-react";
+import { Bell, Bookmark, History, LogIn, LogOut, Settings, UserRound, X } from "lucide-react";
 import { useState } from "react";
 
 import { LoginForm, PRIMARY } from "@/features/account/components/LoginForm";
@@ -110,6 +110,11 @@ export function AccountButton({ compact = false }: { compact?: boolean }) {
             <DropdownMenuItem className={ITEM} onClick={() => setMenu(false)}>
               <Link to="/history" className={ROW}>
                 <History aria-hidden className="h-4 w-4 text-gray-400" /> Lịch sử
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem className={ITEM} onClick={() => setMenu(false)}>
+              <Link to="/settings" className={ROW}>
+                <Settings aria-hidden className="h-4 w-4 text-gray-400" /> Cài đặt & sao lưu
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className={ITEM} onClick={() => (setMenu(false), logout.mutate())}>

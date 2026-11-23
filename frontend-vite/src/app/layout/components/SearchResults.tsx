@@ -5,6 +5,24 @@ import { PosterImg } from "@/features/title";
 import { cn } from "@/shared/lib/utils";
 import { Skeleton } from "@/shared/ui/skeleton";
 
+const links = (root: Element | null | undefined) =>
+  Array.from(
+    root?.querySelectorAll<HTMLAnchorElement>(".search-results a") ?? [],
+  );
+
+/** The search fields call this on keydown: ArrowDown moves from the field into the results */
+export function onSearchKey(
+  event: React.KeyboardEvent<HTMLInputElement>,
+  box: SearchBox,
+) {
+  if (event.key === "Escape") box.close();
+  if (event.key !== "ArrowDown") return;
+  const first = links(event.currentTarget.parentElement)[0];
+  if (!first) return;
+  event.preventDefault();
+  first.focus();
+}
+
 /** The live results under the search field: compact on desktop, large touch rows in the mobile popup */
 export function SearchResults({
   box,
@@ -15,8 +33,26 @@ export function SearchResults({
 }) {
   if (!box.showResults) return null;
 
+  // Up/Down walk the results (Up from the first goes back to the field), Escape closes and returns to it
+  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const all = links(event.currentTarget.parentElement);
+    const at = all.indexOf(document.activeElement as HTMLAnchorElement);
+    if (event.key === "Escape") {
+      box.close();
+      return;
+    }
+    if (at === -1 || (event.key !== "ArrowDown" && event.key !== "ArrowUp"))
+      return;
+    event.preventDefault();
+    const next = at + (event.key === "ArrowDown" ? 1 : -1);
+    if (next < 0) box.inputRef.current?.focus();
+    else all[Math.min(next, all.length - 1)]?.focus();
+  };
+
   return (
-    <div
+    <section
+      aria-label="Kết quả tìm kiếm"
+      onKeyDown={onKeyDown}
       className={cn(
         "search-results cn-pop absolute top-full z-50 mt-2 overflow-hidden rounded-xl border border-white/10 bg-[#181818] shadow-2xl",
         large ? "left-0 right-[-3.5rem]" : "right-0 w-[400px]",
@@ -39,11 +75,12 @@ export function SearchResults({
                   search={{ slug: item.slug }}
                   onClick={box.close}
                   className={cn(
-                    "flex items-center transition-colors hover:bg-white/10 active:bg-white/10",
+                    "flex items-center transition-colors hover:bg-white/10 active:bg-white/10 focus-visible:bg-white/10 focus-visible:outline-none",
                     large ? "gap-4 rounded-2xl p-2.5" : "gap-3 rounded-lg p-2",
                   )}
                 >
                   <PosterImg
+                    thumb
                     art={item}
                     src={item.poster || item.image || ""}
                     alt=""
@@ -85,7 +122,7 @@ export function SearchResults({
             onClick={box.close}
             className="block border-t border-white/10 px-4 py-2.5 text-center text-sm font-semibold text-gray-200 transition-colors hover:bg-white/10 hover:text-white"
           >
-            Xem tất cả {box.results.length} kết quả
+            Xem tất cả kết quả
           </Link>
         </>
       ) : box.isWaiting ? (
@@ -101,10 +138,13 @@ export function SearchResults({
           ))}
         </div>
       ) : (
-        <p className="px-4 py-6 text-center text-sm text-gray-400">
+        <p
+          role="status"
+          className="px-4 py-6 text-center text-sm text-gray-400"
+        >
           Không tìm thấy anime nào cho &ldquo;{box.trimmed}&rdquo;.
         </p>
       )}
-    </div>
+    </section>
   );
 }

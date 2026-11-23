@@ -1,4 +1,4 @@
-// Opening / ending times of an episode, so "Bỏ qua giới thiệu" jumps to where this episode's opening really
+// Opening / ending / recap times of an episode, so "Bỏ qua giới thiệu" jumps to where this episode's opening really
 // ends. Times come from AniSkip (community database keyed by MyAnimeList id), the MyAnimeList id from an
 // AniList title search. Both APIs answer browsers directly (CORS *). No data -> no skip button.
 
@@ -7,6 +7,8 @@ export interface SkipTimes {
   op?: [number, number];
   /** ending (credits), seconds [start, end) */
   ed?: [number, number];
+  /** "previously on", seconds [start, end) */
+  recap?: [number, number];
 }
 
 const ANILIST = "https://graphql.anilist.co";
@@ -61,6 +63,7 @@ export function toSkipTimes(results: AniSkipResult[]): SkipTimes {
       times.op = range;
     if ((skipType === "ed" || skipType === "mixed-ed") && !times.ed)
       times.ed = range;
+    if (skipType === "recap" && !times.recap) times.recap = range;
   }
   return times;
 }
@@ -72,7 +75,7 @@ export async function getSkipTimes(
   length: number,
 ): Promise<SkipTimes> {
   const params = new URLSearchParams();
-  for (const type of ["op", "ed", "mixed-op", "mixed-ed"])
+  for (const type of ["op", "ed", "mixed-op", "mixed-ed", "recap"])
     params.append("types[]", type);
   params.set("episodeLength", String(Math.round(length)));
   const response = await fetch(`${ANISKIP}/${malId}/${episode}?${params}`);

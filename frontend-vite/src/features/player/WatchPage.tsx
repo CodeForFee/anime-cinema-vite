@@ -45,6 +45,7 @@ export default function WatchPage() {
         sources={streamData?.sources}
         failed={watch.streamFailed}
         title={anime.title}
+        poster={anime.poster}
         episodeName={watch.episodeName}
         progressKey={watch.progressKey}
         episodes={watch.episodes}
@@ -70,6 +71,7 @@ export default function WatchPage() {
         <EpisodeGrid
           episodes={anime.episodes || []}
           currentEpisodeSlug={episode?.name || ""}
+          progressSlug={anime.slug}
           onSelectEpisode={watch.select}
           seasons={anime.seasons || []}
           // the picked part shows at once, even while its episodes load

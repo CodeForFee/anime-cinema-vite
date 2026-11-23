@@ -95,6 +95,10 @@ export function subscribeArt(listener: () => void) {
 
 export const artFor = (key: string) => known.get(key);
 
+/** AniList keeps each cover at 460 px (".../cover/large/"), 230 px ("medium") and 100 px ("small") wide */
+export const smallerCover = (url: string) =>
+  url.replace("/cover/large/", "/cover/medium/");
+
 function remember(key: string, art: Art) {
   known.set(key, art);
   void core()

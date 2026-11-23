@@ -1,6 +1,6 @@
 // The source's comment thread (/ajax/comment, read by its comment.js) and the viewer's account on the source.
 // Requests carry the viewer's source session: browser extension cookies or the app's native cookie jar.
-import { load } from "cheerio";
+import { load } from "cheerio/slim";
 import { md5 } from "@/core/source/md5";
 import { get, post } from "@/core/source/transport";
 

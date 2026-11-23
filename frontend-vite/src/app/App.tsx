@@ -1,6 +1,6 @@
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { RouterProvider } from "@tanstack/react-router";
-import { LazyMotion } from "framer-motion";
+import { LazyMotion, MotionConfig } from "framer-motion";
 
 import { persistOptions, queryClient } from "@/app/query-client";
 import { router } from "@/app/router";
@@ -16,7 +16,11 @@ export default function App() {
     >
       {/* strict: a full `motion.*` component anywhere would pull every animation feature into the main chunk */}
       <LazyMotion features={loadMotion} strict>
-        <RouterProvider router={router} />
+        {/* with the OS "reduce motion" setting, springs and slides jump to their end (CSS and view
+            transitions already follow it, app/globals.css and router.tsx) */}
+        <MotionConfig reducedMotion="user">
+          <RouterProvider router={router} />
+        </MotionConfig>
       </LazyMotion>
     </PersistQueryClientProvider>
   );

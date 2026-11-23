@@ -151,19 +151,15 @@ const watchRoute = createRoute({
   component: lazyRouteComponent(() => import("@/features/player/WatchPage")),
 });
 
-const historyRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/history",
-  component: lazyRouteComponent(() => import("@/features/library/HistoryPage")),
-});
-
-const favoritesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/favorites",
-  component: lazyRouteComponent(
-    () => import("@/features/library/FavoritesPage"),
-  ),
-});
+// pages that read only what is on the device: no loader, no search params
+const devicePage = <Path extends string>(
+  path: Path,
+  load: Parameters<typeof lazyRouteComponent>[0],
+) =>
+  createRoute({ getParentRoute: () => rootRoute, path, component: lazyRouteComponent(load) });
+const historyRoute = devicePage("/history", () => import("@/features/library/HistoryPage"));
+const favoritesRoute = devicePage("/favorites", () => import("@/features/library/FavoritesPage"));
+const settingsRoute = devicePage("/settings", () => import("@/features/library/SettingsPage"));
 
 const scheduleRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -196,6 +192,7 @@ const accountRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   accountRoute,
+  settingsRoute,
   homeRoute,
   exploreRoute,
   scheduleRoute,

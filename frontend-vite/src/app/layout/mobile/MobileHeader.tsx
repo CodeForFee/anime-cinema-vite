@@ -2,7 +2,10 @@ import { Search, X } from "lucide-react";
 import { useEffect } from "react";
 
 import { Brand, HeaderBar } from "@/app/layout/components/Brand";
-import { SearchResults } from "@/app/layout/components/SearchResults";
+import {
+  onSearchKey,
+  SearchResults,
+} from "@/app/layout/components/SearchResults";
 import { useSearchBox } from "@/app/layout/hooks/use-search-box";
 import { AccountButton } from "@/features/account";
 import { Button } from "@/shared/ui/button";
@@ -43,8 +46,8 @@ export function MobileHeader() {
               value={box.query}
               onChange={(e) => box.type(e.target.value)}
               onFocus={box.focus}
-              onKeyDown={(e) => e.key === "Escape" && box.close()}
-              className="search-field h-9 rounded-full border-white/20 bg-black/60 pl-9 text-sm text-white focus-visible:ring-0 focus-visible:ring-offset-0"
+              onKeyDown={(e) => onSearchKey(e, box)}
+              className="search-field h-9 rounded-full border-white/20 bg-black/60 pl-9 text-sm text-white focus-visible:border-white/60 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <SearchResults box={box} large />
           </div>

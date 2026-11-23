@@ -46,6 +46,7 @@ export function HeroDesktop({ items }: { items: AnimeItem[] }) {
             )}
           >
             <PosterImg
+              thumb
               art={item}
               src={item.poster || item.image || ""}
               alt={item.title}

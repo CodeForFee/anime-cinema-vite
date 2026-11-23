@@ -6,6 +6,10 @@ import { resumePoint, useProgressStore } from "@/core/player/progress";
 import { findMalId, getSkipTimes } from "@/core/player/skip-times";
 import type { Episode } from "@/core/types/anime";
 import { usePlayerBridge } from "@/features/player/engines/iframe-bridge";
+import { useSkip } from "@/features/player/hooks/use-skip";
+import { useStreamHealth } from "@/features/player/hooks/use-stream-health";
+import { useWakeLock } from "@/features/player/hooks/use-wake-lock";
+import { usePlayerStore } from "@/features/player/store";
 import { onBack } from "@/platform/back";
 
 const SAVE_EVERY_MS = 5000;
@@ -21,6 +25,10 @@ const nativeShell = () =>
 
 export interface SessionOptions {
   embedUrl?: string;
+  /** For the lock screen (Media Session) */
+  title?: string;
+  episodeName?: string;
+  poster?: string;
   /** Where the watch position of this episode is kept (core/player/progress.ts progressKey) */
   progressKey?: string;
   episodes?: Episode[];
@@ -52,18 +60,61 @@ export function usePlayerSession(
     onNextEpisode,
     onNearEnd,
     skipLookup,
+    title,
+    episodeName,
+    poster,
   }: SessionOptions,
   refs: {
     iframe: RefObject<HTMLIFrameElement | null>;
     frame: RefObject<HTMLDivElement | null>;
   },
+  /** bumped by "Thử lại": the frame is loaded again */
+  attempt = 0,
 ) {
   const bridge = usePlayerBridge(refs.iframe, embedUrl, true);
   const state = bridge.ready ? bridge.state : null;
+  const speed = usePlayerStore((s) => s.speed);
+  const autoSkip = usePlayerStore((s) => s.autoSkip);
+  const problem = useStreamHealth({
+    embedUrl,
+    attempt,
+    ready: bridge.ready,
+    state,
+    error: bridge.error,
+  });
+  useWakeLock(Boolean(state && !state.paused));
+
+  // the viewer's speed and the lock-screen title, once the frame answers (every episode)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per bridge start, not on every speed change
+  useEffect(() => {
+    if (!bridge.ready) return;
+    if (speed !== 1) bridge.send("rate", speed);
+  }, [bridge.ready, progressKey]);
+  useEffect(() => {
+    if (bridge.ready && title)
+      bridge.sendMeta({
+        title,
+        episode: episodeName ?? "",
+        poster,
+        hasNext: Boolean(hasNextEpisode && onNextEpisode),
+      });
+  }, [
+    bridge.ready,
+    bridge.sendMeta,
+    title,
+    episodeName,
+    poster,
+    hasNextEpisode,
+    onNextEpisode,
+  ]);
+  // "next" from the lock screen or a headset
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only a new press counts
+  useEffect(() => {
+    if (bridge.nextRequests > 0) onNextEpisode?.();
+  }, [bridge.nextRequests]);
 
   // ---- per-episode state: resume point, dismissed cards ----
   const [resumeAt, setResumeAt] = useState<number | null>(null);
-  const [introSkipped, setIntroSkipped] = useState(false);
   const [nextDismissed, setNextDismissed] = useState(false);
   const lastSave = useRef(0);
   const nearEndSent = useRef(false);
@@ -74,7 +125,6 @@ export function usePlayerSession(
         ? resumePoint(useProgressStore.getState().entries[progressKey])
         : null,
     );
-    setIntroSkipped(false);
     setNextDismissed(false);
     lastSave.current = 0;
     nearEndSent.current = false;
@@ -211,9 +261,16 @@ export function usePlayerSession(
     enabled: Boolean(malId && skipLookup?.episode && duration > 0),
     staleTime: 24 * 60 * 60 * 1000,
   });
-  const op = skipTimes?.op;
   const ed = skipTimes?.ed;
   const now = state?.currentTime ?? 0;
+  const skip = useSkip({
+    times: skipTimes,
+    state,
+    episodeKey: progressKey,
+    hold: askResume,
+    auto: autoSkip,
+    seek: (seconds) => bridge.send("seek", seconds),
+  });
   const remaining =
     state && state.duration > 0
       ? state.duration - state.currentTime
@@ -223,6 +280,8 @@ export function usePlayerSession(
   return {
     bridge,
     state,
+    problem,
+    skip,
     askResume,
     offeredAt,
     answerResume,
@@ -239,17 +298,5 @@ export function usePlayerSession(
       state !== null &&
       (state.ended || remaining <= NEXT_UP_BEFORE_END || inEnding),
     dismissNextUp: () => setNextDismissed(true),
-    // only while the opening is actually playing: resuming past it never shows the button
-    showSkipIntro:
-      !askResume &&
-      !introSkipped &&
-      state !== null &&
-      op !== undefined &&
-      now >= op[0] &&
-      now < op[1] - 2,
-    skipIntro: () => {
-      if (op) bridge.send("seek", op[1]);
-      setIntroSkipped(true);
-    },
   };
 }

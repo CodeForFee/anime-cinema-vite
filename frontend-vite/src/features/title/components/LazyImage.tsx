@@ -3,6 +3,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { type Titled, useHdArt } from "@/features/title/hooks/useHdArt";
 
+import { smallerCover } from "@/core/hd-art";
 import { sourceHostSnapshot, subscribeSourceHost } from "@/core/source/hosts";
 import { forceHttp2 } from "@/core/source/urls";
 
@@ -21,12 +22,31 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   art?: Titled;
 }
 
-/** A plain <img> poster that switches to the title's sharp cover once it is known */
+/**
+ * A plain <img> poster that switches to the title's sharp cover once it is known. `thumb`: shown at most
+ * ~64 CSS px wide, so it takes AniList's 230 px cover instead of the 460 px one. A cover that fails falls back
+ * to the source poster, and a poster that fails too leaves the frame's own background instead of a broken icon.
+ */
 export const PosterImg: React.FC<
-  React.ImgHTMLAttributes<HTMLImageElement> & { art?: Titled }
-> = ({ art, src, ...props }) => {
-  const hd = useHdArt(art)?.cover;
-  return <img src={useSourceImage(hd || src)} {...props} />;
+  React.ImgHTMLAttributes<HTMLImageElement> & { art?: Titled; thumb?: boolean }
+> = ({ art, src, thumb, onError, style, ...props }) => {
+  const cover = useHdArt(art)?.cover;
+  const hd = cover && thumb ? smallerCover(cover) : cover;
+  const source = useSourceImage(src);
+  const [failed, setFailed] = useState<string[]>([]);
+  const chosen = [hd, source].find((url) => url && !failed.includes(url));
+  return (
+    <img
+      src={chosen}
+      decoding="async"
+      style={chosen ? style : { ...style, visibility: "hidden" }}
+      onError={(event) => {
+        if (chosen) setFailed((list) => [...list, chosen]);
+        onError?.(event);
+      }}
+      {...props}
+    />
+  );
 };
 
 /**

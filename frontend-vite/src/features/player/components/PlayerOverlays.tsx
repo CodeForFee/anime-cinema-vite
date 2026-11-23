@@ -156,7 +156,40 @@ export function NextUpCard({
   );
 }
 
-export function SkipIntroButton({ onSkip }: { onSkip: () => void }) {
+/** "Video không phản hồi": the frame stayed silent or has buffered for long; it may still recover by itself */
+export function StreamHint({
+  stalled,
+  onRetry,
+}: {
+  stalled: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      className="cn-pop glass absolute left-1/2 top-[max(3.5rem,calc(var(--inset-top)+3rem))] z-30 flex -translate-x-1/2 items-center gap-1 rounded-full py-1 pl-4 pr-1 text-sm text-white"
+    >
+      <span className="whitespace-nowrap">
+        {stalled ? "Video đứng hình lâu" : "Video không phản hồi"}
+      </span>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 font-semibold text-black transition active:scale-95"
+      >
+        Thử lại
+      </button>
+    </div>
+  );
+}
+
+export function SkipButton({
+  label,
+  onSkip,
+}: {
+  label: string;
+  onSkip: () => void;
+}) {
   return (
     <button
       type="button"
@@ -164,7 +197,7 @@ export function SkipIntroButton({ onSkip }: { onSkip: () => void }) {
       className="cn-pop glass-button absolute bottom-20 right-3 z-20 flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-white transition active:scale-95 landscape:right-[max(0.75rem,var(--inset-right))]"
     >
       <FastForward aria-hidden className="h-4 w-4 fill-current" />
-      Bỏ qua giới thiệu
+      {label}
     </button>
   );
 }
