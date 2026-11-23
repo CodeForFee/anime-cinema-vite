@@ -20,6 +20,7 @@ export function ScheduleRow({ item, now }: { item: ScheduleDay["items"][number];
       >
         <span className="card-lift relative block h-[92px] w-16 shrink-0 overflow-hidden rounded-2xl bg-white/5">
           <PosterImg
+            thumb
             art={anime}
             src={anime.poster}
             alt=""

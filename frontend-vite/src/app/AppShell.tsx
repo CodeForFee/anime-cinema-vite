@@ -1,13 +1,14 @@
 import { onlineManager } from "@tanstack/react-query";
 import { Outlet } from "@tanstack/react-router";
 import { WifiOff } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 
 import { DesktopHeader } from "@/app/layout/desktop/DesktopHeader";
 import { Footer } from "@/app/layout/desktop/Footer";
 import { ExtensionGate } from "@/app/layout/ExtensionGate";
 import { MobileHeader } from "@/app/layout/mobile/MobileHeader";
 import { SidebarDock } from "@/app/layout/mobile/SidebarDock";
+import { useRouteA11y } from "@/app/layout/use-route-a11y";
 import { useFormFactor } from "@/shared/lib/form-factor";
 
 // While the device is offline: one quiet line above the tab bar. Nothing to press: requests wait and the
@@ -29,13 +30,19 @@ function OfflineNotice() {
 /** The frame around every page: on mobile a compact header and the tab bar, on desktop the menu header and a footer */
 export function AppShell() {
   const mobile = useFormFactor() === "mobile";
+  const main = useRef<HTMLElement>(null);
+  useRouteA11y(main);
   return (
     <ExtensionGate>
       {mobile ? <MobileHeader /> : <DesktopHeader />}
       <div
         className={`flex flex-col min-h-[calc(100vh-64px)] w-full overflow-x-hidden ${mobile ? "pb-24" : ""}`}
       >
-        <main className="flex-1 w-full max-w-full">
+        <main
+          ref={main}
+          tabIndex={-1}
+          className="flex-1 w-full max-w-full outline-none"
+        >
           <Outlet />
         </main>
         {!mobile && <Footer />}

@@ -23,6 +23,7 @@ import { queryClient } from "@/app/query-client";
 import { installBackButton } from "@/platform/back";
 import { watchNetwork } from "@/platform/network";
 import { isNativeApp } from "@/platform/transport";
+import { reportVitals } from "@/platform/vitals";
 
 // Only Chromium renders an SVG filter as backdrop-filter; elsewhere .glass stays a plain blur
 if ("userAgentData" in navigator) document.documentElement.dataset.liquid = "";
@@ -86,3 +87,5 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>,
 );
+
+reportVitals();

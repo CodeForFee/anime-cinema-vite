@@ -53,6 +53,7 @@ export function HeroMobile({ items }: { items: AnimeItem[] }) {
             }}
           >
             <PosterImg
+              thumb
               art={item}
               src={item.poster || item.image || ""}
               alt=""

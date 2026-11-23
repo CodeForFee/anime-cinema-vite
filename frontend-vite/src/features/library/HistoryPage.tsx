@@ -113,6 +113,7 @@ export default function HistoryPage() {
                     >
                       {item.poster && (
                         <PosterImg
+                          thumb
                           art={item}
                           src={item.poster}
                           alt=""

@@ -80,6 +80,7 @@ export function NowPlaying({ watch }: { watch: WatchSession }) {
   return (
     <div className="glass-card flex items-center gap-3 rounded-3xl p-3 pr-4 md:p-4">
       <PosterImg
+        thumb
         art={anime}
         src={anime.poster || anime.image}
         alt=""
