@@ -23,7 +23,7 @@ Route by capability first, then cheapest. Delete rows for models this project do
 
 | model | scope (file globs) | task | since (UTC) | status |
 |---|---|---|---|---|
-| claude-opus-5-5 | avs-helper-extension/**; frontend-vite/{src/**,public/player-bridge.js,vite.config.ts,package.json}; .github/workflows/**; .agent/** | UX plan waves 1-4: extension fixes, perf/a11y, player servers+failover, library | 2026-11-23T01:59Z | wip |
+| claude-opus-5-5 | avs-helper-extension/**; frontend-vite/{src/**,public/player-bridge.js,vite.config.ts,package.json}; .github/workflows/**; .agent/** | UX plan waves 1-4: extension fixes, perf/a11y, player, library | 2026-11-23T01:59Z | released; server switch open as B-007 |
 | gpt-6 | .agent/**; frontend-vite/docs/SOURCE-ACCOUNT.md; C:/Users/NEO/.codex/config.toml and tools/chrome-devtools-mcp/** | T-003 configure Chrome MCP for current browser after bundled Browser/Computer Use unavailable | 2026-10-24T12:31Z | done (released); current Chrome connected, source callback captured; app direct-Google/register features remain incomplete |
 | gpt-6 | .agent/** | T-002 inspect source callback/registration contract after user proposes return via source | 2026-10-24T12:22Z | released; needs source-domain callback request + registration form; source requests HTTP403 |
 | gpt-6 | frontend-vite/src/{features/account/**,platform/source-account*,core/source/endpoints/comments/fetch*}, frontend-vite/android/app/src/main/{AndroidManifest.xml,java/app/capynime/{MainActivity,SourceAccountPlugin,SourceAccountActivity}.java}, frontend-vite/docs/SOURCE-ACCOUNT.md, .agent/** | T-002 source account login/register and direct Google | 2026-10-24T12:06Z | released; independent session fixes verified; no opener/native Activity retained |
