@@ -15,6 +15,7 @@ import { type ExploreSearch, LazyShelf, MovieShelf } from "@/features/browse";
 import { InfoModal } from "@/features/title";
 import { useFormFactor } from "@/shared/lib/form-factor";
 import { HomeSkeleton } from "@/shared/ui/skeletons";
+import { ContinueWatching } from "@/features/home/components/ContinueWatching";
 
 // the hero and the ranked list differ by form factor: each form loads only its own chunk
 const MobileTop = lazy(() => import("@/features/home/mobile/HomeTop"));
@@ -98,6 +99,7 @@ export default function HomePage() {
 
       {/* MovieShelf renders nothing when its list is empty */}
       <div className="space-y-2 relative z-20">
+        <ContinueWatching />
         {res &&
           SHELVES.map((shelf) =>
             shelf.path ? (

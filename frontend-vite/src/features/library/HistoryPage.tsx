@@ -69,6 +69,12 @@ export default function HistoryPage() {
             </p>
           )}
         </div>
+        <Link
+          to="/settings"
+          className="glass-pill ml-auto h-9 shrink-0 rounded-full px-4 text-sm font-medium leading-9 text-gray-300 hover:text-white"
+        >
+          Sao lưu
+        </Link>
         {history.length > 0 && (
           <button
             type="button"

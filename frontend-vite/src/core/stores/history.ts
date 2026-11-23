@@ -13,6 +13,9 @@ interface HistoryStoreState {
   getAnimeHistory: (slug: string) => HistoryItem | undefined;
 }
 
+/** Titles kept in "Lịch sử"; the oldest drops off */
+export const HISTORY_LIMIT = 300;
+
 const safeStorage = {
   getItem: (name: string): string | null => {
     if (typeof window === "undefined") return null;
@@ -48,7 +51,7 @@ export const useHistoryStore = create<HistoryStoreState>()(
           return {
             history: [{ ...item, updatedAt: Date.now() }, ...filtered].slice(
               0,
-              60,
+              HISTORY_LIMIT,
             ),
           };
         });

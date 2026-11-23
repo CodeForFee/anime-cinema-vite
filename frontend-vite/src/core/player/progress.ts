@@ -19,7 +19,7 @@ interface ProgressEntry {
   at: number;
 }
 
-const MAX_ENTRIES = 500;
+export const MAX_ENTRIES = 500;
 
 interface ProgressState {
   entries: Record<string, ProgressEntry>;

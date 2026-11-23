@@ -12,6 +12,7 @@ const LABELS: Record<string, string> = {
   "/favorites": "Yêu thích",
   "/schedule": "Lịch chiếu",
   "/account": "Tài khoản",
+  "/settings": "Cài đặt",
 };
 
 /** The tab title for a page; null keeps the one in index.html (the home page) */

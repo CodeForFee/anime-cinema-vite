@@ -9,6 +9,7 @@ import { Episode, SeasonItem } from "@/core/types/anime";
 import { formatEpisodeName } from "@/core/format";
 import { cn } from "@/shared/lib/utils";
 import { Search } from "lucide-react";
+import { progressKey, useProgressStore } from "@/core/player/progress";
 
 interface EpisodeGridProps {
   episodes: Episode[];
@@ -16,6 +17,8 @@ interface EpisodeGridProps {
   onSelectEpisode: (ep: Episode) => void;
   seasons?: SeasonItem[];
   currentSlug?: string;
+  /** The title the watch positions are kept under (core/player/progress.ts): marks watched episodes */
+  progressSlug?: string;
 }
 
 const EPISODES_PER_GROUP = 50;
@@ -26,7 +29,14 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
   onSelectEpisode,
   seasons = [],
   currentSlug = "",
+  progressSlug,
 }) => {
+  const progress = useProgressStore((s) => s.entries);
+  /** 0..1 of the episode seen, or null when never opened */
+  const seen = (ep: Episode) => {
+    const entry = progressSlug && ep.id && progress[progressKey(progressSlug, ep.id)];
+    return entry && entry.d > 0 ? Math.min(1, entry.t / entry.d) : null;
+  };
   const navigate = useNavigate();
   const [filterText, setFilterText] = useState("");
   // null = follow the group that contains the episode being watched
@@ -155,21 +165,31 @@ export const EpisodeGrid: React.FC<EpisodeGridProps> = ({
         <div className="grid max-h-80 grid-cols-4 gap-2 overflow-y-auto pr-1 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
           {displayEpisodes.map((ep) => {
             const isActive = isCurrentEpisode(ep);
+            const part = isActive ? null : seen(ep);
+            const done = part !== null && part > 0.9;
             return (
               <Button
                 key={ep.id || ep.name}
                 variant="unstyled"
                 size="unstyled"
                 aria-current={isActive ? "true" : undefined}
+                aria-label={done ? `${formatEpisodeName(ep.name)}, đã xem` : undefined}
                 onClick={() => onSelectEpisode(ep)}
                 className={cn(
-                  "h-10 min-w-0 rounded-xl px-1 text-sm font-semibold transition active:scale-95",
+                  "relative h-10 min-w-0 overflow-hidden rounded-xl px-1 text-sm font-semibold transition active:scale-95",
                   isActive
                     ? "bg-primaryRed text-white shadow-[0_0_18px_rgba(229,9,20,0.5)]"
-                    : "glass-pill text-gray-200 hover:text-white",
+                    : done
+                      ? "glass-pill text-gray-500 hover:text-white"
+                      : "glass-pill text-gray-200 hover:text-white",
                 )}
               >
                 <span className="truncate">{formatEpisodeName(ep.name)}</span>
+                {part !== null && !done && (
+                  <span aria-hidden className="absolute inset-x-0 bottom-0 h-0.5 bg-white/10">
+                    <span className="block h-full bg-primaryRed" style={{ width: `${part * 100}%` }} />
+                  </span>
+                )}
               </Button>
             );
           })}
