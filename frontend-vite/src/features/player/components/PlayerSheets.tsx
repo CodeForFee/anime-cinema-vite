@@ -152,7 +152,11 @@ export function SpeedSheet({
               {value === 1 ? "Chuẩn" : `${value}x`}
             </button>
           ))}
-          {footer && <div className="col-span-full -mx-4">{footer}</div>}
+          {footer && (
+            <div className="col-span-full mt-1 border-t border-white/10 pt-1">
+              {footer}
+            </div>
+          )}
         </div>
       )}
     </Sheet>
