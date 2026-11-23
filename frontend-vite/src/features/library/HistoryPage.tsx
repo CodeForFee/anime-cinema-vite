@@ -8,6 +8,7 @@ import { progressKey, useProgressStore } from "@/core/player/progress";
 import { Link } from "@tanstack/react-router";
 import { formatTimeAgo } from "@/core/format";
 import { useHistoryStore } from "@/core/stores/history";
+import { useUnfinishedCount } from "@/core/stores/unfinished";
 import type { HistoryItem } from "@/core/types/history";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -26,6 +27,7 @@ export default function HistoryPage() {
   const removeFromHistory = useHistoryStore((state) => state.removeFromHistory);
   const clearHistory = useHistoryStore((state) => state.clearHistory);
   const progress = useProgressStore((state) => state.entries);
+  const unfinished = useUnfinishedCount();
 
   // "Xoá hết" asks once more in place instead of a dialog
   const [confirmClear, setConfirmClear] = useState(false);
@@ -65,7 +67,9 @@ export default function HistoryPage() {
           </h1>
           {history.length > 0 && (
             <p className="mt-1 text-sm text-gray-400">
-              {history.length} phim, mới nhất ở trên
+              {history.length} phim
+              {unfinished > 0 && ` · ${unfinished} phim chưa xem xong`}, mới
+              nhất ở trên
             </p>
           )}
         </div>

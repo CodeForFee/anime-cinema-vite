@@ -9,6 +9,7 @@ import {
   Search,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
+import { useUnfinishedCount } from "@/core/stores/unfinished";
 import { haptic } from "@/platform/haptics";
 import { cn } from "@/shared/lib/utils";
 
@@ -27,6 +28,7 @@ const MOBILE_NAV_LINKS = [
  */
 export const SidebarDock: React.FC = () => {
   const pathname = useLocation({ select: (location) => location.pathname });
+  const unfinished = useUnfinishedCount();
 
   return (
     <nav
@@ -38,12 +40,15 @@ export const SidebarDock: React.FC = () => {
       <div className="liquid-glass pointer-events-auto relative flex w-full max-w-sm items-center gap-1 rounded-full p-1.5">
         {MOBILE_NAV_LINKS.map(({ label, href, icon: Icon }) => {
           const isActive = pathname === href;
+          const count = href === "/history" ? unfinished : 0;
 
           return (
             <Link
               key={href}
               to={href}
-              aria-label={label}
+              aria-label={
+                count > 0 ? `${label}, ${count} phim chưa xem xong` : label
+              }
               aria-current={isActive ? "page" : undefined}
               onClick={() => !isActive && haptic()}
               className={cn(
@@ -64,6 +69,14 @@ export const SidebarDock: React.FC = () => {
                 className="relative h-[22px] w-[22px]"
                 strokeWidth={isActive ? 2.25 : 1.75}
               />
+              {count > 0 && (
+                <span
+                  aria-hidden
+                  className="absolute right-[18%] top-1 min-w-[16px] rounded-full bg-primaryRed px-1 text-center text-[10px] font-bold leading-4 text-white"
+                >
+                  {count > 9 ? "9+" : count}
+                </span>
+              )}
             </Link>
           );
         })}
