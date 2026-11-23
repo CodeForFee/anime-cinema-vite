@@ -8,6 +8,10 @@ interface PlayerStoreState {
   isTheaterMode: boolean;
   isLightsOff: boolean;
   autoPlayNext: boolean;
+  /** Playback speed applied to every episode */
+  speed: number;
+  /** Jump over openings, recaps and mid-episode endings without asking */
+  autoSkip: boolean;
   showShortcuts: boolean;
   /** The viewer's quality choice, kept on the device and applied to every episode (core/player/pick-quality.ts) */
   quality: QualityPref;
@@ -22,6 +26,8 @@ interface PlayerStoreState {
   setLightsOff: (val: boolean) => void;
   toggleLightsOff: () => void;
   setAutoPlayNext: (val: boolean) => void;
+  setSpeed: (speed: number) => void;
+  setAutoSkip: (on: boolean) => void;
   setShowShortcuts: (val: boolean) => void;
   setQuality: (quality: QualityPref) => void;
   setSurround: (on: boolean) => void;
@@ -36,6 +42,8 @@ export const usePlayerStore = create<PlayerStoreState>()(
       isTheaterMode: false,
       isLightsOff: false,
       autoPlayNext: true,
+      speed: 1,
+      autoSkip: false,
       showShortcuts: false,
       quality: "auto",
       surround: false,
@@ -50,6 +58,8 @@ export const usePlayerStore = create<PlayerStoreState>()(
       toggleLightsOff: () =>
         set((state) => ({ isLightsOff: !state.isLightsOff })),
       setAutoPlayNext: (val) => set({ autoPlayNext: val }),
+      setSpeed: (speed) => set({ speed }),
+      setAutoSkip: (autoSkip) => set({ autoSkip }),
       setShowShortcuts: (val) => set({ showShortcuts: val }),
       setQuality: (quality) => set({ quality }),
       setSurround: (surround) => set({ surround }),
@@ -57,16 +67,30 @@ export const usePlayerStore = create<PlayerStoreState>()(
       setUpscale: (upscale) => set({ upscale }),
       setColor: (color) => set({ color }),
     }),
-    // the quality and enhancement choices outlive the page
+    // the viewer's choices outlive the page
     {
       name: "capynime-player",
       storage: createJSONStorage(() => localStorage),
-      partialize: ({ quality, surround, surroundMode, upscale, color }) => ({
+      partialize: ({
         quality,
         surround,
         surroundMode,
         upscale,
         color,
+        autoPlayNext,
+        isTheaterMode,
+        speed,
+        autoSkip,
+      }) => ({
+        quality,
+        surround,
+        surroundMode,
+        upscale,
+        color,
+        autoPlayNext,
+        isTheaterMode,
+        speed,
+        autoSkip,
       }),
     },
   ),

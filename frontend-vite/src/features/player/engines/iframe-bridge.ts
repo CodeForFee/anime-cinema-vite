@@ -7,7 +7,10 @@ import {
 } from "react";
 
 import type { QualityLevel } from "@/core/player/pick-quality";
-import type { EnhanceSettings, EnhanceState } from "@/features/player/engines/enhance/model";
+import type {
+  EnhanceSettings,
+  EnhanceState,
+} from "@/features/player/engines/enhance/model";
 
 // Names shared with public/player-bridge.js, the script running inside the player frame
 const BRIDGE = "avs-player-bridge";
@@ -33,6 +36,14 @@ export interface PlayerLevels {
   current: number;
 }
 
+/** What the lock screen / notification shows (Media Session, set inside the frame) */
+export interface MediaMeta {
+  title: string;
+  episode: string;
+  poster?: string;
+  hasNext: boolean;
+}
+
 /** The level actually on screen; `auto` while the player's automatic choice is on */
 export interface VisualQuality {
   label: string;
@@ -49,12 +60,15 @@ const MODES = new Set(["off", "fsr", "anime4k"]);
 const NOTICES = new Set(["downgraded", "stopped"]);
 
 /** The frame's "enhanced" answer, kept to the fields and values the app knows (it comes from another origin) */
-export function parseEnhanced(message: Record<string, unknown>): EnhanceState | null {
+export function parseEnhanced(
+  message: Record<string, unknown>,
+): EnhanceState | null {
   if (!MODES.has(message.upscale as string)) return null;
   const support = (message.support ?? {}) as Record<string, unknown>;
   return {
     surround: message.surround === true,
-    surroundMode: message.surroundMode === "speakers" ? "speakers" : "headphones",
+    surroundMode:
+      message.surroundMode === "speakers" ? "speakers" : "headphones",
     upscale: message.upscale as EnhanceState["upscale"],
     color: message.color === true,
     support: {
@@ -62,8 +76,13 @@ export function parseEnhanced(message: Record<string, unknown>): EnhanceState | 
       webgl2: support.webgl2 === true,
       webgpu: support.webgpu === true,
     },
-    error: typeof message.error === "string" ? message.error.slice(0, 200) : undefined,
-    notice: NOTICES.has(message.notice as string) ? (message.notice as EnhanceState["notice"]) : undefined,
+    error:
+      typeof message.error === "string"
+        ? message.error.slice(0, 200)
+        : undefined,
+    notice: NOTICES.has(message.notice as string)
+      ? (message.notice as EnhanceState["notice"])
+      : undefined,
   };
 }
 
@@ -87,6 +106,10 @@ export function usePlayerBridge(
   const [visual, setVisual] = useState<VisualQuality | null>(null);
   /** What the frame's enhancers actually run; null until it answers an "enhance" */
   const [enhanced, setEnhanced] = useState<EnhanceState | null>(null);
+  /** The frame's video failed (bridge "error"); null while fine */
+  const [error, setError] = useState<string | null>(null);
+  /** Counts "next episode" presses from the lock screen / headset (Media Session in the frame) */
+  const [nextRequests, setNextRequests] = useState(0);
   /** When the app last sent a seek (ms): the wait after it is the seek loading, not a stall */
   const seekedAt = useRef(0);
 
@@ -112,6 +135,7 @@ export function usePlayerBridge(
     setLevels(null);
     setVisual(null);
     setEnhanced(null);
+    setError(null);
     if (!origin) return;
 
     const onMessage = (event: MessageEvent) => {
@@ -131,6 +155,9 @@ export function usePlayerBridge(
       else if (message.type === "levels" && Array.isArray(message.levels))
         setLevels({ levels: message.levels, current: message.current });
       else if (message.type === "enhanced") setEnhanced(parseEnhanced(message));
+      else if (message.type === "error")
+        setError(String(message.code ?? "video").slice(0, 40));
+      else if (message.type === "next") setNextRequests((n) => n + 1);
       else if (message.type === "visual")
         setVisual({
           label: message.label,
@@ -148,13 +175,31 @@ export function usePlayerBridge(
   const sendEnhance = useCallback(
     (value: EnhanceSettings) => {
       if (origin)
-        iframeRef.current?.contentWindow?.postMessage({ source: APP, type: "enhance", value }, origin);
+        iframeRef.current?.contentWindow?.postMessage(
+          { source: APP, type: "enhance", value },
+          origin,
+        );
+    },
+    [iframeRef, origin],
+  );
+
+  /** Title, episode and poster for the lock screen; strings only, the frame is another origin */
+  const sendMeta = useCallback(
+    (value: MediaMeta) => {
+      if (origin)
+        iframeRef.current?.contentWindow?.postMessage(
+          { source: APP, type: "meta", value },
+          origin,
+        );
     },
     [iframeRef, origin],
   );
 
   return {
     ready,
+    error,
+    nextRequests,
+    sendMeta,
     state,
     send,
     enhanced,

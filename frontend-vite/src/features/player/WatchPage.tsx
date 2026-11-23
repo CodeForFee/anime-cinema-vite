@@ -45,6 +45,7 @@ export default function WatchPage() {
         sources={streamData?.sources}
         failed={watch.streamFailed}
         title={anime.title}
+        poster={anime.poster}
         episodeName={watch.episodeName}
         progressKey={watch.progressKey}
         episodes={watch.episodes}

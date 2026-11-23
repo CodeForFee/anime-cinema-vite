@@ -29,7 +29,11 @@ interface Bridge {
  * choice is the viewer's alone: a fallback the engine makes (Anime4K too slow, audio held back) only shows as a
  * note, and every episode, full-screen switch or reload applies the choice again.
  */
-export function useEnhance(bridge: Bridge, video: RefObject<HTMLVideoElement | null>, local: boolean) {
+export function useEnhance(
+  bridge: Bridge,
+  video: RefObject<HTMLVideoElement | null>,
+  local: boolean,
+) {
   const surround = usePlayerStore((s) => s.surround);
   const surroundMode = usePlayerStore((s) => s.surroundMode);
   const upscale = usePlayerStore((s) => s.upscale);
@@ -56,11 +60,15 @@ export function useEnhance(bridge: Bridge, video: RefObject<HTMLVideoElement | n
     const el = video.current;
     if (!local || !el) return;
     let cancelled = false;
-    void import("@/features/player/engines/enhance").then(({ createEnhancer }) => {
-      if (cancelled) return;
-      enhancer.current = createEnhancer(el, setLocalState);
-      void enhancer.current.set({ ...usePlayerStore.getState(), ...device() }).then(setLocalState);
-    });
+    void import("@/features/player/engines/enhance").then(
+      ({ createEnhancer }) => {
+        if (cancelled) return;
+        enhancer.current = createEnhancer(el, setLocalState);
+        void enhancer.current
+          .set({ ...usePlayerStore.getState(), ...device() })
+          .then(setLocalState);
+      },
+    );
     return () => {
       cancelled = true;
       enhancer.current?.destroy();
@@ -69,13 +77,26 @@ export function useEnhance(bridge: Bridge, video: RefObject<HTMLVideoElement | n
     };
   }, [local, video]);
   useEffect(() => {
-    void enhancer.current?.set({ surround, surroundMode, upscale, color, ...device() }).then(setLocalState);
+    void enhancer.current
+      ?.set({ surround, surroundMode, upscale, color, ...device() })
+      .then(setLocalState);
   }, [surround, surroundMode, upscale, color]);
 
-  const state = local ? localState : enhanced?.error === "outdated" ? null : enhanced;
+  const state = local
+    ? localState
+    : enhanced?.error === "outdated"
+      ? null
+      : enhanced;
   const isOutdated = !local && (outdated || enhanced?.error === "outdated");
 
-  return { state, outdated: isOutdated, surround, surroundMode, upscale, color };
+  return {
+    state,
+    outdated: isOutdated,
+    surround,
+    surroundMode,
+    upscale,
+    color,
+  };
 }
 
 export type EnhanceView = ReturnType<typeof useEnhance>;

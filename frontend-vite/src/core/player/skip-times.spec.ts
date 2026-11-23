@@ -19,13 +19,17 @@ describe("skip times", () => {
     expect(searchNames("Shuiro no Kamen")).toEqual(["Shuiro no Kamen"]);
   });
 
-  test("AniSkip answer -> op/ed ranges", () => {
+  test("AniSkip answer -> op/ed/recap ranges", () => {
     const times = toSkipTimes([
       { interval: { startTime: 3.2, endTime: 93.2 }, skipType: "op" },
       { interval: { startTime: 1417, endTime: 1507 }, skipType: "mixed-ed" },
       { interval: { startTime: 0, endTime: 10 }, skipType: "recap" },
     ]);
-    expect(times).toEqual({ op: [3.2, 93.2], ed: [1417, 1507] });
+    expect(times).toEqual({
+      op: [3.2, 93.2],
+      ed: [1417, 1507],
+      recap: [0, 10],
+    });
   });
 
   test("episode numbers", () => {

@@ -6,10 +6,12 @@ import type { StreamSource } from "@/core/types/anime";
 import {
   NextUpCard,
   ResumePrompt,
-  SkipIntroButton,
+  SkipButton,
+  StreamHint,
   WeakNetworkHint,
 } from "@/features/player/components/PlayerOverlays";
 import { EnhanceSheet } from "@/features/player/components/EnhanceSheet";
+import { PlaybackToggles } from "@/features/player/components/PlaybackToggles";
 import {
   EpisodeSheet,
   QualitySheet,
@@ -70,6 +72,13 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
   const isTheaterMode = usePlayerStore((s) => s.isTheaterMode);
   const toggleTheaterMode = usePlayerStore((s) => s.toggleTheaterMode);
   const autoPlayNext = usePlayerStore((s) => s.autoPlayNext);
+  const setSpeed = usePlayerStore((s) => s.setSpeed);
+  // "Thử lại" loads the frame again (and asks the source for the stream again)
+  const [attempt, setAttempt] = useState(0);
+  const retry = () => {
+    setAttempt((n) => n + 1);
+    onRefresh?.();
+  };
   const formFactor = useFormFactor();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -79,10 +88,11 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
   >(null);
   const [anchorX, setAnchorX] = useState(0);
 
-  const session = usePlayerSession(props, {
-    iframe: iframeRef,
-    frame: frameRef,
-  });
+  const session = usePlayerSession(
+    props,
+    { iframe: iframeRef, frame: frameRef },
+    attempt,
+  );
   const { state, bridge, isFullscreen } = session;
   const quality = useQuality({ ...bridge, state }, props.progressKey);
   const source = embedUrl ? undefined : sources?.[0];
@@ -114,7 +124,7 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
     };
   }, [embedUrl, source?.file, source?.type]);
 
-  const showError = hasError || failed;
+  const showError = hasError || failed || session.problem === "error";
   const Controls = formFactor === "mobile" ? TouchControls : DesktopControls;
   const openSheet = (kind: NonNullable<typeof sheet>) => (x: number) => {
     setAnchorX(x);
@@ -166,7 +176,7 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
               <Button
                 variant="unstyled"
                 size="unstyled"
-                onClick={onRefresh}
+                onClick={retry}
                 className="h-10 rounded-full bg-white px-6 font-semibold text-black hover:bg-white/90"
               >
                 <RotateCw className="mr-2 h-4 w-4" />
@@ -179,7 +189,7 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
         {embedUrl && !showError && (
           <iframe
             ref={iframeRef}
-            key={embedUrl}
+            key={`${embedUrl}|${attempt}`}
             src={embedUrl}
             title={`${title} - ${episodeName}`}
             className="absolute inset-0 z-[5] h-full w-full border-0"
@@ -235,9 +245,17 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
           />
         )}
 
-        {session.showSkipIntro && (
-          <SkipIntroButton onSkip={session.skipIntro} />
+        {session.skip && (
+          <SkipButton label={session.skip.label} onSkip={session.skip.onSkip} />
         )}
+
+        {!showError &&
+          (session.problem === "silent" || session.problem === "stalled") && (
+            <StreamHint
+              stalled={session.problem === "stalled"}
+              onRetry={retry}
+            />
+          )}
 
         {session.showNextUp && state && onNextEpisode && (
           <NextUpCard
@@ -267,7 +285,11 @@ export function CinemaPlayer(props: CinemaPlayerProps) {
           <SpeedSheet
             anchorX={anchorX}
             rate={state.rate}
-            onSelect={(rate) => bridge.send("rate", rate)}
+            onSelect={(rate) => {
+              bridge.send("rate", rate);
+              setSpeed(rate);
+            }}
+            footer={<PlaybackToggles />}
             onClose={() => setSheet(null)}
           />
         )}

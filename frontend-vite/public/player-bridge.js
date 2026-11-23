@@ -9,8 +9,10 @@
  *     Ad requests themselves are blocked at the network layer (MainActivity / extension rules).
  *  2. Remote control. Lets src/features/player/engines/iframe-bridge.ts drive the <video> by postMessage
  *     (play, pause, seek, rate, volume, quality), so the app draws its own controls; it reports the
- *     position, the buffer ahead and JW Player's quality levels back. The player's controls are hidden
- *     only after the app says hello.
+ *     position, the buffer ahead and JW Player's quality levels back, and "error" when the video or the
+ *     player fails. The player's controls are hidden only after the app says hello.
+ *  3. Media Session. The app sends the title ("meta"); the lock screen, notification and headset buttons
+ *     then show it and drive this <video> ("next" goes back to the app).
  */
 (function () {
   "use strict";
@@ -234,6 +236,9 @@
     jwApi = api;
     api.on("levels", levels);
     api.on("levelsChanged", levels);
+    // the player's own failure screen sits under the app's overlay: say so, the app offers a retry
+    api.on("error", function (event) { send("error", { code: "jw-" + ((event && event.code) || 0) }); });
+    api.on("setupError", function (event) { send("error", { code: "jw-setup-" + ((event && event.code) || 0) }); });
     api.on("visualQuality", function (event) {
       var level = (event && event.level) || {};
       send("visual", { label: String(level.label || ""), height: level.height || 0, auto: event && event.mode === "auto" });
@@ -261,13 +266,48 @@
     });
   }
 
+  /* ---------- 3. Media Session ---------- */
+
+  var meta = null;
+  function str(value, max) { return typeof value === "string" ? value.slice(0, max) : ""; }
+  function applyMeta() {
+    var session = navigator.mediaSession;
+    if (!meta || !video || !session || typeof window.MediaMetadata !== "function") return;
+    try {
+      session.metadata = new window.MediaMetadata({
+        title: meta.episode ? meta.title + " - " + meta.episode : meta.title,
+        artist: "Capynime",
+        artwork: meta.poster ? [{ src: meta.poster, sizes: "512x512" }] : []
+      });
+    } catch (e) { /* a poster URL the browser rejects */ }
+    function on(action, handler) { try { session.setActionHandler(action, handler); } catch (e) { /* unsupported action */ } }
+    on("play", function () { var p = video.play(); if (p && p.catch) p.catch(function () {}); });
+    on("pause", function () { video.pause(); });
+    on("seekbackward", function (details) { video.currentTime = Math.max(0, video.currentTime - ((details && details.seekOffset) || 10)); });
+    on("seekforward", function (details) { video.currentTime = Math.min(video.duration || Infinity, video.currentTime + ((details && details.seekOffset) || 10)); });
+    on("seekto", function (details) { if (details && isFinite(details.seekTime)) video.currentTime = details.seekTime; });
+    on("nexttrack", meta.hasNext ? function () { send("next"); } : null);
+  }
+  function positionState() {
+    var session = navigator.mediaSession;
+    if (!meta || !session || !session.setPositionState || !isFinite(video.duration) || video.duration <= 0) return;
+    try {
+      session.setPositionState({ duration: video.duration, playbackRate: video.playbackRate || 1, position: Math.min(video.currentTime, video.duration) });
+    } catch (e) { /* position past the end while seeking */ }
+  }
+
   function attach() {
     forwardResumeOffer();
     var found = document.querySelector("video.jwApi-video") || document.querySelector("video");
     if (found) hookQuality(); // only a set-up player has a <video>; before that jwplayer() may be a stub
     if (!found || found === video) return;
     video = found;
+    // Chrome may float it in picture-in-picture when the viewer leaves the tab mid-episode
+    try { video.autoPictureInPicture = true; } catch (e) { /* not supported */ }
+    video.addEventListener("error", function () { send("error", { code: "video-" + ((video.error && video.error.code) || 0) }); });
+    ["durationchange", "ratechange", "seeked"].forEach(function (name) { video.addEventListener(name, positionState); });
     applyEnhance();
+    applyMeta();
     ["play", "playing", "pause", "waiting", "seeked", "ratechange", "durationchange", "ended", "timeupdate", "volumechange", "progress"]
       .forEach(function (name) { video.addEventListener(name, report); });
     report();
@@ -299,6 +339,18 @@
     if (message.type === "resume") {
       var button = document.getElementById(message.value ? "avs-resume-btn-yes" : "avs-resume-btn-no");
       if (button) button.click();
+      return;
+    }
+    if (message.type === "meta") {
+      var given = message.value || {};
+      meta = {
+        title: str(given.title, 200),
+        episode: str(given.episode, 80),
+        // only an https picture: it is fetched by the browser for the notification
+        poster: /^https:\/\//.test(given.poster || "") ? str(given.poster, 1000) : "",
+        hasNext: given.hasNext === true
+      };
+      applyMeta();
       return;
     }
     if (message.type === "enhance") {

@@ -3,6 +3,7 @@ name: AVS Helper extension release
 # A version bump in avs-helper-extension/package.json publishes ext-v<version> with the packed extension, so the
 # web's "update the extension" banner (frontend-vite/src/app/layout/ExtensionGate.tsx) has a download to link to.
 # Pushes that keep the version skip publishing; the player scripts it bundles live in frontend-vite/public.
+# Not marked Latest: the APK stays the repo's latest release (the native updater reads only native-v* tags anyway).
 on:
   push:
     branches: [main]
@@ -55,5 +56,5 @@ jobs:
           gh release create "$EXT_TAG" \
             "$GITHUB_WORKSPACE/avs-helper-extension.zip" \
             "$GITHUB_WORKSPACE/avs-helper-extension.zip.sha256" \
-            --target "$GITHUB_SHA" --title "AVS Helper ${EXT_TAG#ext-v}" --generate-notes \
+            --target "$GITHUB_SHA" --title "AVS Helper ${EXT_TAG#ext-v}" --generate-notes --latest=false \
             --notes "Giải nén, mở chrome://extensions, bật Developer mode, bấm Load unpacked và chọn thư mục vừa giải nén."

@@ -114,11 +114,14 @@ export function SpeedSheet({
   onSelect,
   onClose,
   anchorX,
+  footer,
 }: {
   rate: number;
   onSelect: (rate: number) => void;
   onClose: () => void;
   anchorX?: number;
+  /** under the buttons, e.g. the playback switches */
+  footer?: React.ReactNode;
 }) {
   return (
     <Sheet
@@ -149,6 +152,7 @@ export function SpeedSheet({
               {value === 1 ? "Chuẩn" : `${value}x`}
             </button>
           ))}
+          {footer && <div className="col-span-full -mx-4">{footer}</div>}
         </div>
       )}
     </Sheet>
