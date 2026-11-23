@@ -89,3 +89,6 @@ createRoot(document.getElementById("root")!).render(
 );
 
 reportVitals();
+
+// dev only: await __capyCapture("<slug>") saves a source fixture (core/source/capture.ts)
+if (import.meta.env.DEV) void import("@/core/source/capture");

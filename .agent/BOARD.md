@@ -50,6 +50,7 @@ One owner per file. If your scope overlaps an open row, do not edit â€” see
 - [ ] B-004 existing log/20261024T1110Z-claude-opus-5-5-9290e952.md lacks agent frontmatter; godkit verify reports no-identity. Original history preserved; new T-002 task/log have identity (2026-10-24, gpt-6).
 - [ ] B-005 avs-helper-extension/lib/background/logic/create-rule.ts: plain `#animevsub-vsub` and `o` Referer rules have no initiatorDomains, so any site can tag a URL and get the source Referer. Not changed: the worker fetch is initiated by the extension, so adding allowlist hosts alone would break every source request; try initiatorDomains [...allowlist, chrome.runtime.id] in a real Chrome first.
 - [ ] B-006 avs-helper-extension toolchain: vite 2.9/4.5, vitest 0.24/0.34, tsup 6, @tachibana-shin/webext-bridge 6.0.0-rc3, webextension-polyfill 0.9 (no types; lib tsc has pre-existing implicit-any errors). cookie bumped to 0.7.2 only.
+- [ ] B-007 server switch (UX plan wave 2 item 0) blocked: no real source contract. Built-in browser cannot open the source and Node gets HTTP 403. Capture with `await __capyCapture("<slug>")` in the dev app + extension (frontend-vite/src/core/source/capture.ts), or a DevTools copy of the source site's own server-button request; then parse servers in endpoints/episodes, add the row in WatchPanels.tsx and fail over on useStreamHealth "error".
 
 ## Decisions
 
