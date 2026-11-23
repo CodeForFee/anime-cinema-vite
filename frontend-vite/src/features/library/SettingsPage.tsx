@@ -53,8 +53,8 @@ export default function SettingsPage() {
         Cài đặt
       </h1>
 
-      <section className="glass-card space-y-2 rounded-3xl p-4">
-        <h2 className="px-1 text-sm font-semibold text-gray-400">Phát video</h2>
+      <section className="glass-card space-y-1 rounded-3xl px-5 pb-2 pt-5">
+        <h2 className="text-sm font-semibold text-gray-400">Phát video</h2>
         <PlaybackToggles />
       </section>
 
