@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import app.capynime.compose.data.AnimeItem
 import app.capynime.compose.data.AnimeRepository
+import app.capynime.compose.data.HomeSnapshot
 import app.capynime.compose.data.Library
 import app.capynime.compose.ui.FIcon
 import app.capynime.compose.ui.LIcon
@@ -118,7 +119,7 @@ private val SHELVES = listOf(
 
 @Composable
 fun HomeScreen() {
-    val home = rememberLoad("home") { AnimeRepository.home() }
+    val home = rememberLoad("home", stale = HomeSnapshot::home) { AnimeRepository.home() }
     val nav = LocalNav.current
     LoadBox(home, Modifier.fillMaxSize(), skeleton = { HomeSkeleton() }) { data ->
         // the ranked list: this season's slider, else the featured titles, else the latest

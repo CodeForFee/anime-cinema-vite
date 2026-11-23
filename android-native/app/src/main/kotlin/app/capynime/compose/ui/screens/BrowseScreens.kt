@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -45,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -54,7 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.capynime.compose.data.AnimeItem
 import app.capynime.compose.data.AnimeRepository
+import app.capynime.compose.data.HomeSnapshot
 import app.capynime.compose.data.Library
+import app.capynime.compose.data.MenuGroup
 import app.capynime.compose.data.Page
 import app.capynime.compose.ui.FIcon
 import app.capynime.compose.ui.LIcon
@@ -132,13 +136,62 @@ fun FilterPill(text: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
+/** A menu of the source (Thể Loại, Season, Top Anime) as a pill: names the entry on screen when it is one of its own */
+@Composable
+private fun GroupPill(text: String, selected: Boolean, open: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier.height(36.dp).pressable(onClick = onClick)
+            .then(if (selected || open) Modifier.clip(Capsule()).background(Color.White).border(1.dp, Color.White, Capsule()) else Modifier.glassPill())
+            .padding(start = 16.dp, end = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val ink = if (selected || open) Color.Black else Capy.Gray200
+        Text(text, color = ink, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 160.dp))
+        LIcon(Lu.ChevronDown, size = 16.dp, tint = ink, modifier = Modifier.padding(start = 4.dp).graphicsLayer { rotationZ = if (open) 180f else 0f })
+    }
+}
+
+/**
+ * The menus after the quick types (Thể Loại, Season, Top Anime): the phone has no header dropdowns, so each is a
+ * pill that opens its entries right under it. Picking one closes it (the screen changes path).
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MenuGroups(groups: List<MenuGroup>, path: String, onPick: (String) -> Unit) {
+    var open by remember { mutableStateOf<String?>(null) }
+    Column(Modifier.padding(bottom = 12.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            groups.forEach { group ->
+                val picked = group.items.firstOrNull { it.path == path }
+                GroupPill(picked?.label ?: group.label, picked != null, open == group.label) {
+                    open = if (open == group.label) null else group.label
+                }
+            }
+        }
+        groups.firstOrNull { it.label == open }?.let { group ->
+            FlowRow(
+                Modifier.padding(top = 12.dp).fillMaxWidth().glassCard(rounded(16.dp)).padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                group.items.forEach { link ->
+                    FilterPill(link.label, link.path == path) {
+                        open = null
+                        onPick(link.path)
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** ExplorePage.tsx: the trending titles, or one source list page after page, as a 2-column grid */
 @Composable
 fun ExploreScreen(path: String) {
     val nav = LocalNav.current
-    val menus = rememberLoad("menu", staleMs = 60 * 60_000) { AnimeRepository.menu() }
+    val menus = rememberLoad("menu", staleMs = 60 * 60_000, stale = HomeSnapshot::menu) { AnimeRepository.menu() }
     val groups = (menus.value as? Load.Ok)?.value.orEmpty()
-    val home = rememberLoad("home") { AnimeRepository.home() }
+    val home = rememberLoad("home", stale = HomeSnapshot::home) { AnimeRepository.home() }
     val pager = remember(path) { Pager("browse:$path") { AnimeRepository.browse(path, it) } }
     val grid = smoothGridState()
     val scope = rememberCoroutineScope()
@@ -177,6 +230,9 @@ fun ExploreScreen(path: String) {
                 item { FilterPill("Thịnh Hành", path.isEmpty()) { nav.explore("") } }
                 items(groups.firstOrNull()?.items.orEmpty(), key = { it.path }) { link -> FilterPill(link.label, link.path == path) { nav.explore(link.path) } }
             }
+        }
+        if (groups.size > 1) item(span = { GridItemSpan(maxLineSpan) }, key = "groups") {
+            MenuGroups(groups.drop(1), path) { nav.explore(it) }
         }
         when {
             loading -> item(span = { GridItemSpan(maxLineSpan) }, key = "skeleton") { PosterGridSkeleton(18) }

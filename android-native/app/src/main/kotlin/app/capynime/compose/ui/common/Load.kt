@@ -1,6 +1,7 @@
 package app.capynime.compose.ui.common
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 import androidx.compose.runtime.Composable
@@ -51,9 +52,12 @@ class Loaded<T>(private val state: MutableState<Load<T>>, private val reload: ()
     fun retry() = reload()
 }
 
-/** Loads [block] once per [key], from the memory cache when fresh */
+/**
+ * Loads [block] once per [key], from the memory cache when fresh. [stale]: an older copy kept on the device
+ * (HomeSnapshot), shown while nothing better is on screen, and kept when the fresh load fails.
+ */
 @Composable
-fun <T> rememberLoad(key: String, staleMs: Long = 5 * 60_000, block: suspend () -> T): Loaded<T> {
+fun <T> rememberLoad(key: String, staleMs: Long = 5 * 60_000, stale: (() -> T?)? = null, block: suspend () -> T): Loaded<T> {
     val state = remember(key) {
         val cached = MemoryCache.get<T>(key)
         mutableStateOf<Load<T>>(if (cached != null) Load.Ok(cached.first) else Load.Loading)
@@ -64,6 +68,10 @@ fun <T> rememberLoad(key: String, staleMs: Long = 5 * 60_000, block: suspend () 
         if (cached != null && System.currentTimeMillis() - cached.second < staleMs && attempt == 0) return@LaunchedEffect
         val current = state.value
         if (current is Load.Ok) state.value = current.copy(refreshing = true) else state.value = Load.Loading
+        val staleCopy = if (current !is Load.Ok && stale != null) launch {
+            val old = withContext(Dispatchers.IO) { stale() }
+            if (old != null && state.value is Load.Loading) state.value = Load.Ok(old, refreshing = true)
+        } else null
         state.value = try {
             // off the main thread: parsing a source page (Jsoup) takes tens of ms and would stall scrolling
             val value = withContext(Dispatchers.Default) { block() }
@@ -72,7 +80,13 @@ fun <T> rememberLoad(key: String, staleMs: Long = 5 * 60_000, block: suspend () 
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Throwable) {
-            if (current is Load.Ok) current.copy(refreshing = false) else Load.Failed(friendly(e))
+            // whatever is on screen by now (the cached or the stale copy) stays rather than an error; offline the
+            // request fails before the copy is read, so the copy is waited for first
+            staleCopy?.join()
+            when (val now = state.value) {
+                is Load.Ok -> now.copy(refreshing = false)
+                else -> Load.Failed(friendly(e))
+            }
         }
     }
     return remember(key) { Loaded(state) { attempt++ } }

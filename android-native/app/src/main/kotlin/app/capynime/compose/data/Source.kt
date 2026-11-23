@@ -2,7 +2,10 @@ package app.capynime.compose.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -44,7 +47,12 @@ object Source {
         private set
     private lateinit var cookies: PersistentCookieJar
 
+    /** The home page as last read, for the next launch (CapyApp shows it while the fresh one loads) */
+    lateinit var homeSnapshot: java.io.File
+        private set
+
     fun init(context: Context) {
+        homeSnapshot = java.io.File(context.filesDir, "home-snapshot.html")
         SourceHosts.init(context)
         cookies = PersistentCookieJar(context.getSharedPreferences("cookies", Context.MODE_PRIVATE))
         client = OkHttpClient.Builder()
@@ -82,12 +90,25 @@ object Source {
 
     private val cache = BoundedCache<String, Cached>(24)
     private val cacheLock = Mutex()
+    // a request already on its way, shared: home and menu both read "/" on launch and used to fetch it twice
+    private val inflight = HashMap<String, Deferred<SourcePage>>()
+    private val requests = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     suspend fun page(path: String, fresh: Boolean = false): SourcePage {
         if (!fresh) cacheLock.withLock { cache[path]?.takeIf { System.currentTimeMillis() - it.at < 60_000 } }?.let { return it.page }
-        val page = get(path)
-        cacheLock.withLock { cache.put(path, Cached(System.currentTimeMillis(), page)) }
-        return page
+        val request = cacheLock.withLock {
+            inflight[path] ?: requests.async {
+                try {
+                    val page = get(path)
+                    cacheLock.withLock { cache.put(path, Cached(System.currentTimeMillis(), page)) }
+                    if (path == "/") runCatching { homeSnapshot.writeText(page.body) }
+                    page
+                } finally {
+                    cacheLock.withLock { inflight.remove(path) }
+                }
+            }.also { inflight[path] = it }
+        }
+        return request.await()
     }
 
     suspend fun get(path: String): SourcePage = withFailover { origin -> execute(Request.Builder().url(origin + path).build()) }
