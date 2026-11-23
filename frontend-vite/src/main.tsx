@@ -50,8 +50,17 @@ window.addEventListener("load", () =>
 // Offline shell for the web; the Android app has its files locally (and drops a worker an older build left)
 // (sw.js is generated with skipWaiting + clientsClaim, registerType "autoUpdate" in vite.config.ts)
 if (!isNativeApp) {
-  if (import.meta.env.PROD)
-    void navigator.serviceWorker?.register("/sw.js").catch(() => {});
+  if (import.meta.env.PROD && navigator.serviceWorker) {
+    // A new deploy's worker takes over open tabs (clientsClaim) while they still run the old build: reload once
+    // into it. Not on the first visit, when there was no worker before.
+    const hadWorker = Boolean(navigator.serviceWorker.controller);
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadWorker || sessionStorage.getItem("capynime-reloaded")) return;
+      sessionStorage.setItem("capynime-reloaded", "1");
+      location.reload();
+    });
+    void navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }
 } else
   void navigator.serviceWorker
     ?.getRegistrations()

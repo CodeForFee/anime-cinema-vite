@@ -4,9 +4,9 @@ import { useState } from "react";
 
 /** Older builds lose the source Referer when Chrome restarts them and hand any site's cookies to the page */
 export const MIN_EXTENSION_VERSION = "1.0.47";
-// published by .github/workflows/extension-release.yml
+// published by .github/workflows/extension-release.yml; GitHub searches release titles ("AVS Helper x.y.z"), not tags
 const DOWNLOAD_URL =
-  "https://github.com/CodeForFee/anime-cinema-vite/releases?q=ext-v&expanded=true";
+  "https://github.com/CodeForFee/anime-cinema-vite/releases?q=AVS+Helper&expanded=true";
 
 /** true when `version` (x.y.z) is older than `min`; anything unparsable counts as current */
 export function isOutdated(version: string, min = MIN_EXTENSION_VERSION) {
