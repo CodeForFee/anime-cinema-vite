@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "@tachibana-shin/webext-bridge": "6.0.0-rc3",
-    "cookie": "^0.5.0",
+    "cookie": "^0.7.2",
     "js-base64": "^3.7.2"
   },
   "devDependencies": {

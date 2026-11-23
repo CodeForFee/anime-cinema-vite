@@ -16,8 +16,6 @@ const mapUa = {
     "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36 Edg/114.0.1823.41"
 } as const
 
-// eslint-disable-next-line functional/no-let
-let addedGoogleUserContent = false
 const RuleActionType =
   typeof chrome?.declarativeNetRequest !== "undefined"
     ? chrome.declarativeNetRequest.RuleActionType
@@ -57,8 +55,14 @@ const ResourceType =
       } as typeof chrome.declarativeNetRequest.ResourceType)
 
 const typesUa = Object.keys(mapUa) as (keyof typeof mapUa)[]
+// Referer rules count up from 1 and are replaced as a set (install-referers.ts); the global rules below own
+// 8000-8999 and ad-rules.ts 9000+, so neither is swept away with the Referer rules nor collides with them.
+export const GLOBAL_RULE_ID = 8000
 // eslint-disable-next-line functional/no-let
 let currentId = 1
+export function resetRuleIds() {
+  currentId = 1
+}
 
 export function createRule(endsWith: string, referer: string) {
   if (__DEV__) console.log(endsWith, referer)
@@ -173,132 +177,132 @@ export function createRule(endsWith: string, referer: string) {
     })
   })
 
-  if (!addedGoogleUserContent) {
-    rules.push(
-      {
-        id: currentId++,
-        priority: 999,
-        action: {
-          type: RuleActionType.MODIFY_HEADERS,
-          requestHeaders: [
-            {
-              header: "Accept-Encoding",
-              operation: HeaderOperation.SET,
-              value: "gzip, deflate, br, zstd"
-            },
-            {
-              header: "Origin",
-              operation: HeaderOperation.REMOVE
-            },
-            {
-              header: "Priority",
-              operation: HeaderOperation.SET,
-              value: "i"
-            },
-            {
-              header: "Referer",
-              operation: HeaderOperation.SET,
-              value: "https://lh3.googleusercontent.com/"
-            },
-            {
-              header: "Sec-Fetch-Dest",
-              operation: HeaderOperation.SET,
-              value: "image"
-            },
-            {
-              header: "Sec-Fetch-Mode",
-              operation: HeaderOperation.SET,
-              value: "no-cors"
-            },
-            {
-              header: "Sec-Fetch-Site",
-              operation: HeaderOperation.SET,
-              value: "cross-site"
-            },
-            {
-              header: "Sec-Gpc",
-              operation: HeaderOperation.SET,
-              value: "1"
-            }
-          ],
-          responseHeaders: [
-            {
-              header: "Access-Control-Allow-Origin",
-              operation: HeaderOperation.SET,
-              value: "*"
-            },
-            {
-              header: "Access-Control-Allow-Methods",
-              operation: HeaderOperation.SET,
-              value: "PUT, GET, HEAD, POST, DELETE, OPTIONS"
-            }
-          ]
-        },
-        condition: {
-          // urlFilter: endsWith + GA + "|",
-          regexFilter:
-            "^https?://([a-zA-Z0-9-]+\\.)?googleusercontent\\.[a-zA-Z]{2,}(/|$)",
-          resourceTypes: [
-            ResourceType.XMLHTTPREQUEST,
-            ResourceType.IMAGE,
-            ResourceType.MEDIA
-          ], // see available https://developer.chrome.com/docs/extensions/reference/declarativeNetRequest/#type-ResourceType
-          initiatorDomains: allowlist.hosts
-        }
-      },
-      {
-        id: currentId++,
-        priority: 1,
-        action: {
-          type: RuleActionType.MODIFY_HEADERS,
-          requestHeaders: [
-            {
-              header: "Origin",
-              operation: HeaderOperation.REMOVE
-            },
-            {
-              header: "Referer",
-              operation: HeaderOperation.REMOVE
-            },
-            {
-              header: "Sec-Fetch-Mode",
-              operation: HeaderOperation.REMOVE
-            },
-            {
-              header: "Sec-Fetch-Site",
-              operation: HeaderOperation.REMOVE
-            },
-            {
-              header: "Sec-Gpc",
-              operation: HeaderOperation.REMOVE
-            }
-          ],
-          responseHeaders: [
-            {
-              header: "Access-Control-Allow-Origin",
-              operation: HeaderOperation.SET,
-              value: "*"
-            },
-            {
-              header: "Access-Control-Allow-Methods",
-              operation: HeaderOperation.SET,
-              value: "PUT, GET, HEAD, POST, DELETE, OPTIONS"
-            }
-          ]
-        },
-        condition: {
-          urlFilter: "#rm-origin|",
-          resourceTypes: [
-            ResourceType.XMLHTTPREQUEST,
-            ResourceType.IMAGE,
-            ResourceType.MEDIA
-          ], // see available https://developer.chrome.com/docs/extensions/reference/declarativeNetRequest/#type-ResourceType
-          initiatorDomains: allowlist.hosts
-        }
-      }
-    )
-    addedGoogleUserContent = true
-  }
-
   return rules
+}
+
+/** Rules that do not depend on the Referer map: installed once per worker start, ids fixed */
+export function globalRules(): chrome.declarativeNetRequest.Rule[] {
+  return [
+    {
+      id: GLOBAL_RULE_ID + 0,
+      priority: 999,
+      action: {
+        type: RuleActionType.MODIFY_HEADERS,
+        requestHeaders: [
+          {
+            header: "Accept-Encoding",
+            operation: HeaderOperation.SET,
+            value: "gzip, deflate, br, zstd"
+          },
+          {
+            header: "Origin",
+            operation: HeaderOperation.REMOVE
+          },
+          {
+            header: "Priority",
+            operation: HeaderOperation.SET,
+            value: "i"
+          },
+          {
+            header: "Referer",
+            operation: HeaderOperation.SET,
+            value: "https://lh3.googleusercontent.com/"
+          },
+          {
+            header: "Sec-Fetch-Dest",
+            operation: HeaderOperation.SET,
+            value: "image"
+          },
+          {
+            header: "Sec-Fetch-Mode",
+            operation: HeaderOperation.SET,
+            value: "no-cors"
+          },
+          {
+            header: "Sec-Fetch-Site",
+            operation: HeaderOperation.SET,
+            value: "cross-site"
+          },
+          {
+            header: "Sec-Gpc",
+            operation: HeaderOperation.SET,
+            value: "1"
+          }
+        ],
+        responseHeaders: [
+          {
+            header: "Access-Control-Allow-Origin",
+            operation: HeaderOperation.SET,
+            value: "*"
+          },
+          {
+            header: "Access-Control-Allow-Methods",
+            operation: HeaderOperation.SET,
+            value: "PUT, GET, HEAD, POST, DELETE, OPTIONS"
+          }
+        ]
+      },
+      condition: {
+        // urlFilter: endsWith + GA + "|",
+        regexFilter:
+          "^https?://([a-zA-Z0-9-]+\\.)?googleusercontent\\.[a-zA-Z]{2,}(/|$)",
+        resourceTypes: [
+          ResourceType.XMLHTTPREQUEST,
+          ResourceType.IMAGE,
+          ResourceType.MEDIA
+        ], // see available https://developer.chrome.com/docs/extensions/reference/declarativeNetRequest/#type-ResourceType
+        initiatorDomains: allowlist.hosts
+      }
+    },
+    {
+      id: GLOBAL_RULE_ID + 1,
+      priority: 1,
+      action: {
+        type: RuleActionType.MODIFY_HEADERS,
+        requestHeaders: [
+          {
+            header: "Origin",
+            operation: HeaderOperation.REMOVE
+          },
+          {
+            header: "Referer",
+            operation: HeaderOperation.REMOVE
+          },
+          {
+            header: "Sec-Fetch-Mode",
+            operation: HeaderOperation.REMOVE
+          },
+          {
+            header: "Sec-Fetch-Site",
+            operation: HeaderOperation.REMOVE
+          },
+          {
+            header: "Sec-Gpc",
+            operation: HeaderOperation.REMOVE
+          }
+        ],
+        responseHeaders: [
+          {
+            header: "Access-Control-Allow-Origin",
+            operation: HeaderOperation.SET,
+            value: "*"
+          },
+          {
+            header: "Access-Control-Allow-Methods",
+            operation: HeaderOperation.SET,
+            value: "PUT, GET, HEAD, POST, DELETE, OPTIONS"
+          }
+        ]
+      },
+      condition: {
+        urlFilter: "#rm-origin|",
+        resourceTypes: [
+          ResourceType.XMLHTTPREQUEST,
+          ResourceType.IMAGE,
+          ResourceType.MEDIA
+        ], // see available https://developer.chrome.com/docs/extensions/reference/declarativeNetRequest/#type-ResourceType
+        initiatorDomains: allowlist.hosts
+      }
+    }
+  ]
 }

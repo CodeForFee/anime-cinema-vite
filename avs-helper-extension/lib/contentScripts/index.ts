@@ -53,7 +53,8 @@ document.addEventListener("http:request", (async ({
             return {
               id: detail.id,
               ok: false,
-              res: err
+              // a plain object: the page gets a name and message whatever the bridge serialized
+              res: toError(err) as unknown as RequestResponse
             }
           })
       )
@@ -71,7 +72,10 @@ document.addEventListener("set:referrers", (async ({
   id: string
   referrers: Record<string, string>
 }>) => {
-  await sendMessage("set:referrers", detail.referrers)
+  // the page awaits this answer (source-host.ts adoptSourceHost): it must come even when the worker failed
+  await Promise.resolve(sendMessage("set:referrers", detail.referrers)).catch(
+    (err) => console.warn("[AVS Helper] set:referrers failed", err)
+  )
   document.dispatchEvent(
     new CustomEvent("res:set:referrers", {
       detail: encodeDetail({
@@ -80,6 +84,19 @@ document.addEventListener("set:referrers", (async ({
     })
   )
 }) as unknown as EventListenerOrEventListenerObject)
+
+function toError(err: unknown) {
+  const { name, message, status } = (err ?? {}) as {
+    name?: string
+    message?: string
+    status?: number
+  }
+  return {
+    name: name || "Error",
+    message: message || String(err),
+    ...(typeof status === "number" ? { status } : {})
+  }
+}
 
 document.documentElement.dataset.httpVersion = version
 document.documentElement.dataset.httpAllow = JSON.stringify(true)

@@ -15,6 +15,8 @@ export async function getManifest() {
     name: pkg.displayName || pkg.name,
     version: pkg.version,
     description: pkg.description,
+    // world: "MAIN" content scripts need 111, AbortSignal.any in the worker 116
+    minimum_chrome_version: "116",
     background: {
       service_worker: "./dist/background/index.mjs"
     },
@@ -23,11 +25,7 @@ export async function getManifest() {
       48: "./assets/icon-512.png",
       128: "./assets/icon-512.png"
     },
-    permissions: [
-      "cookies",
-      "declarativeNetRequest",
-      "storage"
-    ],
+    permissions: ["cookies", "declarativeNetRequest", "storage"],
     host_permissions: ["*://*/*"],
     content_scripts: [
       {

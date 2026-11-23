@@ -1,7 +1,7 @@
 {
   "name": "avs-helper",
   "displayName": "AVS Helper",
-  "version": "1.0.46",
+  "version": "1.0.47",
   "description": "Cầu nối request cho web Anime Cinema (fork của AnimeVsub Helper, MIT)",
   "private": true,
   "scripts": {
